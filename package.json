@@ -1,8 +1,26 @@
 {
   "name": "@rifat/reb",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Evidence-backed analysis of SaaS products, driven by your AI agent.",
   "license": "MIT",
+  "author": "S.M. Ridwanul Islam Rifat",
+  "homepage": "https://github.com/RidwanulIslamRifat/reb#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RidwanulIslamRifat/reb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RidwanulIslamRifat/reb/issues"
+  },
+  "keywords": [
+    "saas",
+    "product-analysis",
+    "mcp",
+    "ai-agent",
+    "knowledge-graph",
+    "evidence",
+    "cli"
+  ],
   "type": "module",
   "bin": {
     "reb": "dist/cli.js"
@@ -11,10 +29,14 @@
     "dist",
     "handbook",
     "pipelines",
-    "reports"
+    "reports",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build --config src/dashboard/app/vite.config.ts --logLevel warn",

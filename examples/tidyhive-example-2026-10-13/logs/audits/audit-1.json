@@ -1,0 +1,80 @@
+{
+  "number": 1,
+  "at": "2026-10-13T18:35:49.828Z",
+  "plan_version": 8,
+  "rounds_before": 0,
+  "gaps": [
+    {
+      "n": 1,
+      "severity": "blocking",
+      "kind": "report_need",
+      "summary": "No journey nodes, but the reports need at least 2",
+      "detail": "Needed by feature: Key journeys.",
+      "suggested_task": {
+        "id": "a1-journey",
+        "title": "Find journey nodes for feature: Key journeys",
+        "role": "business_analyst",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "kb/nodes/"
+        ],
+        "done_when": [
+          "at least 2 journey nodes"
+        ]
+      }
+    },
+    {
+      "n": 2,
+      "severity": "major",
+      "kind": "report_need",
+      "summary": "No persona nodes, but the reports need at least 1",
+      "detail": "Needed by feature: Key journeys.",
+      "suggested_task": {
+        "id": "a1-persona",
+        "title": "Find persona nodes for feature: Key journeys",
+        "role": "business_analyst",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "kb/nodes/"
+        ],
+        "done_when": [
+          "at least 1 persona node"
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "severity": "major",
+      "kind": "report_need",
+      "summary": "No integration nodes, but the reports need at least 1",
+      "detail": "Needed by feature: Integrations.",
+      "suggested_task": {
+        "id": "a1-integration",
+        "title": "Find integration nodes for feature: Integrations",
+        "role": "desk_researcher",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "kb/nodes/"
+        ],
+        "done_when": [
+          "at least 1 integration node",
+          "every integration node has evidence"
+        ]
+      }
+    }
+  ],
+  "stop": false,
+  "stop_reason": "1 blocking gap; re-plan round 1 of 3",
+  "replanned_in": 10,
+  "replan_changed": true,
+  "questions": []
+}

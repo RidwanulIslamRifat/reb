@@ -1,0 +1,3 @@
+# Keep line endings as LF on every computer (Windows included), so tests and formatting checks
+# see the same files everywhere. Git detects binary files (images, .docx) on its own.
+* text=auto eol=lf

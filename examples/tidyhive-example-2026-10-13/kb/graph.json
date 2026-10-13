@@ -1,0 +1,243 @@
+{
+  "generated_at": "2026-10-13T18:35:49.966Z",
+  "nodes": [
+    {
+      "id": "company-tidyhive-labs",
+      "type": "company",
+      "name": "Tidyhive Labs",
+      "label": "documented"
+    },
+    {
+      "id": "feature-audit-log",
+      "type": "feature",
+      "name": "Audit log",
+      "label": "documented"
+    },
+    {
+      "id": "feature-csv-export",
+      "type": "feature",
+      "name": "CSV export",
+      "label": "documented"
+    },
+    {
+      "id": "feature-kanban-board",
+      "type": "feature",
+      "name": "Kanban board",
+      "label": "documented"
+    },
+    {
+      "id": "feature-recurring-tasks",
+      "type": "feature",
+      "name": "Recurring tasks",
+      "label": "documented"
+    },
+    {
+      "id": "feature-single-sign-on",
+      "type": "feature",
+      "name": "Single sign-on",
+      "label": "documented"
+    },
+    {
+      "id": "integration-slack",
+      "type": "integration",
+      "name": "Slack",
+      "label": "documented"
+    },
+    {
+      "id": "journey-invite-a-teammate",
+      "type": "journey",
+      "name": "Invite a teammate",
+      "label": "documented"
+    },
+    {
+      "id": "journey-set-up-a-board",
+      "type": "journey",
+      "name": "Set up a board",
+      "label": "documented"
+    },
+    {
+      "id": "module-admin",
+      "type": "module",
+      "name": "Admin",
+      "label": "documented"
+    },
+    {
+      "id": "module-boards",
+      "type": "module",
+      "name": "Boards",
+      "label": "documented"
+    },
+    {
+      "id": "persona-team-lead",
+      "type": "persona",
+      "name": "Team lead",
+      "label": "documented"
+    },
+    {
+      "id": "pricing_tier-free",
+      "type": "pricing_tier",
+      "name": "Free",
+      "label": "documented"
+    },
+    {
+      "id": "pricing_tier-team",
+      "type": "pricing_tier",
+      "name": "Team",
+      "label": "documented"
+    },
+    {
+      "id": "product-tidyhive",
+      "type": "product",
+      "name": "Tidyhive",
+      "label": "documented"
+    }
+  ],
+  "edges": [
+    {
+      "from": "company-tidyhive-labs",
+      "type": "makes",
+      "to": "product-tidyhive"
+    },
+    {
+      "from": "company-tidyhive-labs",
+      "type": "evidence",
+      "to": "E-001"
+    },
+    {
+      "from": "feature-audit-log",
+      "type": "gated_by",
+      "to": "pricing_tier-team"
+    },
+    {
+      "from": "feature-audit-log",
+      "type": "evidence",
+      "to": "E-009"
+    },
+    {
+      "from": "feature-csv-export",
+      "type": "evidence",
+      "to": "E-007"
+    },
+    {
+      "from": "feature-kanban-board",
+      "type": "connects_to",
+      "to": "integration-slack"
+    },
+    {
+      "from": "feature-kanban-board",
+      "type": "evidence",
+      "to": "E-005"
+    },
+    {
+      "from": "feature-recurring-tasks",
+      "type": "evidence",
+      "to": "E-006"
+    },
+    {
+      "from": "feature-single-sign-on",
+      "type": "gated_by",
+      "to": "pricing_tier-team"
+    },
+    {
+      "from": "feature-single-sign-on",
+      "type": "evidence",
+      "to": "E-008"
+    },
+    {
+      "from": "integration-slack",
+      "type": "evidence",
+      "to": "E-012"
+    },
+    {
+      "from": "journey-invite-a-teammate",
+      "type": "evidence",
+      "to": "E-015"
+    },
+    {
+      "from": "journey-set-up-a-board",
+      "type": "uses",
+      "to": "feature-kanban-board",
+      "step": 1
+    },
+    {
+      "from": "journey-set-up-a-board",
+      "type": "evidence",
+      "to": "E-014"
+    },
+    {
+      "from": "module-admin",
+      "type": "has",
+      "to": "feature-single-sign-on"
+    },
+    {
+      "from": "module-admin",
+      "type": "has",
+      "to": "feature-audit-log"
+    },
+    {
+      "from": "module-admin",
+      "type": "evidence",
+      "to": "E-004"
+    },
+    {
+      "from": "module-boards",
+      "type": "has",
+      "to": "feature-kanban-board"
+    },
+    {
+      "from": "module-boards",
+      "type": "has",
+      "to": "feature-recurring-tasks"
+    },
+    {
+      "from": "module-boards",
+      "type": "has",
+      "to": "feature-csv-export"
+    },
+    {
+      "from": "module-boards",
+      "type": "evidence",
+      "to": "E-003"
+    },
+    {
+      "from": "persona-team-lead",
+      "type": "does",
+      "to": "journey-set-up-a-board"
+    },
+    {
+      "from": "persona-team-lead",
+      "type": "does",
+      "to": "journey-invite-a-teammate"
+    },
+    {
+      "from": "persona-team-lead",
+      "type": "evidence",
+      "to": "E-013"
+    },
+    {
+      "from": "pricing_tier-free",
+      "type": "evidence",
+      "to": "E-010"
+    },
+    {
+      "from": "pricing_tier-team",
+      "type": "evidence",
+      "to": "E-011"
+    },
+    {
+      "from": "product-tidyhive",
+      "type": "has",
+      "to": "module-boards"
+    },
+    {
+      "from": "product-tidyhive",
+      "type": "has",
+      "to": "module-admin"
+    },
+    {
+      "from": "product-tidyhive",
+      "type": "evidence",
+      "to": "E-002"
+    }
+  ]
+}

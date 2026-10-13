@@ -1,0 +1,40 @@
+name: Release
+
+# Publishes reb to npm when the owner publishes a GitHub release (see docs/RELEASING.md).
+# The npm token lives only in the repository secret NPM_TOKEN, never in the code.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # lets npm show where the package was built (provenance)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - name: Check the release tag matches package.json
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME}"
+          if [ "${tag}" != "v${version}" ]; then
+            echo "::error::The release tag is ${tag} but package.json says ${version}. Name the tag v${version}, or change the version in package.json first."
+            exit 1
+          fi
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

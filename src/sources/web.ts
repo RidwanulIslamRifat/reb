@@ -56,7 +56,7 @@ async function readCapped(response: Response): Promise<{ body: Uint8Array; trunc
   return { body, truncated };
 }
 
-/** The real web, with an honest user agent such as "reb/0.1.0" (ROADMAP decision 12). */
+/** The real web, with an honest user agent such as "reb/1.0.0" (ROADMAP decision 12). */
 export function createWeb(userAgent: string): Web {
   return {
     sleep: (ms) => new Promise((done) => setTimeout(done, ms)),

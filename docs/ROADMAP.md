@@ -521,25 +521,57 @@ How the owner checks it
 Goal: anyone can install reb with one command and use it end to end.
 
 Deliverables
-- [ ] Published to npm as `@rifat/reb` (command still `reb`); `npx @rifat/reb setup` works from npm.
-- [ ] End-to-end test: new run, plan, evidence, graph, audit, re-plan, report, using fixtures only.
-- [ ] Safety review against SPEC 2: no login, no private API calls, no replay, no scraping, no click automation, no telemetry.
-- [ ] README: install, daily use, terminal commands, where files live, privacy statement.
-- [ ] CHANGELOG, version 1.0.0, GitHub release, npm publish from GitHub Actions.
-- [ ] CI runs on Linux, macOS and Windows.
+- [~] Published to npm as `@rifat/reb` (command still `reb`); `npx @rifat/reb setup` works from npm.
+      Everything is ready; the owner publishes by creating a GitHub release (docs/RELEASING.md). Blocked on
+      the npm name: the npm user `rifat` already exists (see follow-ups).
+- [x] End-to-end test: new run, plan, evidence, graph, audit, re-plan, report, using fixtures only.
+- [x] Safety review against SPEC 2: no login, no private API calls, no replay, no scraping, no click automation, no telemetry.
+- [x] README: install, daily use, terminal commands, where files live, privacy statement.
+- [~] CHANGELOG, version 1.0.0, GitHub release, npm publish from GitHub Actions. CHANGELOG, 1.0.0 and the
+      release workflow are done; the GitHub release itself is the owner's step.
+- [x] CI runs on Linux, macOS and Windows.
+
+Added in M10
+- [x] README rewritten for a non-technical reader: what reb is, one-line install, first analysis in 5 steps,
+      what each report contains, safety boundaries, FAQ.
+- [x] `examples/tidyhive-example-2026-10-13/`: a complete made-up run (fictional Tidyhive), with a README.
+- [x] `docs/RELEASING.md`: npm account, token, the `NPM_TOKEN` GitHub secret, and each release step.
+- [x] `.gitattributes` keeps LF line endings, so tests and formatting behave the same on Windows.
+
+Notes from building it
+- The end-to-end test (`tests/e2e/fullRun.test.ts`) runs the whole analysis through the CLI in-process with
+  its own runs folder, so it needs no build and no internet. Setting `REB_E2E_KEEP=<folder>` keeps the
+  finished run; that is how `examples/` was made. `tests/examples.test.ts` checks the example stays valid.
+- Safety review result: the only network call is `src/sources/web.ts` (plain GET, no cookies, redirects not
+  followed, robots.txt checked by the caller); the only program started is the person's browser for the
+  dashboard; no browser automation, no telemetry. `tests/safety.test.ts` keeps it that way.
+- The package test (`tests/e2e/package.test.ts`) needs `npm run build` first and is skipped without it, so CI
+  now builds before testing. `CHANGELOG.md` was added to the package files.
+- Lint and type check run once (on Linux); the build and tests run on all three systems.
+- The release workflow refuses to publish when the release tag is not `v` + the package.json version, and
+  runs every check before `npm publish --provenance`.
+
+Follow-ups found in M10
+- [ ] Owner decision: the npm user `rifat` already exists (since 2017). If it is not the owner's, rename the
+      package (for example `@ridwanulislamrifat/reb`, free when checked) before the first release.
+- [ ] After the first release: switch the workflow to npm trusted publishing (no stored token).
+- [ ] After the first release: the M4 follow-ups about `reb update` and `--command npx` above.
 
 Files and folders
-- `README.md`, `CHANGELOG.md`, `docs/USER_GUIDE.md`
-- `.github/workflows/release.yml`
-- `tests/e2e/`
+- `README.md`, `CHANGELOG.md`, `docs/USER_GUIDE.md`, `docs/RELEASING.md`, `examples/`
+- `.github/workflows/release.yml`, `.github/workflows/ci.yml` (three operating systems), `.gitattributes`
+- `tests/e2e/fullRun.test.ts`, `tests/e2e/package.test.ts`, `tests/safety.test.ts`, `tests/examples.test.ts`
 
 Tests
 - Full end-to-end test passes on all three operating systems.
 - Packed package (`npm pack`) contains `dist/`, handbook, pipelines, templates, built dashboard, and no tests or fixtures.
 
 How the owner checks it
-1. On any computer with Node.js 22: `npx @rifat/reb --version` then `npx @rifat/reb doctor`
-2. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"
+1. Before publishing: `npm ci`, `npm run build`, then
+   `node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-13` shows the sample analysis.
+2. After the first release (docs/RELEASING.md), on any computer with Node.js 22:
+   `npx @rifat/reb --version` then `npx @rifat/reb doctor`
+3. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"
    and confirm it starts by creating a run and a plan.
 
 ---
