@@ -192,3 +192,33 @@ describe("evidence and knowledge graph from the CLI", () => {
     expect(output.trim().split("\n").at(-1)).toBe("6 problems found.");
   });
 });
+
+describe("research tools from the CLI", () => {
+  it("evidence har prints endpoint patterns with counts and [REDACTED], never the fake secrets", async () => {
+    const home = join(await tempDir(), "runs");
+    const out = await cli(home, "evidence", "har", "tests/fixtures/har/sample.har");
+    expect(out).toContain("15 requests to app.acme-notes.example");
+    expect(out).toMatch(/\s6 {2}api +GET app\.acme-notes\.example\/api\/v1\/notifications\?/);
+    expect(out).toContain("polling every 10 s");
+    expect(out).toContain("GET app.acme-notes.example/api/v1/users/:id");
+    expect(out).toContain("[REDACTED]");
+    expect(out).not.toContain("FAKE-SECRET");
+  });
+
+  it("evidence har refuses a file that is not a HAR", async () => {
+    const home = join(await tempDir(), "runs");
+    await expect(cli(home, "evidence", "har", "tests/fixtures/har/not-a-har.json")).rejects.toThrow(
+      "This file is not a HAR",
+    );
+  });
+
+  it("evidence read-page and stack refuse private addresses before reading anything", async () => {
+    const home = join(await tempDir(), "runs");
+    await cli(home, "new", "example.com");
+    for (const command of ["read-page", "stack"]) {
+      await expect(cli(home, "evidence", command, "http://192.168.0.1/")).rejects.toThrow(
+        "local or private address",
+      );
+    }
+  });
+});

@@ -1,0 +1,25 @@
+{
+  "_about": "Fake site served by tests/sources/fakeWeb.ts. Each address maps to a status, headers and a saved file. Tests never use the real internet.",
+  "responses": {
+    "https://acme-notes.example/robots.txt": { "status": 200, "headers": { "content-type": "text/plain" }, "file": "robots.txt" },
+    "https://acme-notes.example/": {
+      "status": 200,
+      "headers": { "content-type": "text/html; charset=utf-8", "server": "Vercel", "x-vercel-id": "fra1::fake", "x-powered-by": "Next.js" },
+      "cookies": ["__cf_bm"],
+      "file": "home.html"
+    },
+    "https://acme-notes.example/pricing": { "status": 200, "headers": { "content-type": "text/html" }, "file": "pricing.html" },
+    "https://acme-notes.example/blog/seed-round": { "status": 200, "headers": { "content-type": "text/html", "server": "nginx" }, "file": "blog-post.html" },
+    "https://acme-notes.example/app": { "status": 200, "headers": { "content-type": "text/html" }, "file": "app-shell.html" },
+    "https://acme-notes.example/session": { "status": 200, "headers": { "content-type": "text/html" }, "file": "login.html" },
+    "https://acme-notes.example/old-pricing": { "status": 301, "headers": { "location": "/pricing" } },
+    "https://acme-notes.example/to-private": { "status": 302, "headers": { "location": "/private/plans" } },
+    "https://acme-notes.example/dashboard": { "status": 302, "headers": { "location": "https://acme-notes.example/login?next=/dashboard" } },
+    "https://acme-notes.example/members": { "status": 401, "headers": {} },
+    "https://acme-notes.example/whitepaper": { "status": 200, "headers": { "content-type": "application/pdf" }, "body": "%PDF-1.7 fake" },
+    "https://no-robots.example/robots.txt": { "status": 404, "headers": {} },
+    "https://no-robots.example/": { "status": 200, "headers": { "content-type": "text/plain" }, "body": "Plain text page from a site without robots.txt." },
+    "https://broken-robots.example/robots.txt": { "status": 503, "headers": {} },
+    "https://broken-robots.example/": { "status": 200, "headers": { "content-type": "text/html" }, "file": "pricing.html" }
+  }
+}

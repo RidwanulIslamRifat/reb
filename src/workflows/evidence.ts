@@ -10,6 +10,7 @@ import {
   SourceInputSchema,
   SourceRecordSchema,
   type LedgerRecord,
+  type SourceRecord,
 } from "../domain/evidence.js";
 import { looksLikeNodeId } from "../domain/node.js";
 import { describeIssues } from "../domain/plan.js";
@@ -17,7 +18,7 @@ import { readBytesIfExists } from "../storage/jsonl.js";
 import { appendLedgerRecord, readLedger } from "../storage/ledger.js";
 import { readNodeText } from "../storage/nodeFiles.js";
 import type { Context } from "./context.js";
-import { argsOf, logged } from "./logging.js";
+import { argsOf, logged, type RunRef } from "./logging.js";
 import { resolveRun } from "./runs.js";
 
 function requireRecord(
@@ -59,40 +60,50 @@ export async function recordSource(ctx: Context, input: SourceArgs) {
     "record_source",
     run,
     { ...args, content_bytes: content?.length },
-    async () => {
-      const hash = content === undefined ? input.content_sha256 : sha256(content);
-      if (!hash) {
-        throw new RebError(
-          "A source needs the content that was read, to record its sha256.",
-          "Give the saved page with --file <path>, or its hash with --sha256 <hex>.",
-        );
-      }
-      if (input.content_sha256 && input.content_sha256 !== hash) {
-        throw new RebError(
-          "The given sha256 does not match the content.",
-          "Give either the content or the hash, not both.",
-        );
-      }
-      const parsed = SourceInputSchema.safeParse({ ...args, content_sha256: hash });
-      if (!parsed.success) {
-        throw new RebError(
-          `The source is not valid: ${describeIssues(parsed.error)}.`,
-          "Fix the listed fields. A source needs a url and a title.",
-        );
-      }
-      const record = await appendLedgerRecord(run.paths, (records) => {
-        if (parsed.data.corrects) requireRecord(records, parsed.data.corrects, "source", "Source");
-        return SourceRecordSchema.parse({
-          kind: "source",
-          id: nextLedgerId(records, "source"),
-          ...parsed.data,
-          publisher: parsed.data.publisher ?? "",
-          read_at: ctx.now().toISOString(),
-        });
-      });
-      return { ...run, record };
-    },
+    async () => ({ ...run, record: await appendSource(ctx, run, { ...args, content }) }),
   );
+}
+
+/**
+ * Checks a source and appends it to the ledger with the next S-NNN id, without logging an event.
+ * Used by record_source and by the tools that read a page and record it themselves.
+ */
+export async function appendSource(
+  ctx: Context,
+  run: RunRef,
+  input: Omit<SourceArgs, "run">,
+): Promise<SourceRecord> {
+  const { content, ...args } = input;
+  const hash = content === undefined ? input.content_sha256 : sha256(content);
+  if (!hash) {
+    throw new RebError(
+      "A source needs the content that was read, to record its sha256.",
+      "Give the saved page with --file <path>, or its hash with --sha256 <hex>.",
+    );
+  }
+  if (input.content_sha256 && input.content_sha256 !== hash) {
+    throw new RebError(
+      "The given sha256 does not match the content.",
+      "Give either the content or the hash, not both.",
+    );
+  }
+  const parsed = SourceInputSchema.safeParse({ ...args, content_sha256: hash });
+  if (!parsed.success) {
+    throw new RebError(
+      `The source is not valid: ${describeIssues(parsed.error)}.`,
+      "Fix the listed fields. A source needs a url and a title.",
+    );
+  }
+  return appendLedgerRecord(run.paths, (records) => {
+    if (parsed.data.corrects) requireRecord(records, parsed.data.corrects, "source", "Source");
+    return SourceRecordSchema.parse({
+      kind: "source",
+      id: nextLedgerId(records, "source"),
+      ...parsed.data,
+      publisher: parsed.data.publisher ?? "",
+      read_at: ctx.now().toISOString(),
+    });
+  });
 }
 
 /** Like record_source, but hashes a saved copy of the page from a file. */

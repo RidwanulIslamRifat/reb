@@ -7,6 +7,7 @@ import { evidenceTools } from "./tools/evidence.js";
 import { graphTools } from "./tools/graph.js";
 import { logTools } from "./tools/logs.js";
 import { planTools } from "./tools/plan.js";
+import { researchTools } from "./tools/research.js";
 import { runTools } from "./tools/runs.js";
 
 /** Every MCP tool reb offers so far, with its SPEC 9 name. */
@@ -15,6 +16,7 @@ export const TOOLS: readonly ToolDef[] = [
   ...planTools,
   ...evidenceTools,
   ...graphTools,
+  ...researchTools,
   ...logTools,
 ];
 

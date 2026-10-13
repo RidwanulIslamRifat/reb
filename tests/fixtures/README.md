@@ -8,3 +8,8 @@ Small, fake sample files used by tests. Never put real HAR files, real run folde
   `node dist/cli.js kb validate --run tests/fixtures/kb-sample` lists 6 problems.
   Running reb on it writes `logs/events.jsonl` inside it; that file is ignored by git.
 - `layers/`: code snippets for the layer import lint test.
+- `pages/`: saved, made-up HTML pages, a robots.txt and `site.json`, a fake website the research tests
+  read instead of the real internet.
+- `har/`: synthetic HAR files. `sample.har` has fake secrets (all containing `FAKE-SECRET`) planted in
+  headers, cookies, query strings and bodies; no test output may contain them. `not-a-har.json` and
+  `broken.har` test the "file is not a HAR" refusal.

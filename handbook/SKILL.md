@@ -19,7 +19,9 @@ reb follows normal use only (SPEC 2.3):
 - Never log in to the product, never use the user's account or cookies, never call its private API.
 - Never replay, modify or forge network requests. Never scrape, crawl or bulk-export.
 - Never automate clicks or typing in the product. The human does all hands-on use.
-- Read only public pages, one page at a time, with your own web tools. Respect robots.txt.
+- Read only public pages, one page at a time, with `read_public_page` (it obeys robots.txt and
+  records the source for you). If reb refuses a page, do not open it with another tool.
+- Find pages with your own web search; record what you use from a search result with `record_source`.
 - Never store secrets: no passwords, tokens, cookies or API keys in evidence, nodes or notes.
 
 If a step would need any of this, stop and give the human a checklist to do it themselves
@@ -64,7 +66,7 @@ sub-agent. Give it:
 - the `role_prompt` from `next_task` as its instructions,
 - the run name, the task (id, title, inputs, outputs, done_when),
 - the rule that it may only use the reb tools listed in the role's `tools`, plus your web search
-  and page reading tools for public pages.
+  to find public pages (pages are read with `read_public_page`).
 
 Independent tasks (no `depends_on` between them) may run in parallel; reb assigns evidence ids
 safely. If sub-agents are not available, do the task yourself following the role prompt.

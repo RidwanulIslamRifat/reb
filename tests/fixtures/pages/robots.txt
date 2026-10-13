@@ -1,0 +1,14 @@
+# Acme Notes robots.txt (fixture)
+User-agent: *
+Disallow: /admin
+Disallow: /account/
+Allow: /account/public$
+
+User-agent: badbot
+Disallow: /
+
+User-agent: reb
+User-agent: otherbot
+Disallow: /private
+Disallow: /*.pdf$
+Allow: /private/press

@@ -6,6 +6,7 @@ import {
   recordSourceFromFile,
   recordSource,
 } from "../../../workflows/evidence.js";
+import { detectTechStack, readPublicPage, summarizeHarFile } from "../../../workflows/research.js";
 import { line, noteRun, type CliIo } from "../output.js";
 
 type RunOption = { run?: string };
@@ -112,5 +113,75 @@ export function registerEvidence(program: Command, io: CliIo): void {
           );
         }
       }
+    });
+
+  evidence
+    .command("read-page")
+    .description("Read one public page, print its text and record it as a source (S-NNN)")
+    .argument("<url>", "full public address, for example https://example.com/pricing")
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(async (url: string, options: RunOption) => {
+      const result = await readPublicPage(ctx(), { ...options, url, max_chars: Infinity });
+      noteRun(io, result);
+      line(io, `Recorded ${result.source.id}: ${result.source.title} (${result.source.url}).`);
+      line(io, `Read at ${result.source.read_at}, sha256 ${result.source.content_sha256}.`);
+      for (const limit of result.limitations) line(io, `Limitation: ${limit}`);
+      for (const warning of result.warnings) line(io, `Warning: ${warning}`);
+      line(io);
+      line(io, result.text || "(no text)");
+    });
+
+  evidence
+    .command("stack")
+    .description("Guess the tools one public page uses, from its HTML and headers")
+    .argument("<url>", "full public address, usually the home page")
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(async (url: string, options: RunOption) => {
+      const result = await detectTechStack(ctx(), { ...options, url });
+      noteRun(io, result);
+      line(io, `Recorded ${result.source.id}: ${result.source.title} (${result.source.url}).`);
+      if (result.technologies.length === 0) line(io, "No known tools found on this page.");
+      for (const t of result.technologies) {
+        line(io, `${t.name}  (${t.category}, ${t.confidence})  ${t.clues.join("; ")}`);
+      }
+      for (const warning of result.warnings) line(io, `Warning: ${warning}`);
+    });
+
+  evidence
+    .command("har")
+    .description("Summarise a saved HAR file; secrets are stripped first")
+    .argument("<file>", "path to the .har file")
+    .option("--run <name>", "run to log this call in (default: the most recently changed, if any)")
+    .action(async (file: string, options: RunOption) => {
+      const result = await summarizeHarFile(ctx(), { ...options, file });
+      if ("slug" in result) noteRun(io, result);
+      const { summary } = result;
+      line(
+        io,
+        `${summary.requests} requests to ${summary.hosts.join(", ")} over ${summary.duration_seconds} s.`,
+      );
+      line(io);
+      line(io, "COUNT  KIND   ENDPOINT");
+      for (const e of summary.endpoints) {
+        const query = e.query_params.length ? `?${e.query_params.join("&")}` : "";
+        const extra = [
+          e.polling ? `polling every ${e.polling.every_seconds} s` : "",
+          e.streaming ?? "",
+        ].filter(Boolean);
+        line(
+          io,
+          `${String(e.count).padStart(5)}  ${e.kind.padEnd(5)}  ${e.method} ${e.host}${e.pattern}${query}` +
+            (extra.length ? `  [${extra.join(", ")}]` : ""),
+        );
+      }
+      const r = summary.removed;
+      line(io);
+      line(
+        io,
+        `Stripped and not kept: ${r.cookies} cookies, ${r.auth_headers} auth headers, ` +
+          `${r.secret_query_values} secret query values, ${r.request_bodies} request bodies, ` +
+          `${r.response_bodies} response bodies.`,
+      );
+      if ("note" in result) line(io, `Note: ${result.note}`);
     });
 }
