@@ -18,6 +18,7 @@ Goal: an empty but correctly shaped project that builds, tests, lints and runs a
 
 Deliverables
 - [ ] TypeScript project on Node.js 22+, ES modules, MIT license (SPEC 13).
+- [ ] Package name `@rifat/reb` in `package.json`, with the command name `reb`.
 - [ ] Folder layout for every layer in SPEC 4, each with a short README saying what belongs there.
 - [ ] Lint rule that blocks imports pointing the wrong way between layers (for example domain importing storage).
 - [ ] `reb` CLI entry point with `--help` and `--version`, listing the planned commands
@@ -309,7 +310,7 @@ How the owner checks it
 Goal: anyone can install reb with one command and use it end to end.
 
 Deliverables
-- [ ] Package name settled (`reb`, or scoped name with command still `reb`), `npx <name> setup` works from npm.
+- [ ] Published to npm as `@rifat/reb` (command still `reb`); `npx @rifat/reb setup` works from npm.
 - [ ] End-to-end test: new run, plan, evidence, graph, audit, re-plan, report, using fixtures only.
 - [ ] Safety review against SPEC 2: no login, no private API calls, no replay, no scraping, no click automation, no telemetry.
 - [ ] README: install, daily use, terminal commands, where files live, privacy statement.
@@ -326,81 +327,82 @@ Tests
 - Packed package (`npm pack`) contains `dist/`, handbook, pipelines, templates, built dashboard, and no tests or fixtures.
 
 How the owner checks it
-1. On any computer with Node.js 22: `npx <package-name> --version` then `npx <package-name> doctor`
+1. On any computer with Node.js 22: `npx @rifat/reb --version` then `npx @rifat/reb doctor`
 2. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"
    and confirm it starts by creating a run and a plan.
 
 ---
 
-## Questions and gaps found in the spec
+## Decisions on spec questions and gaps
 
-Each item has a recommended answer. Please confirm or change these before the milestone they affect.
+The owner approved these on 2026-10-13: item 1 as chosen by the owner, all others as recommended.
+They are binding for the milestones they name unless the owner changes them.
 
-1. **npm package name (affects M1, M4, M10).** SPEC 13 says use a scoped name if "reb" is taken, but the install
-   command `npx reb setup` depends on it. *Recommended:* check the name now, in M1, and fix the name in `package.json`
-   from the start so docs and setup never change later.
+1. **npm package name (affects M1, M4, M10).** SPEC 13 allows a scoped name if "reb" is taken.
+   *Decided:* the package is `@rifat/reb`; the command name stays `reb`. Install is `npx @rifat/reb setup`.
+   Publishing needs an npm account or organisation called `rifat` (to check before M10).
 
-2. **Command that starts the MCP server (M4).** Not named in the spec. *Recommended:* `reb mcp`, using stdio,
-   registered in agents as `npx -y <package-name> mcp`.
+2. **Command that starts the MCP server (M4).** Not named in the spec. *Decided:* `reb mcp`, using stdio,
+   registered in agents as `npx -y @rifat/reb mcp`.
 
 3. **Which run a tool works on (M2, M4).** Tools need to know the run but the spec does not say how.
-   *Recommended:* every run-level tool takes a `run` (slug); if missing, use the most recently changed run and say so in the reply.
+   *Decided:* every run-level tool takes a `run` (slug); if missing, use the most recently changed run and say so in the reply.
 
-4. **Do CLI calls also go to `events.jsonl`? (M2)** SPEC 9 says "every tool call". *Recommended:* yes, CLI and MCP both log,
+4. **Do CLI calls also go to `events.jsonl`? (M2)** SPEC 9 says "every tool call". *Decided:* yes, CLI and MCP both log,
    with a field saying which one, so behaviour is the same (SPEC 2.6).
 
-5. **Where source records live (M3).** SPEC 6.2 says sources are records but not which file. *Recommended:* same
+5. **Where source records live (M3).** SPEC 6.2 says sources are records but not which file. *Decided:* same
    `evidence/ledger.jsonl`, with a `kind` field (`source` or `evidence`), so there is one append-only ledger.
 
-6. **ID assignment with parallel sub-agents (M3).** Two sub-agents could both take `E-031`. *Recommended:* reb assigns IDs
+6. **ID assignment with parallel sub-agents (M3).** Two sub-agents could both take `E-031`. *Decided:* reb assigns IDs
    itself under a short file lock; callers never pick IDs.
 
-7. **Node id format (M3).** Not defined. *Recommended:* `<type>-<short-kebab-name>`, for example `feature-sso`, unique per run.
+7. **Node id format (M3).** Not defined. *Decided:* `<type>-<short-kebab-name>`, for example `feature-sso`, unique per run.
 
 8. **What the node `label` means (M3).** Front matter requires `label`, but it is not said whether it is the evidence label.
-   *Recommended:* yes, one of observed, documented, inferred, unknown; the validator flags a node labelled stronger than its evidence.
+   *Decided:* yes, one of observed, documented, inferred, unknown; the validator flags a node labelled stronger than its evidence.
 
-9. **Ordered links (M3).** `uses (journey->feature, ordered)` has no format. *Recommended:* the order of the list in front matter is the step order.
+9. **Ordered links (M3).** `uses (journey->feature, ordered)` has no format. *Decided:* the order of the list in front matter is the step order.
 
 10. **Raw HAR files (M5, M7).** SPEC 9 strips secrets "before anything is stored", but the user drops raw HAR files into
-    `evidence/inbox/` themselves. *Recommended:* reb never copies a raw HAR; after import it warns that the raw file holds
+    `evidence/inbox/` themselves. *Decided:* reb never copies a raw HAR; after import it warns that the raw file holds
     secrets and offers to delete it. The run folder is local and never committed.
 
 11. **Pages that need JavaScript (M5).** A plain fetch cannot see content drawn by JavaScript, and a headless browser
-    gets close to "automation". *Recommended:* plain HTTP fetch only; when little text comes back, say so in the source's
+    gets close to "automation". *Decided:* plain HTTP fetch only; when little text comes back, say so in the source's
     limitations and suggest the human takes a screenshot.
 
-12. **Politeness limits for `read_public_page` (M5).** Not defined. *Recommended:* one URL per call, an honest user agent
+12. **Politeness limits for `read_public_page` (M5).** Not defined. *Decided:* one URL per call, an honest user agent
     `reb/<version>`, at least 1 second between calls to the same site, refuse if robots.txt disallows or cannot be read
     (except "not found", which means allowed), and a warning after 100 pages per run to stay clearly away from scraping.
 
-13. **Tech stack signatures (M5).** No source given; well-known lists have restrictive licences. *Recommended:* a small
+13. **Tech stack signatures (M5).** No source given; well-known lists have restrictive licences. *Decided:* a small
     hand-written signature file in the repo (around 50 common tools), easy to extend.
 
-14. **REA bridge (M5).** "Optional REA bridge" is not described. *Recommended:* in v1 only `doctor` detects whether REA is
+14. **REA bridge (M5).** "Optional REA bridge" is not described. *Decided:* in v1 only `doctor` detects whether REA is
     installed; the bridge itself becomes a follow-up after v1.
 
 15. **"plan tier" in the brief (M2).** Unclear whether it is reb's plan or the product's pricing plan.
-    *Recommended:* it is the product's pricing plan the analyst has access to (for example "Free trial"); features above it
+    *Decided:* it is the product's pricing plan the analyst has access to (for example "Free trial"); features above it
     can only be documented or inferred, never observed.
 
-16. **What `make_test_dataset` produces (M7).** Not described. *Recommended:* small, obviously fake data files (names like
+16. **What `make_test_dataset` produces (M7).** Not described. *Decided:* small, obviously fake data files (names like
     "Test User 01", example.com emails) for the human to enter by hand; never real personal data.
 
 17. **Audit needs report sections before reports exist (M6 vs M9).** SPEC 11 puts section needs in the report templates,
-    but the auditor comes first. *Recommended:* keep section needs as data files in `reports/specs/` in M6; M9 templates read them.
+    but the auditor comes first. *Decided:* keep section needs as data files in `reports/specs/` in M6; M9 templates read them.
 
-18. **How `reb update` works with npx (M4).** With npx there is no installed copy to update. *Recommended:* registrations
-    use `npx -y <package-name>@latest`, so update only refreshes the handbook and registrations; if installed globally,
-    it also runs `npm install -g <package-name>@latest` after asking.
+18. **How `reb update` works with npx (M4).** With npx there is no installed copy to update. *Decided:* registrations
+    use `npx -y @rifat/reb@latest`, so update only refreshes the handbook and registrations; if installed globally,
+    it also runs `npm install -g @rifat/reb@latest` after asking.
 
-19. **Dashboard port (M8).** Not specified. *Recommended:* bind to 127.0.0.1 only, try port 4747, pick a free one if taken, print the address.
+19. **Dashboard port (M8).** Not specified. *Decided:* bind to 127.0.0.1 only, try port 4747, pick a free one if taken, print the address.
 
-20. **Same product analysed twice on one day (M2).** Folder name `<slug>-<YYYY-MM-DD>` would clash. *Recommended:* use local
+20. **Same product analysed twice on one day (M2).** Folder name `<slug>-<YYYY-MM-DD>` would clash. *Decided:* use local
     date and add `-2`, `-3` on clashes.
 
-21. **Supported operating systems (M1, M10).** Not stated. *Recommended:* macOS, Linux and Windows; CI tests all three from M10,
+21. **Supported operating systems (M1, M10).** Not stated. *Decided:* macOS, Linux and Windows; CI tests all three from M10,
     Linux only before that to keep checks fast.
 
 22. **Extra libraries not named in SPEC 13.** Likely needs: a YAML front-matter reader, an HTML-to-readable-text library,
-    a robots.txt parser. *Recommended:* add each only in the milestone that needs it, with the reason stated in that pull request (AGENTS.md rule 6).
+    a robots.txt parser. *Decided:* add each only in the milestone that needs it, with the reason stated in that pull request (AGENTS.md rule 6).
