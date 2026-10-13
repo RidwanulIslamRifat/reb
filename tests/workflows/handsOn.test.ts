@@ -114,7 +114,7 @@ describe("import_inbox", () => {
     expect(records).toHaveLength(4);
     expect(records.every((r) => r.kind === "evidence" && r.confidence === "observed")).toBe(true);
     const bySubject = Object.fromEntries(
-      records.map((r) => [r.kind === "evidence" ? r.subject : "", r]),
+      records.flatMap((r) => (r.kind === "evidence" ? [[r.subject, r] as const] : [])),
     );
     expect(bySubject["question-export-formats"]).toMatchObject({
       finding: "Only CSV and Markdown are offered; there is no PDF option.",
