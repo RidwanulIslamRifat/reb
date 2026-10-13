@@ -1,4 +1,5 @@
-import { appendFile, readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 /**
  * Append-only JSON Lines files. There is deliberately no function here that rewrites
@@ -8,8 +9,9 @@ export async function appendJsonLine(path: string, value: unknown): Promise<void
   await appendText(path, JSON.stringify(value) + "\n");
 }
 
-/** Adds text at the end of a file, creating it if needed. Never touches what is already there. */
+/** Adds text at the end of a file, creating it (and its folder) if needed. Never touches what is already there. */
 export async function appendText(path: string, text: string): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
   await appendFile(path, text, { encoding: "utf8", flag: "a" });
 }
 
@@ -26,6 +28,16 @@ export async function readJsonLines(path: string): Promise<unknown[]> {
 export async function readTextIfExists(path: string): Promise<string | null> {
   try {
     return await readFile(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+/** Raw bytes of a file, or null when it does not exist (for hashing saved sources). */
+export async function readBytesIfExists(path: string): Promise<Uint8Array | null> {
+  try {
+    return await readFile(path);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw error;

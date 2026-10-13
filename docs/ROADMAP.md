@@ -28,7 +28,8 @@ Deliverables
 - [x] `.gitignore` that excludes runs, HAR files, `.env`, `dist/`, `node_modules/`.
 
 Follow-ups found in M1
-- [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log).
+- [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
+      M3: kb, evidence).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -70,8 +71,9 @@ Follow-ups found in M2
       Decide in M4 whether a runs-root log is wanted. `reb log tail` (reading the log) is also not logged.
 - [ ] A task status change is a plan change, so it also makes a new plan version (SPEC 6.1 "every change").
       If this makes history too long, M6 could group status changes; needs an owner decision.
-- [ ] Two plan saves at the very same moment could race; add the M3 file lock to `save_plan` too.
-- [ ] brief.md values are written as JSON (valid YAML); switch to the M3 YAML reader when it is added.
+- [x] Two plan saves at the very same moment could race; add the M3 file lock to `save_plan` too. (Done in M3.)
+- [x] brief.md values are written as JSON (valid YAML); switch to the M3 YAML reader when it is added. (Done in M3:
+      brief.md is now read as YAML, so values typed without quotes also work.)
 
 Files and folders
 - `src/domain/brief.ts`, `plan.ts`, `event.ts`, `run.ts`
@@ -102,19 +104,36 @@ How the owner checks it
 Goal: findings can be recorded with sources and labels, and linked into a validated graph.
 
 Deliverables
-- [ ] Domain schemas: source record (S-NNN), evidence record (E-NNN), node front matter, 13 node types,
+- [x] Domain schemas: source record (S-NNN), evidence record (E-NNN), node front matter, 13 node types,
       12 link types with allowed from/to pairs (SPEC 6.2, 6.3).
-- [ ] Evidence workflows: `record_source`, `record_evidence`, `list_evidence`. IDs assigned by reb, never by the caller.
+- [x] Evidence workflows: `record_source`, `record_evidence`, `list_evidence`. IDs assigned by reb, never by the caller.
       Corrections are new records linking to the old one.
-- [ ] Graph workflows: `upsert_node`, `link_nodes`, `get_node`, `query_graph`, `build_graph`
+- [x] Graph workflows: `upsert_node`, `link_nodes`, `get_node`, `query_graph`, `build_graph`
       (writes `kb/graph.json` and `kb/stats.json`), `validate_graph`.
-- [ ] Validation report: broken links, features without evidence, numbers without a dated source,
+- [x] Validation report: broken links, features without evidence, numbers without a dated source,
       inferred claims labelled observed, duplicate names, links of a wrong type pair.
-- [ ] CLI: `reb evidence add|list`, `reb kb add|link|show|query|build|validate`.
+- [x] CLI: `reb evidence add|list`, `reb kb add|link|show|query|build|validate`.
+
+Added in M3
+- [x] `reb evidence source <url>` records a source; `--file` hashes a saved copy, `--sha256` takes a hash.
+- [x] `reb kb stats` builds graph.json and stats.json and prints the counts.
+- [x] `--run` also takes a path to a run folder (for example `tests/fixtures/kb-sample`), not only a run name.
+- [x] Extra validation rule `bad_node_file`: a node file that cannot be read, or whose name differs from its id.
+- [x] New dependency `yaml` (ROADMAP decision 22) for node front matter and brief.md.
+
+Follow-ups found in M3
+- [ ] "Numbers without a dated source" treats any digit in a finding as a number (also "version 2").
+      Observed findings are exempt because their own date counts. Refine if it gives false alarms.
+- [ ] "Label stronger than evidence" only checks nodes that have evidence; features without any are caught
+      by "features without evidence". Other node types without evidence are not flagged yet.
+- [ ] There is no command to remove a link or a node yet; edit or delete the file in `kb/nodes/` by hand.
+- [ ] `record_evidence` accepts a subject node that does not exist yet (with a warning), so research can
+      come before the graph; `validate_graph` reports it as a broken link until the node is created.
+- [ ] M4: expose the M3 workflows as MCP tools with the SPEC 9 names.
 
 Files and folders
-- `src/domain/evidence.ts`, `node.ts`, `links.ts`
-- `src/storage/ledger.ts`, `nodeFiles.ts`
+- `src/domain/evidence.ts`, `node.ts`, `links.ts`, `validation.ts`, `graph.ts`
+- `src/storage/ledger.ts`, `nodeFiles.ts`, `lock.ts`
 - `src/workflows/evidence.ts`, `graph.ts`, `validate.ts`
 - `src/adapters/cli/commands/evidence.ts`, `kb.ts`
 - `tests/fixtures/kb-sample/` (small fake product graph with deliberate mistakes)

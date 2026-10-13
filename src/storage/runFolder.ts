@@ -1,6 +1,6 @@
 import { mkdir, readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { RebError } from "../domain/errors.js";
 import { readTextIfExists } from "./jsonl.js";
 
@@ -32,6 +32,14 @@ export function runPaths(dir: string) {
     plan: join(dir, "plan", "plan.json"),
     history: join(dir, "plan", "history"),
     planVersion: (version: number) => join(dir, "plan", "history", `plan-v${version}.json`),
+    planLock: join(dir, "plan", ".plan.lock"),
+    nodes: join(dir, "kb", "nodes"),
+    node: (id: string) => join(dir, "kb", "nodes", `${id}.md`),
+    graph: join(dir, "kb", "graph.json"),
+    stats: join(dir, "kb", "stats.json"),
+    graphLock: join(dir, "kb", ".graph.lock"),
+    ledger: join(dir, "evidence", "ledger.jsonl"),
+    ledgerLock: join(dir, "evidence", ".ledger.lock"),
     events: join(dir, "logs", "events.jsonl"),
     decisions: join(dir, "logs", "decisions.md"),
     role: (role: string) => join(dir, "logs", "roles", `${role}.md`),
@@ -111,17 +119,31 @@ export async function listRunFolders(root: string): Promise<RunFolderInfo[]> {
   );
 }
 
-/** Finds an existing run by slug, with a clear error when it is missing. */
-export async function openRunFolder(root: string, slug: string): Promise<RunPaths> {
-  const paths = runPaths(join(root, slug));
-  if (slug.includes("/") || slug.includes("\\") || (await readTextIfExists(paths.brief)) === null) {
+/**
+ * Finds an existing run by slug, with a clear error when it is missing.
+ * A value with a slash is a path to a run folder anywhere (for example tests/fixtures/kb-sample);
+ * its slug is then the folder name.
+ */
+export async function openRunFolder(
+  root: string,
+  slugOrPath: string,
+): Promise<{ slug: string; paths: RunPaths }> {
+  const isPath = slugOrPath.includes("/") || slugOrPath.includes("\\");
+  const paths = runPaths(isPath ? resolve(slugOrPath) : join(root, slugOrPath));
+  if ((await readTextIfExists(paths.brief)) === null) {
+    if (isPath) {
+      throw new RebError(
+        `${paths.dir} is not a reb run folder (it has no brief.md).`,
+        'Give the path to a run folder, or a run name from "reb list".',
+      );
+    }
     const known = (await listRunFolders(root)).map((r) => r.slug);
     throw new RebError(
-      `There is no run called "${slug}" in ${root}.`,
+      `There is no run called "${slugOrPath}" in ${root}.`,
       known.length
         ? `Use one of: ${known.join(", ")}. "reb list" shows them all.`
         : 'Create one first with "reb new <domain>".',
     );
   }
-  return paths;
+  return { slug: isPath ? basename(paths.dir) : slugOrPath, paths };
 }

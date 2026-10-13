@@ -7,3 +7,6 @@ docs/
 AGENTS.md
 CLAUDE.md
 LICENSE
+
+# Fixtures are kept exactly as reb writes them (round-trip tests depend on it).
+tests/fixtures/

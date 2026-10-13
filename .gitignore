@@ -16,3 +16,9 @@ tmp-runs/
 .DS_Store
 .vscode/
 .idea/
+
+# Logs written when the owner runs reb against a fixture run (ROADMAP "How the owner checks it")
+tests/fixtures/*/logs/
+tests/fixtures/*/kb/graph.json
+tests/fixtures/*/kb/stats.json
+tests/fixtures/*/**/.*.lock

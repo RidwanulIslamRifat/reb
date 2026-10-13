@@ -21,7 +21,7 @@ export interface ResolvedRun extends RunRef {
 
 /** Finds the run a call works on: the one named, or else the most recently changed one. */
 export async function resolveRun(ctx: Context, slug?: string): Promise<ResolvedRun> {
-  if (slug) return { slug, paths: await openRunFolder(ctx.root, slug), defaulted: false };
+  if (slug) return { ...(await openRunFolder(ctx.root, slug)), defaulted: false };
   const [latest] = await listRunFolders(ctx.root);
   if (!latest) {
     throw new RebError(

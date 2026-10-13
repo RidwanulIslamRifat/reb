@@ -63,3 +63,10 @@ export async function appendDecision(
   });
   await appendText(paths.decisions, text);
 }
+
+/** A call's arguments without `run`, for the event log (the run is already on every event). */
+export function argsOf<T extends { run?: string }>(input: T): Omit<T, "run"> {
+  const { run: _ignored, ...rest } = input;
+  void _ignored;
+  return rest;
+}

@@ -7,12 +7,13 @@ import {
   PlanDraftSchema,
   TaskStatusSchema,
   type Plan,
+  type TaskStatus,
 } from "../domain/plan.js";
 import { readTextIfExists } from "../storage/jsonl.js";
-import { readPlanText, writePlanVersion } from "../storage/planFiles.js";
+import { readPlanText, withPlanLock, writePlanVersion } from "../storage/planFiles.js";
 import type { Context } from "./context.js";
 import { appendDecision, logged, type RunRef } from "./logging.js";
-import { resolveRun } from "./runs.js";
+import { resolveRun, type ResolvedRun } from "./runs.js";
 
 async function readCurrentPlan(run: RunRef): Promise<{ plan: Plan; text: string } | null> {
   const text = await readPlanText(run.paths);
@@ -106,21 +107,23 @@ export async function savePlan(
           "Fix the listed fields. Each task needs id, title and role.",
         );
       }
-      const previous = await readCurrentPlan(run);
-      const version = (previous?.plan.version ?? 0) + 1;
-      const next = {
-        ...draft.data,
-        tasks: draft.data.tasks.map((t) => ({ ...t, added_in: t.added_in ?? version })),
-      };
-      const plan = await storeNewVersion(
-        ctx,
-        run,
-        previous,
-        next,
-        `plan saved with ${next.tasks.length} tasks`,
-        reason,
-      );
-      return { ...run, plan };
+      return withPlanLock(run.paths, async () => {
+        const previous = await readCurrentPlan(run);
+        const version = (previous?.plan.version ?? 0) + 1;
+        const next = {
+          ...draft.data,
+          tasks: draft.data.tasks.map((t) => ({ ...t, added_in: t.added_in ?? version })),
+        };
+        const plan = await storeNewVersion(
+          ctx,
+          run,
+          previous,
+          next,
+          `plan saved with ${next.tasks.length} tasks`,
+          reason,
+        );
+        return { ...run, plan };
+      });
     },
   );
 }
@@ -149,26 +152,36 @@ export async function updateTaskStatus(
         `Use one of: ${TaskStatusSchema.options.join(", ")}.`,
       );
     }
-    const previous = await requirePlan(run);
-    const task = findTask(previous.plan, input.task);
-    if (task.status === status.data) {
-      return { ...run, plan: previous.plan, task, changed: false };
-    }
-    const reason = input.reason?.trim() || `status set from the ${ctx.via}`;
-    const next = {
-      ...previous.plan,
-      tasks: previous.plan.tasks.map((t) => (t.id === task.id ? { ...t, status: status.data } : t)),
-    };
-    const plan = await storeNewVersion(
-      ctx,
-      run,
-      previous,
-      next,
-      `task ${task.id}: ${task.status} -> ${status.data}`,
-      reason,
-    );
-    return { ...run, plan, task: findTask(plan, task.id), changed: true };
+    return withPlanLock(run.paths, () => changeStatus(ctx, run, input, status.data));
   });
+}
+
+/** The part of update_task_status that reads and writes the plan; runs under the plan lock. */
+async function changeStatus(
+  ctx: Context,
+  run: ResolvedRun,
+  input: { task: string; reason?: string },
+  status: TaskStatus,
+) {
+  const previous = await requirePlan(run);
+  const task = findTask(previous.plan, input.task);
+  if (task.status === status) {
+    return { ...run, plan: previous.plan, task, changed: false };
+  }
+  const reason = input.reason?.trim() || `status set from the ${ctx.via}`;
+  const next = {
+    ...previous.plan,
+    tasks: previous.plan.tasks.map((t) => (t.id === task.id ? { ...t, status } : t)),
+  };
+  const plan = await storeNewVersion(
+    ctx,
+    run,
+    previous,
+    next,
+    `task ${task.id}: ${task.status} -> ${status}`,
+    reason,
+  );
+  return { ...run, plan, task: findTask(plan, task.id), changed: true };
 }
 
 /** Reads a plan from a JSON file the analyst wrote, then saves it like save_plan. */
