@@ -1,0 +1,18 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Secrets
+.env
+.env.*
+
+# reb run folders and captured traffic: may hold personal data and secrets
+runs/
+tmp-runs/
+*.har
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/

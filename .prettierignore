@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+package-lock.json
+# Owner-written documents are kept exactly as written.
+docs/
+AGENTS.md
+CLAUDE.md
+LICENSE
