@@ -1,16 +1,19 @@
 import { createRequire } from "node:module";
 import { Command } from "commander";
 import { RebError } from "../../domain/errors.js";
+import { registerList } from "./commands/list.js";
+import { registerLog } from "./commands/log.js";
+import { registerNew } from "./commands/new.js";
+import { registerPlan } from "./commands/plan.js";
+import { defaultIo, type CliIo } from "./output.js";
 
 const require = createRequire(import.meta.url);
 const { version } = require("../../../package.json") as { version: string };
 
 export const VERSION = version;
 
-/** Commands from SPEC 3 and ROADMAP. Each milestone replaces a placeholder with the real command. */
+/** Commands from SPEC 3 and ROADMAP that are not built yet. Each milestone removes the ones it adds. */
 export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string }> = [
-  { name: "new", description: "Create a run for a product domain" },
-  { name: "plan", description: "Show and update the analysis plan" },
   { name: "kb", description: "Work with the knowledge graph" },
   { name: "evidence", description: "Record and list evidence" },
   { name: "audit", description: "Check the analysis for gaps" },
@@ -22,10 +25,15 @@ export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string
   { name: "mcp", description: "Start the MCP server for AI agents" },
 ];
 
-export function buildProgram(): Command {
+export function buildProgram(io: CliIo = defaultIo): Command {
   const program = new Command("reb")
     .description("Evidence-backed analysis of SaaS products.")
     .version(VERSION, "-v, --version", "Print the reb version");
+
+  registerNew(program, io);
+  registerList(program, io);
+  registerPlan(program, io);
+  registerLog(program, io);
 
   for (const { name, description } of PLANNED_COMMANDS) {
     program
