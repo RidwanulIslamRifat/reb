@@ -28,9 +28,9 @@ Deliverables
 - [x] `.gitignore` that excludes runs, HAR files, `.env`, `dist/`, `node_modules/`.
 
 Follow-ups found in M1
-- [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
+- [x] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
       M3: kb, evidence; M4: setup, update, doctor, mcp; M5: evidence read-page, stack, har; M6: audit,
-      plan create, plan gate, plan replan; M7: evidence test-plan, dataset, import, rea).
+      plan create, plan gate, plan replan; M7: evidence test-plan, dataset, import, rea; M9: report). Done.
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -320,8 +320,8 @@ Follow-ups found in M6
 - [ ] A task whose dependency is set to `dropped` with `reb plan set-status` never starts (only `apply_replan`'s
       drop moves the waiting tasks on). For example, skipping the user's own session (walkthrough) stalls the
       plan. Decide whether a dropped dependency should count as finished.
-- [ ] The audit counts nodes and evidence; it does not judge whether the content is good. Report drafts in
-      `reports/` are not checked yet (M9).
+- [ ] The audit counts nodes and evidence; it does not judge whether the content is good. Since M9,
+      `render_report` checks that every claim in a report draft cites existing ids; quality is still not judged.
 - [ ] Focus-question hints work on English words only.
 - [ ] Question nodes made by the stop rule have no `about` link; the kb_curator adds them by hand.
 
@@ -470,16 +470,39 @@ Notes from building it
 Goal: turn the graph into the four requested reports with citations.
 
 Deliverables
-- [ ] Templates in `reports/templates/`: business, feature, market, build, using the report specs from M6.
-- [ ] `render_report`: Markdown always, Word (.docx) optional; every claim cites node ids or E-/S- ids;
+- [x] Templates in `reports/templates/`: business, feature, market, build. The M6 report specs moved into the
+      templates' front matter (each section: id, title, what it is about, the node types it needs), so
+      `run_audit` and `render_report` read the same file; `reports/specs/` is gone (changes decision 17).
+- [x] `render_report`: Markdown always, Word (.docx) optional; every claim cites node ids or E-/S- ids;
       each report ends with sources and open questions.
-- [ ] Citation check: render fails with a clear list if a claim has no citation or cites a missing id.
-- [ ] Report writer role updated; CLI `reb report <type> [--docx]`.
+- [x] Citation check: render fails with a clear list if a claim has no citation or cites a missing id.
+- [x] Report writer role updated; CLI `reb report <type> [--docx]`.
+
+Notes from building it
+- The report_writer writes a draft in `notes/report-<type>.md` (summary, then `## <section title>` blocks).
+  `render_report` checks every claim in it (each paragraph, list item and table row) and refuses with line
+  numbers when one has no citation, cites an id that does not exist, or uses a heading that is not a section.
+- Under each section the report lists the graph's nodes of the types the section needs, with label, links and
+  each evidence finding, all cited. Corrected evidence is replaced by its correction. Section needs the graph
+  does not meet are listed under "Open questions", next to question nodes and nodes labelled unknown.
+- Sources lists every S- record cited directly or behind a cited E- record; evidence from files (hands-on
+  sessions) is listed below it.
+- The Word file is written with a small built-in writer (`src/storage/docxWriter.ts`, Node's own zlib), so no
+  new dependency. It keeps headings, lists, tables, bold and italic.
+- The fixture is a new `tests/fixtures/report-sample/` instead of `run-sample/`: run-sample's ledger is
+  deliberately ignored by git because the M7 owner checks import into it, and the M7 tests rely on its
+  small graph.
+- Follow-up: the report task's `done_when` lines about citations are still a checklist item for the agent;
+  `check_gate` could run the citation check on the rendered report.
+- Follow-up: `reb report` renders one report per call; a `--all` option for every report in the brief may help.
 
 Files and folders
 - `reports/templates/*.md`
-- `src/workflows/renderReport.ts`, `src/storage/docxWriter.ts`
-- `tests/fixtures/run-sample/` (complete enough to render every report)
+- `src/domain/report.ts` (rendering, draft sections, citation check), `src/domain/reportSpec.ts` (template format)
+- `src/workflows/renderReport.ts`, `src/storage/docxWriter.ts`, `src/storage/reportFiles.ts`
+- `src/adapters/cli/commands/report.ts`, `src/adapters/mcp/tools/reports.ts`, handbook `roles/report_writer.md`
+- `tests/fixtures/report-sample/` (complete enough to render every report)
+- Tests: `tests/domain/report.test.ts`, `tests/workflows/reports.test.ts`
 
 Tests
 - Each report type renders from the fixture run; every section present.
@@ -488,8 +511,8 @@ Tests
 - .docx file opens (valid zip with document part) and contains the same headings.
 
 How the owner checks it
-1. `node dist/cli.js report business --docx --run tests/fixtures/run-sample`
-2. Open `tests/fixtures/run-sample/reports/business.docx` in Word: headings, citations like `[E-003]`
+1. `npm run build`, then `node dist/cli.js report feature --docx --run tests/fixtures/report-sample`
+2. Open `tests/fixtures/report-sample/reports/feature.docx` in Word: headings, citations like `[E-003]`
    and a "Sources" and "Open questions" section at the end.
 
 ---
@@ -582,6 +605,7 @@ They are binding for the milestones they name unless the owner changes them.
 
 17. **Audit needs report sections before reports exist (M6 vs M9).** SPEC 11 puts section needs in the report templates,
     but the auditor comes first. *Decided:* keep section needs as data files in `reports/specs/` in M6; M9 templates read them.
+    *Changed in M9:* the needs moved into the templates' front matter as SPEC 11 says, and `reports/specs/` was removed.
 
 18. **How `reb update` works with npx (M4).** With npx there is no installed copy to update. *Decided:* registrations
     use `npx -y @rifat/reb@latest`, so update only refreshes the handbook and registrations; if installed globally,

@@ -28,7 +28,7 @@ import { loadGraph } from "./graph.js";
 import { logged } from "./logging.js";
 import { requirePlan } from "./plan.js";
 import { readBrief, resolveRun } from "./runs.js";
-import { loadReportSpecs } from "./specs.js";
+import { loadReportTemplates } from "./specs.js";
 
 /** Reads logs/audits/audit-<n>.json. */
 export async function loadAudit(paths: RunPaths, n: number): Promise<AuditRecord> {
@@ -109,7 +109,7 @@ async function gapsToQuestions(paths: RunPaths, audit: number, gaps: Gap[]): Pro
 
 /**
  * run_audit (SPEC 8): compares the graph and the focus-answer drafts with the brief's focus
- * questions, the requested report specs and validate_graph. Writes logs/audits/audit-<N>.md
+ * questions, the requested report templates (their section needs) and validate_graph. Writes logs/audits/audit-<N>.md
  * (and .json) with numbered gaps, severity and a suggested task each, and applies the stop rule.
  */
 export async function runAudit(ctx: Context, input: { run?: string } = {}) {
@@ -117,7 +117,7 @@ export async function runAudit(ctx: Context, input: { run?: string } = {}) {
   return logged(ctx, "run_audit", run, {}, async () => {
     const { brief, notes } = await readBrief(run);
     const { plan } = await requirePlan(run);
-    const specs = await loadReportSpecs(brief.reports.length ? brief.reports : plan.reports);
+    const specs = await loadReportTemplates(brief.reports.length ? brief.reports : plan.reports);
     const graph = await loadGraph(run.paths);
     const files = await existingRunFiles(
       run.paths,

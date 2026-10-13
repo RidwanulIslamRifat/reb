@@ -14,7 +14,7 @@ import {
 } from "../../src/domain/pipeline.js";
 import { ROLE_FOR_TYPE } from "../../src/domain/nodeRoles.js";
 import { PlanSchema } from "../../src/domain/plan.js";
-import { parseReportSpec } from "../../src/domain/reportSpec.js";
+import { parseReportTemplate } from "../../src/domain/reportSpec.js";
 import { REPORT_TYPES } from "../../src/domain/brief.js";
 
 async function pipeline(id: string): Promise<Pipeline> {
@@ -93,15 +93,35 @@ describe("pipeline files", () => {
     expect(result.error!.issues[0]!.message).toMatch(/role should be desk_researcher/);
   });
 
-  it("has a valid report spec for every report type", async () => {
+  it("has a valid report template for every report type, each section declaring its node needs", async () => {
     for (const r of REPORT_TYPES) {
-      const spec = parseReportSpec(
-        JSON.parse(await readFile(`reports/specs/${r}.json`, "utf8")),
-        r,
+      const template = parseReportTemplate(
+        await readFile(`reports/templates/${r}.md`, "utf8"),
+        `${r}.md`,
       );
-      expect(spec.report).toBe(r);
-      expect(spec.sections.length).toBeGreaterThan(2);
+      expect(template.report).toBe(r);
+      expect(template.sections.length).toBeGreaterThan(2);
+      expect(template.intro).toContain("{product}");
+      for (const s of template.sections) {
+        expect(s.needs.length, `${r}: ${s.id}`).toBeGreaterThan(0);
+        expect(s.about.length, `${r}: ${s.id}`).toBeGreaterThan(10);
+      }
     }
+  });
+
+  it("rejects a report template with two sections of the same id, or no front matter", () => {
+    const text = [
+      "---",
+      "report: build",
+      "title: Build",
+      "sections:",
+      "  - { id: scope, title: Scope, needs: [{ type: module, min: 1 }] }",
+      "  - { id: scope, title: Scope again }",
+      "---",
+      "Intro",
+    ].join("\n");
+    expect(() => parseReportTemplate(text, "build.md")).toThrow(/two sections with the id "scope"/);
+    expect(() => parseReportTemplate("no front matter", "build.md")).toThrow(/cannot be read/);
   });
 
   it("rejects a pipeline with a dependency cycle or an unknown dependency", () => {

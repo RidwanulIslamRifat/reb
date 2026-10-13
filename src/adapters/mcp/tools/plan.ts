@@ -96,7 +96,7 @@ export const planTools = [
     name: "run_audit",
     description:
       "Audit the run: compares the graph and the focus-answer drafts with the brief's focus questions, the requested " +
-      "report specs and validate_graph. Writes logs/audits/audit-<N>.md with numbered gaps, severity (blocking, major, " +
+      "report templates (the node types each section needs) and validate_graph. Writes logs/audits/audit-<N>.md with numbered gaps, severity (blocking, major, " +
       "minor) and a suggested task each. stop is true when there are no blocking gaps or 3 re-plan rounds are done; " +
       "then the remaining gaps become question nodes. Otherwise call apply_replan next.",
     input: { run: runArg },

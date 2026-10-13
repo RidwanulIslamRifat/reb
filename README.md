@@ -39,6 +39,16 @@ node dist/cli.js dashboard --run tests/fixtures/dashboard-sample   # a made-up s
 A page opens on your computer only (127.0.0.1) with the plan, knowledge graph, evidence, activity log and
 reports. It only reads your files. Press Ctrl+C to stop it. You can also ask your agent to "open the dashboard".
 
+## Write a report
+
+```sh
+node dist/cli.js report feature --docx --run tests/fixtures/report-sample   # a made-up sample run
+```
+
+Writes `reports/feature.md` (and a Word copy with `--docx`) in the run folder: every claim cites node ids
+or evidence ids such as `[E-003]`, and the report ends with "Sources" and "Open questions". Report types:
+business, feature, market, build. Your agent's report writer does this for you at the end of an analysis.
+
 ## Checks
 
 ```sh

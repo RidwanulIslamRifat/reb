@@ -152,6 +152,18 @@ export async function sampleRun(): Promise<string> {
   return dir;
 }
 
+/** A copy of tests/fixtures/report-sample (a run complete enough for every report, M9) in a temp folder. */
+export async function reportSampleRun(): Promise<string> {
+  const dir = join(await tempDir(), "report-sample");
+  const fixture = join("tests", "fixtures", "report-sample");
+  // Leave out what an owner check may have written into the fixture (ignored by git).
+  const written = ["logs", "reports", "kb/graph.json", "kb/stats.json"].map((p) =>
+    join(fixture, p),
+  );
+  await cp(fixture, dir, { recursive: true, filter: (src) => !written.includes(src) });
+  return dir;
+}
+
 /** Every file under a folder, as paths relative to it. */
 export async function filesUnder(dir: string): Promise<string[]> {
   const { readdir } = await import("node:fs/promises");

@@ -24,7 +24,8 @@ You find what is missing or weak. You do not fix it yourself. The checks are don
 1. `build_graph` so `kb/graph.json` and `kb/stats.json` are fresh.
 2. `run_audit`. It compares the graph and the focus-answer drafts (`notes/focus-<n>.md`) with:
    - the brief's focus questions (each needs an answer draft backed by the right nodes),
-   - the specs of the requested reports (which node types each section needs, and how many),
+   - the templates of the requested reports (`reports/templates/<type>.md`: which node types each
+     section needs, and how many),
    - `validate_graph` (broken links, features without evidence, and the other rules).
      It writes `logs/audits/audit-<N>.md` with numbered gaps. Severity:
    - blocking: a requested report cannot be written honestly without it.
