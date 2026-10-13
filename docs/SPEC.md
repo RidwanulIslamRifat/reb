@@ -1,7 +1,7 @@
-# REB specification (v1)
+# reb specification (v1)
 
 ## 1. Purpose
-REB helps one analyst produce a complete, evidence-backed analysis of any SaaS product:
+reb helps one analyst produce a complete, evidence-backed analysis of any SaaS product:
 a linked knowledge graph of the product and business, plus requested reports
 (business analysis, feature report, market analysis, build-it assessment).
 It is to SaaS analysis what REA (github.com/morluto/rea) is to reverse engineering:
@@ -12,7 +12,7 @@ one install, an MCP server for AI agents, a CLI, a handbook skill, evidence reco
 2. Evidence first: every finding is an evidence record with source, label and limitations.
    Labels: observed (seen in the user's own session), documented (stated publicly),
    inferred (reasoned guess), unknown (not confirmed).
-3. Normal use only: REB never logs in, never calls a product's private API, never replays
+3. Normal use only: reb never logs in, never calls a product's private API, never replays
    or modifies requests, never scrapes or bulk-exports, never automates clicks in the product.
    The human does all hands-on use.
 4. Everything inspectable: plain files on disk, append-only logs, versioned plans.
@@ -20,11 +20,11 @@ one install, an MCP server for AI agents, a CLI, a handbook skill, evidence reco
 6. Same behaviour from CLI and MCP: both call the same workflows.
 
 ## 3. Usage
-- Install: `npx REB setup` detects supported AI agents (Claude Code, Cursor, Codex, Gemini CLI),
+- Install: `npx reb setup` detects supported AI agents (Claude Code, Cursor, Codex, Gemini CLI),
   shows the changes it will make, asks for approval, registers the MCP server, installs the handbook,
   and backs up any config file it edits. Re-running it is safe.
 - Daily: the user tells their agent "Analyse <domain>; reports: <list>". The handbook drives the rest.
-- Terminal (optional): `REB new|plan|kb|evidence|audit|report|dashboard|doctor|update`.
+- Terminal (optional): `reb new|plan|kb|evidence|audit|report|dashboard|doctor|update`.
 
 ## 4. Architecture (layers; dependencies point inward only)
 - domain/: pure types and rules (zod schemas): plan, task, evidence, node, link, report spec. No I/O.
@@ -33,12 +33,12 @@ one install, an MCP server for AI agents, a CLI, a handbook skill, evidence reco
 - workflows/: shared use cases: create run, plan, gate, audit, re-plan, record evidence, upsert node,
   build graph, render report.
 - adapters/cli and adapters/mcp: thin layers that call workflows. No business logic here.
-- dashboard/: local web app (read-only view of run folders) served by `REB dashboard`.
+- dashboard/: local web app (read-only view of run folders) served by `reb dashboard`.
 - handbook/: the skill files installed into agents.
 
 ## 5. Run folder (one per analysed product)
 ~~~text
-~/REB/runs/<slug>-<YYYY-MM-DD>/
+~/reb/runs/<slug>-<YYYY-MM-DD>/
   brief.md                    product, url, category, reports, focus questions, plan tier, deadline
   plan/plan.json              current plan;  plan/history/plan-v<N>.json  every earlier version
   kb/nodes/<id>.md            one file per node;  kb/graph.json, kb/stats.json  generated
@@ -115,7 +115,7 @@ Output: render_report (markdown and docx), open_dashboard.
 Logging: log_role_work. Every tool call is also written to logs/events.jsonl automatically.
 Web search is done with the host agent's own search tool; results are recorded via record_source.
 
-## 10. Dashboard (`REB dashboard`, localhost only)
+## 10. Dashboard (`reb dashboard`, localhost only)
 Pages: runs list; plan board (tasks by status) with version history and diff; knowledge graph
 (zoom, drag, filter by type and label, search, click a node to see its card and evidence,
 highlight path between two nodes); evidence ledger table; logs timeline; reports viewer.
@@ -135,7 +135,7 @@ update: updates the package and refreshes registrations.
 TypeScript on Node.js 22+, ES modules. @modelcontextprotocol/sdk for MCP. zod for schemas.
 A small CLI library (commander or similar). Dashboard: Vite + React + Cytoscape.js, built into
 the package. docx export with the docx npm package. Tests: Vitest. Lint/format: ESLint + Prettier.
-GitHub Actions runs tests on every pull request. Published to npm as "REB". License MIT.
+GitHub Actions runs tests on every pull request. Published to npm as "reb"; if that name is taken, use a scoped name such as "@<owner>/reb" and keep the command name "reb". License MIT.
 
 ## 14. Quality rules
 - Expected failures return clear errors that say what went wrong and how to fix it.
