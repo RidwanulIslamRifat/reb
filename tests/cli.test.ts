@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildProgram, PLANNED_COMMANDS } from "../src/adapters/cli/program.js";
 import { RebError } from "../src/domain/errors.js";
-import { samplePlan, tempDir } from "./helpers.js";
+import { samplePlan, sampleRun, tempDir } from "./helpers.js";
 
 // Runs the CLI in-process with REB_HOME set to `home` and returns what it printed.
 async function cli(home: string, ...args: string[]): Promise<string> {
@@ -199,7 +199,9 @@ describe("research tools from the CLI", () => {
     const home = join(await tempDir(), "runs");
     const out = await cli(home, "evidence", "har", "tests/fixtures/har/sample.har");
     expect(out).toContain("15 requests to app.acme-notes.example");
-    expect(out).toMatch(/\s6 {2}api +GET app\.acme-notes\.example\/api\/v1\/notifications\?/);
+    expect(out).toMatch(
+      /\s6 {2}api +\d+\/\d+ +GET app\.acme-notes\.example\/api\/v1\/notifications\?/,
+    );
     expect(out).toContain("polling every 10 s");
     expect(out).toContain("GET app.acme-notes.example/api/v1/users/:id");
     expect(out).toContain("[REDACTED]");
@@ -276,5 +278,71 @@ describe("planner and auditor from the CLI", () => {
     await writeFile(file, JSON.stringify([{ op: "drop", gap: 1, task: "tech" }]));
     const out = await cli(home, "plan", "replan", "--changes", file, "--audit", "1");
     expect(out).toContain("- dropped task tech (audit 1 item 1");
+  });
+});
+
+describe("hands-on tools from the CLI", () => {
+  it("evidence import --dry-run lists what would be imported and imports nothing", async () => {
+    const run = await sampleRun();
+    const out = await cli("unused", "evidence", "import", "session-01", "--run", run, "--dry-run");
+    expect(out).toContain("Would import 4 items: 1 screenshot, 2 notes, 1 HAR.");
+    expect(out).toMatch(
+      /har +observed +evidence\/inbox\/session-01\/network\.har -> product-acme-notes/,
+    );
+    expect(out).toContain("Dry run: nothing was imported.");
+    expect(out).not.toContain("FAKE-SECRET");
+    expect(await readdir(join(run, "evidence"))).not.toContain("ledger.jsonl");
+  });
+
+  it("evidence import, test-plan and dataset work on the sample run", async () => {
+    const run = await sampleRun();
+    const imported = await cli(
+      "unused",
+      "evidence",
+      "import",
+      "session-01",
+      "--run",
+      run,
+      "--delete-har",
+    );
+    expect(imported).toContain("Imported 4 items");
+    expect(imported).toContain("Deleted raw HAR evidence/inbox/session-01/network.har.");
+    const plan = await cli("unused", "evidence", "test-plan", "--run", run);
+    expect(plan).toContain("Test plan for session-02");
+    expect(plan).toContain("Journey: Export notes");
+    const data = await cli("unused", "evidence", "dataset", "--run", run, "--rows", "2");
+    expect(data).toContain("notes/test-data/users.csv  (2 rows)");
+    expect(data).toContain("All values are fictional.");
+  });
+
+  it("evidence rea stores a saved passive REA result and refuses other tools", async () => {
+    const run = await sampleRun();
+    const file = join(run, "rea-result.json");
+    await writeFile(
+      file,
+      JSON.stringify({ scripts: ["https://js.stripe.example/v3?key=FAKE-SECRET-K"] }),
+    );
+    const args = [
+      "--run",
+      run,
+      "--subject",
+      "feature-export",
+      "--source",
+      "https://acme-notes.example/",
+    ];
+    const ok = await cli(
+      "unused",
+      "evidence",
+      "rea",
+      "analyze_web_bundle",
+      file,
+      ...args,
+      "--finding",
+      "Uses Stripe.",
+    );
+    expect(ok).toMatch(/Recorded E-001 about feature-export \(inferred\)/);
+    await expect(
+      cli("unused", "evidence", "rea", "browser_navigate", file, ...args, "--finding", "x"),
+    ).rejects.toThrow("never used");
   });
 });

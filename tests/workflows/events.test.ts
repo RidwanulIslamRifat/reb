@@ -84,6 +84,12 @@ describe("logs/events.jsonl", () => {
 });
 
 describe("redact", () => {
+  it("removes secret-looking query values from addresses", () => {
+    expect(redact("https://x.example/a?page=2&session_id=abc123&auth_code=xyz789&q=notes")).toBe(
+      "https://x.example/a?page=2&session_id=[REDACTED]&auth_code=[REDACTED]&q=notes",
+    );
+  });
+
   it("removes Authorization, Cookie, Set-Cookie, tokens and API keys", () => {
     const input = {
       headers: [

@@ -12,11 +12,16 @@ const SECRET_TEXT: Array<[RegExp, string]> = [
     /\b((?:access_|refresh_|id_)?token|api[-_]?key|apikey|secret|password|sig|signature)=[^&\s"']+/gi,
     `$1=${REDACTED}`,
   ],
+  // Secret-looking query values in addresses, for example ?session=... or &auth_code=...
+  [
+    /([?&][\w-]*(?:token|key|secret|password|passwd|auth|session|sig|signature|code|credential)[\w-]*)=[^&\s"'#]+/gi,
+    `$1=${REDACTED}`,
+  ],
   [/\bsk-[A-Za-z0-9_-]{8,}/g, REDACTED],
   [/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, REDACTED],
 ];
 
-function redactText(text: string): string {
+export function redactText(text: string): string {
   return SECRET_TEXT.reduce(
     (out, [pattern, replacement]) => out.replace(pattern, replacement),
     text,

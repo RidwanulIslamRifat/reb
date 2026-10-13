@@ -1,6 +1,7 @@
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import { RoleSchema } from "./plan.js";
+import { REA_PASSIVE_TOOLS } from "./rea.js";
 
 /** The skill's folder name in each agent, and the `name` in SKILL.md front matter. */
 export const SKILL_NAME = "reb";
@@ -10,6 +11,11 @@ export const RoleFileSchema = z.object({
   role: RoleSchema,
   description: z.string().min(1),
   tools: z.array(z.string().min(1)).min(1),
+  /**
+   * Tools of the optional REA bridge the role may also use, only when the user has REA installed.
+   * Only REA's passive tools can be listed here.
+   */
+  optional_tools: z.array(z.enum(REA_PASSIVE_TOOLS)).default([]),
 });
 export type RoleFile = z.infer<typeof RoleFileSchema> & { body: string };
 

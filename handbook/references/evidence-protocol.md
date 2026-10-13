@@ -51,3 +51,15 @@ Use the id returned by the tool when you link a node to evidence (`link_nodes` w
 
 Passwords, tokens, cookies, API keys, personal data of real people, or anything from a logged-in
 session that the user did not choose to share. If a note or screenshot contains these, leave them out.
+
+## The user's own session (inbox)
+
+The user saves captures in `evidence/inbox/session-NN/`; `import_inbox` turns them into observed records.
+
+- Notes (`.md`, `.txt`): one finding per bullet, starting with the node: `- [feature-export] Only CSV is offered.`
+  A second `[node-id]` in the bullet becomes a link.
+- Screenshots: name them `<node-id>--<n>.png` (for example `feature-export--1.png`), or mention the file name
+  in a note bullet that names the node.
+- HAR files: reb summarises them and strips cookies, auth headers, tokens, bodies and query secrets before
+  storing anything. The raw file stays in the inbox until the user deletes it (`delete_raw_har`).
+- Importing the same session again only adds new items.

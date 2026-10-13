@@ -7,7 +7,7 @@ import { createMcpServer, TOOLS } from "../../src/adapters/mcp/server.js";
 import { createContext } from "../../src/workflows/context.js";
 import { createRun } from "../../src/workflows/runs.js";
 import { savePlan } from "../../src/workflows/plan.js";
-import { samplePlan, tempDir } from "../helpers.js";
+import { samplePlan, sampleRun, tempDir } from "../helpers.js";
 
 /** Every MCP tool name in SPEC 9. Tools from later milestones are not registered yet. */
 const SPEC_TOOLS = [
@@ -41,15 +41,10 @@ const SPEC_TOOLS = [
   "open_dashboard",
   "log_role_work",
 ];
-const LATER = [
-  "make_test_plan",
-  "make_test_dataset",
-  "import_inbox",
-  "render_report",
-  "open_dashboard",
-];
+const LATER = ["render_report", "open_dashboard"];
 /** Not in SPEC 9: lets the planner save a whole hand-written plan (create_plan covers the usual case). */
-const EXTRA = ["save_plan"];
+// save_plan (M4) and the optional REA bridge (M7) are not in SPEC 9.
+const EXTRA = ["save_plan", "record_rea_result"];
 
 async function connect(home: string) {
   const server = await createMcpServer("0.0.0-test", { REB_HOME: home });
@@ -213,5 +208,35 @@ describe("MCP server", () => {
     const refused = await call("read_public_page", { run, url: "http://localhost:3000/" });
     expect(refused.isError).toBe(true);
     expect(refused.text).toMatch(/^Problem: localhost is a local or private address/);
+  });
+
+  it("offers the hands-on tools and the REA bridge over the same workflows", async () => {
+    const { call } = await connect(join(await tempDir(), "runs"));
+    const run = await sampleRun();
+    const plan = await call("make_test_plan", { run });
+    expect(plan.data.session).toBe("session-02");
+    const data = await call("make_test_dataset", { run, rows: 2, format: "json" });
+    expect(data.data.files).toContain("notes/test-data/users.json");
+    const dry = await call("import_inbox", { run, session: "session-01", dry_run: true });
+    expect(dry.data.summary).toBe("Would import 4 items: 1 screenshot, 2 notes, 1 HAR.");
+    const refused = await call("record_rea_result", {
+      run,
+      tool: "browser_click",
+      subject: "feature-export",
+      finding: "x",
+      source: "https://acme-notes.example/",
+      result: {},
+    });
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toContain("never used (SPEC 2.3)");
+    const next = await call("record_rea_result", {
+      run,
+      tool: "inspect_web_page",
+      subject: "feature-export",
+      finding: "The export page names CSV.",
+      source: "https://acme-notes.example/export",
+      result: { text: "CSV" },
+    });
+    expect(next.data.record.confidence).toBe("documented");
   });
 });

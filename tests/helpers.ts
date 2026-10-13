@@ -135,3 +135,29 @@ export async function addNodes(
   }
   return ids;
 }
+
+/** A copy of tests/fixtures/run-sample (a run with a graph and an inbox session-01) in a temp folder. */
+export async function sampleRun(): Promise<string> {
+  const dir = join(await tempDir(), "run-sample");
+  const fixture = join("tests", "fixtures", "run-sample");
+  // Leave out files an owner check may have written into the fixture (they are ignored by git).
+  const written = [
+    "logs",
+    "notes",
+    "evidence/ledger.jsonl",
+    "evidence/imports",
+    "evidence/rea",
+  ].map((p) => join(fixture, p));
+  await cp(fixture, dir, { recursive: true, filter: (src) => !written.includes(src) });
+  return dir;
+}
+
+/** Every file under a folder, as paths relative to it. */
+export async function filesUnder(dir: string): Promise<string[]> {
+  const { readdir } = await import("node:fs/promises");
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((e) => e.isFile())
+    .map((e) => join(e.parentPath, e.name).slice(dir.length + 1))
+    .sort();
+}

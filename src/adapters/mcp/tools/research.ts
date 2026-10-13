@@ -39,7 +39,7 @@ export const researchTools = [
   tool({
     name: "summarize_har",
     description:
-      "Summarise a HAR file the human saved from their own browser session: endpoint patterns with counts, " +
+      "Summarise a HAR file the human saved from their own browser session: endpoint patterns with counts, request timing, " +
       "polling and streaming. Cookies, auth headers, tokens, bodies and query values are stripped first. " +
       "Never replay or call any endpoint it lists.",
     input: {
