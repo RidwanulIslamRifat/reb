@@ -46,14 +46,14 @@ You need [Node.js](https://nodejs.org/) version 22.12 or newer (choose the "LTS"
 open a terminal and run:
 
 ```sh
-npx @rifat/reb setup
+npx @ridwanul/reb setup
 ```
 
 reb looks for the AI agents on your computer, shows exactly what it would change, and asks
 **"Apply these changes? [y/N]"**. Type `y` and press Enter. It backs up every file before changing
 it, and running it again is safe. Restart your AI agent afterwards.
 
-To check that all is well at any time: `npx @rifat/reb doctor` (every line should have a tick).
+To check that all is well at any time: `npx @ridwanul/reb doctor` (every line should have a tick).
 
 ## Your first analysis in 5 steps
 
@@ -71,7 +71,7 @@ To check that all is well at any time: `npx @rifat/reb doctor` (every line shoul
    the agent you are done. It turns them into _observed_ evidence.
 5. **Read the reports.** When the plan is finished, the agent tells you where the reports are. To
    look at everything in your browser, ask the agent to "open the dashboard", or run
-   `npx @rifat/reb dashboard`.
+   `npx @ridwanul/reb dashboard`.
 
 Want to see a finished analysis first? The [examples/](examples/) folder has a complete, made-up
 one, including its report.
@@ -140,7 +140,7 @@ Every claim points to its evidence and says how sure it is, so you can check any
 Treat _inferred_ claims as educated guesses.
 
 **How do I update reb?**
-Run `npx @rifat/reb update`. Your agents are set up to use the newest version automatically.
+Run `npx @ridwanul/reb update`. Your agents are set up to use the newest version automatically.
 
 **How do I remove reb?**
 Every file setup changed has a backup next to it, named `*.reb-backup-<date>`. Restore those, or
@@ -148,7 +148,7 @@ delete the `reb` entry from your agent's MCP settings. Your analyses in `~/reb/r
 keep or delete.
 
 **Something does not work. What now?**
-Run `npx @rifat/reb doctor`. Every cross comes with a "Fix:" line telling you what to do. If that
+Run `npx @ridwanul/reb doctor`. Every cross comes with a "Fix:" line telling you what to do. If that
 does not help, open an issue on [GitHub](https://github.com/RidwanulIslamRifat/reb/issues).
 
 ## More help

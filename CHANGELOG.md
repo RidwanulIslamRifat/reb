@@ -17,7 +17,7 @@ Nothing yet.
 
 ## [1.0.0] - 2026-10-13
 
-The first public release. Install with `npx @rifat/reb setup`.
+The first public release. Install with `npx @ridwanul/reb setup`.
 
 ### Added
 
