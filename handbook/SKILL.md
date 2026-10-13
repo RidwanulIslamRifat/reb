@@ -118,3 +118,9 @@ Each has a prompt file in `roles/<role>.md` with its allowed reb tools; `next_ta
 The run folder (default `~/reb/runs/<product>-<date>/`) holds `brief.md`, `plan/`, `kb/nodes/`,
 `evidence/ledger.jsonl`, `notes/`, `reports/` and `logs/`. Drafts go in `notes/<role>-<topic>.md`;
 reports in `reports/<type>.md`. Every reb tool call is logged in `logs/events.jsonl` automatically.
+
+## Showing the user their analysis
+
+When the user wants to see progress ("show me", "open the dashboard"), call `open_dashboard`.
+It opens a read-only page on their computer with the plan, the knowledge graph, the evidence,
+the activity log and the reports. If the browser did not open, give them the address it returns.

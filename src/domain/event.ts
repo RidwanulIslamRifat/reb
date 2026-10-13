@@ -43,3 +43,26 @@ export function formatDecision(d: Decision): string {
 export function formatRoleLogEntry(e: RoleLogEntry): string {
   return `## ${e.at}${e.task ? ` (task ${e.task})` : ""}\n\n${e.summary.trim()}\n\n`;
 }
+
+/** Reads logs/decisions.md back into decisions. Lines that do not match the format are skipped. */
+export function parseDecisions(text: string): Decision[] {
+  return text.split("\n").flatMap((line) => {
+    const m = /^- (\S+) \| plan v(\d+) \| (.+?) \| reason: (.*)$/.exec(line);
+    if (!m) return [];
+    return [{ at: m[1]!, plan_version: Number(m[2]), change: m[3]!, reason: m[4]! }];
+  });
+}
+
+/** Reads logs/roles/<role>.md back into entries (the format formatRoleLogEntry writes). */
+export function parseRoleLog(text: string, role: RoleLogEntry["role"]): RoleLogEntry[] {
+  const entries: RoleLogEntry[] = [];
+  for (const chunk of text.split(/^## /m).slice(1)) {
+    const newline = chunk.indexOf("\n");
+    const heading = newline === -1 ? chunk : chunk.slice(0, newline);
+    const m = /^(\S+)(?: \(task (.+)\))?\s*$/.exec(heading);
+    const summary = newline === -1 ? "" : chunk.slice(newline + 1).trim();
+    if (!m || !summary) continue;
+    entries.push({ at: m[1]!, role, ...(m[2] ? { task: m[2] } : {}), summary });
+  }
+  return entries;
+}

@@ -1,8 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createContext } from "../../workflows/context.js";
+import { createContext, type Context } from "../../workflows/context.js";
 import { getSkillBody } from "../../workflows/handbook.js";
 import { registerTools, type ToolDef } from "./tools/common.js";
+import { dashboardTools } from "./tools/dashboard.js";
 import { evidenceTools } from "./tools/evidence.js";
 import { graphTools } from "./tools/graph.js";
 import { handsOnTools } from "./tools/handsOn.js";
@@ -19,21 +20,29 @@ export const TOOLS: readonly ToolDef[] = [
   ...graphTools,
   ...researchTools,
   ...handsOnTools,
+  ...dashboardTools,
   ...logTools,
 ];
+
+/** What the MCP process can do beyond reading and writing run folders. */
+export type McpExtras = Pick<Context, "dashboard" | "openBrowser">;
 
 /**
  * The reb MCP server: a thin adapter over the same workflows the CLI uses (SPEC 2.6).
  * Every call is logged to the run's logs/events.jsonl with via "mcp".
  */
-export async function createMcpServer(version: string, env = process.env): Promise<McpServer> {
+export async function createMcpServer(
+  version: string,
+  env = process.env,
+  extras: McpExtras = {},
+): Promise<McpServer> {
   const server = new McpServer({ name: "reb", version }, { instructions: await getSkillBody() });
-  registerTools(server, createContext("mcp", env), TOOLS);
+  registerTools(server, { ...createContext("mcp", env), ...extras }, TOOLS);
   return server;
 }
 
 /** `reb mcp`: serve over stdio until the agent closes the connection. */
-export async function startMcpServer(version: string): Promise<void> {
-  const server = await createMcpServer(version);
+export async function startMcpServer(version: string, extras: McpExtras = {}): Promise<void> {
+  const server = await createMcpServer(version, process.env, extras);
   await server.connect(new StdioServerTransport());
 }

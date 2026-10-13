@@ -1,0 +1,127 @@
+{
+  "number": 1,
+  "at": "2026-10-01T10:24:48.000Z",
+  "plan_version": 10,
+  "rounds_before": 0,
+  "gaps": [
+    {
+      "n": 1,
+      "severity": "blocking",
+      "kind": "focus_question",
+      "summary": "Focus question 1 has no answer yet",
+      "detail": "\"Which export formats are offered?\" needs an answer draft in notes/focus-1.md that cites nodes and evidence.",
+      "suggested_task": {
+        "id": "a1-focus-1",
+        "title": "Answer focus question 1: Which export formats are offered?",
+        "role": "business_analyst",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "notes/focus-1.md"
+        ],
+        "done_when": [
+          "file notes/focus-1.md exists",
+          "the answer cites node ids or E-/S- ids for every claim"
+        ]
+      }
+    },
+    {
+      "n": 2,
+      "severity": "blocking",
+      "kind": "focus_question",
+      "summary": "Focus question 2 has no answer yet",
+      "detail": "\"What does the Business plan add?\" needs an answer draft in notes/focus-2.md that cites nodes and evidence.",
+      "suggested_task": {
+        "id": "a1-focus-2",
+        "title": "Answer focus question 2: What does the Business plan add?",
+        "role": "desk_researcher",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "notes/focus-2.md"
+        ],
+        "done_when": [
+          "at least 1 pricing_tier node",
+          "file notes/focus-2.md exists",
+          "the answer cites node ids or E-/S- ids for every claim"
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "severity": "major",
+      "kind": "report_need",
+      "summary": "Only 4 of 5 feature nodes the reports need",
+      "detail": "Needed by feature: Features.",
+      "suggested_task": {
+        "id": "a1-feature",
+        "title": "Find feature nodes for feature: Features",
+        "role": "feature_analyst",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "kb/nodes/"
+        ],
+        "done_when": [
+          "at least 5 feature nodes",
+          "every feature node has evidence"
+        ]
+      }
+    },
+    {
+      "n": 4,
+      "severity": "major",
+      "kind": "evidence",
+      "summary": "1 integration node has no evidence",
+      "detail": "integration-slack; needed with evidence by feature: Integrations.",
+      "suggested_task": {
+        "id": "a1-evidence-integration",
+        "title": "Back every integration node with evidence",
+        "role": "desk_researcher",
+        "inputs": [
+          "kb/nodes/integration-slack.md"
+        ],
+        "outputs": [
+          "evidence/ledger.jsonl"
+        ],
+        "done_when": [
+          "every integration node has evidence"
+        ]
+      }
+    },
+    {
+      "n": 5,
+      "severity": "major",
+      "kind": "report_need",
+      "summary": "Only 1 of 2 competitor nodes the reports need",
+      "detail": "Needed by business: Competition.",
+      "suggested_task": {
+        "id": "a1-competitor",
+        "title": "Find competitor nodes for business: Competition",
+        "role": "market_researcher",
+        "inputs": [
+          "brief.md",
+          "kb/nodes/"
+        ],
+        "outputs": [
+          "kb/nodes/"
+        ],
+        "done_when": [
+          "at least 2 competitor nodes",
+          "every competitor node has evidence"
+        ]
+      }
+    }
+  ],
+  "stop": false,
+  "stop_reason": "2 blocking gaps; re-plan round 1 of 3",
+  "replanned_in": 11,
+  "replan_changed": true,
+  "questions": []
+}

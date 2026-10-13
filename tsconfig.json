@@ -14,5 +14,5 @@
     "noEmit": true
   },
   "include": ["src", "tests", "vitest.config.ts"],
-  "exclude": ["tests/fixtures"]
+  "exclude": ["tests/fixtures", "src/dashboard/app"]
 }

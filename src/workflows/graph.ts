@@ -224,30 +224,36 @@ function withCorrections(records: LedgerRecord[], ids: (r: LedgerRecord) => bool
   return records.filter(ids).map((r) => ({ ...r, corrected_by: corrected.get(r.id) }));
 }
 
+/** One node with its links both ways and the evidence about it. Reads only; nothing is logged. */
+export async function describeNode(paths: RunPaths, id: string) {
+  const node = await requireNode(paths, id);
+  const graph = await loadGraph(paths);
+  const byId = new Map(graph.nodes.map((n) => [n.meta.id, n.meta]));
+  const outgoing = linksOf(node.meta).map((l) => ({
+    ...l,
+    name: byId.get(l.to)?.name,
+    exists: byId.has(l.to) || graph.records.some((r) => r.id === l.to),
+  }));
+  const incoming = graph.nodes.flatMap((n) =>
+    linksOf(n.meta)
+      .filter((l) => l.to === node.meta.id)
+      .map((l) => ({ from: n.meta.id, type: l.type, name: n.meta.name })),
+  );
+  const linked = new Set(node.meta.links.evidence ?? []);
+  const evidence = withCorrections(
+    graph.records,
+    (r) => linked.has(r.id) || (r.kind === "evidence" && r.subject === node.meta.id),
+  );
+  return { node, outgoing, incoming, evidence };
+}
+
 /** get_node: one node with its links both ways and the evidence about it. */
 export async function getNode(ctx: Context, input: { run?: string; id: string }) {
   const run = await resolveRun(ctx, input.run);
-  return logged(ctx, "get_node", run, { id: input.id }, async () => {
-    const node = await requireNode(run.paths, input.id);
-    const graph = await loadGraph(run.paths);
-    const byId = new Map(graph.nodes.map((n) => [n.meta.id, n.meta]));
-    const outgoing = linksOf(node.meta).map((l) => ({
-      ...l,
-      name: byId.get(l.to)?.name,
-      exists: byId.has(l.to) || graph.records.some((r) => r.id === l.to),
-    }));
-    const incoming = graph.nodes.flatMap((n) =>
-      linksOf(n.meta)
-        .filter((l) => l.to === node.meta.id)
-        .map((l) => ({ from: n.meta.id, type: l.type, name: n.meta.name })),
-    );
-    const linked = new Set(node.meta.links.evidence ?? []);
-    const evidence = withCorrections(
-      graph.records,
-      (r) => linked.has(r.id) || (r.kind === "evidence" && r.subject === node.meta.id),
-    );
-    return { ...run, node, outgoing, incoming, evidence };
-  });
+  return logged(ctx, "get_node", run, { id: input.id }, async () => ({
+    ...run,
+    ...(await describeNode(run.paths, input.id)),
+  }));
 }
 
 /** query_graph: nodes matching every filter given (type, label, text in id or name, linked to a node). */

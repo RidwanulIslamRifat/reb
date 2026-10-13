@@ -144,6 +144,6 @@ export function registerSetup(program: Command, io: CliIo): void {
     .action(async () => {
       const { startMcpServer } = await import("../../mcp/server.js");
       const { VERSION } = await import("../program.js");
-      await startMcpServer(VERSION);
+      await startMcpServer(VERSION, { dashboard: io.dashboard, openBrowser: io.openBrowser });
     });
 }
