@@ -145,3 +145,16 @@ describe("task status", () => {
     expect((await getPlan(ctx, { run: slug })).plan).toBeNull();
   });
 });
+
+describe("plan lock", () => {
+  it("two saves at the same moment both land, one version apart", async () => {
+    const { ctx, run, slug } = await setup();
+    await Promise.all(
+      ["a", "b", "c"].map((p) =>
+        savePlan(ctx, { run: slug, plan: { ...samplePlan, pipeline: p }, reason: `save ${p}` }),
+      ),
+    );
+    expect(JSON.parse(await readFile(run.paths.plan, "utf8")).version).toBe(3);
+    expect((await readdir(run.paths.history)).sort()).toEqual(["plan-v1.json", "plan-v2.json"]);
+  });
+});

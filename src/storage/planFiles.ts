@@ -1,5 +1,6 @@
 import { readTextIfExists } from "./jsonl.js";
 import { writeFileAtomic, writeFileNew } from "./atomicWrite.js";
+import { withFileLock } from "./lock.js";
 import { RebError } from "../domain/errors.js";
 import type { RunPaths } from "./runFolder.js";
 
@@ -30,4 +31,9 @@ export async function writePlanVersion(
     }
   }
   await writeFileAtomic(paths.plan, nextText);
+}
+
+/** Runs a read-change-write of the plan under the plan lock, so two saves never race. */
+export async function withPlanLock<T>(paths: RunPaths, work: () => Promise<T>): Promise<T> {
+  return withFileLock(paths.planLock, work);
 }

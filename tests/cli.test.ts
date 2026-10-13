@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildProgram, PLANNED_COMMANDS } from "../src/adapters/cli/program.js";
@@ -34,15 +34,13 @@ describe("reb CLI", () => {
   it("lists the real commands and every planned one as not yet available in --help", async () => {
     const help = await run("--help");
     expect(help).toContain("Usage: reb");
-    for (const name of ["new", "list", "plan", "log"]) {
+    for (const name of ["new", "list", "plan", "log", "evidence", "kb"]) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b`, "m"));
     }
     for (const { name } of PLANNED_COMMANDS) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b.*\\(not yet available\\)`, "m"));
     }
     expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual([
-      "kb",
-      "evidence",
       "audit",
       "report",
       "dashboard",
@@ -93,5 +91,101 @@ describe("runs, plans and logs from the CLI", () => {
       (e: unknown) => e,
     )) as RebError;
     expect(error.format()).toMatch(/^Problem: .*\nFix: /);
+  });
+});
+
+describe("evidence and knowledge graph from the CLI", () => {
+  it("evidence source/add/list and kb add/link/show/query/stats/validate work together", async () => {
+    const home = join(await tempDir(), "runs");
+    await cli(home, "new", "example.com");
+    const page = join(home, "..", "pricing.html");
+    await writeFile(page, "<h1>Pricing</h1>");
+
+    expect(
+      await cli(
+        home,
+        "kb",
+        "add",
+        "feature",
+        "Single",
+        "sign-on",
+        "--label",
+        "documented",
+        "--id",
+        "feature-sso",
+      ),
+    ).toContain("Created node feature-sso");
+    await cli(home, "kb", "add", "pricing_tier", "Pro", "--label", "documented");
+    await cli(home, "kb", "add", "persona", "Admin", "--label", "inferred");
+    expect(
+      await cli(
+        home,
+        "evidence",
+        "source",
+        "https://example.com/pricing",
+        "--title",
+        "Pricing",
+        "--published",
+        "2026-09-01",
+        "--file",
+        page,
+      ),
+    ).toContain("Recorded S-001: Pricing");
+    const add = (...extra: string[]) =>
+      cli(
+        home,
+        "evidence",
+        "add",
+        "SSO is on the Pro plan",
+        "--subject",
+        "feature-sso",
+        "--role",
+        "desk_researcher",
+        "--source",
+        "S-001",
+        "--confidence",
+        "documented",
+        "--operation",
+        "read_public_page",
+        ...extra,
+      );
+    expect(await add("--limitation", "Pricing pages change often")).toContain(
+      "Recorded E-001 about feature-sso.",
+    );
+    expect(await add("--corrects", "E-001")).toContain(
+      "Recorded E-002 about feature-sso (corrects E-001).",
+    );
+    expect(await cli(home, "kb", "link", "feature-sso", "gated_by", "pricing_tier-pro")).toContain(
+      "Linked feature-sso gated_by pricing_tier-pro.",
+    );
+    await expect(cli(home, "kb", "link", "persona-admin", "makes", "feature-sso")).rejects.toThrow(
+      RebError,
+    );
+
+    const list = await cli(home, "evidence", "list");
+    expect(list).toContain("S-001  Pricing  https://example.com/pricing  (published 2026-09-01)");
+    expect(list).toContain(
+      'E-001  documented  feature-sso  "SSO is on the Pro plan"  (source S-001)  [corrected by E-002]',
+    );
+
+    const show = await cli(home, "kb", "show", "feature-sso");
+    expect(show).toContain("feature-sso  Single sign-on  (feature, documented)");
+    expect(show).toContain("gated_by pricing_tier-pro  Pro");
+    expect(await cli(home, "kb", "query", "--type", "persona")).toContain(
+      "persona-admin  Admin  (persona, inferred)",
+    );
+    const stats = await cli(home, "kb", "stats");
+    expect(stats).toContain("Nodes: 3 (feature 1, persona 1, pricing_tier 1)");
+    expect(stats).toContain("Features with evidence: 1 of 1");
+    expect(await cli(home, "kb", "validate")).toContain("No problems found.");
+  });
+
+  it("validates the kb-sample fixture by folder path with a numbered list and a count", async () => {
+    const copy = join(await tempDir(), "kb-sample");
+    await cp("tests/fixtures/kb-sample", copy, { recursive: true });
+    const output = await cli("unused", "kb", "validate", "--run", copy);
+    expect(output).toMatch(/^1\. \[broken_link\] /);
+    expect(output).toContain("feature-export has no evidence.");
+    expect(output.trim().split("\n").at(-1)).toBe("6 problems found.");
   });
 });

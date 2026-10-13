@@ -1,3 +1,4 @@
+import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
 /** Report types reb can produce (SPEC 1, 11). */
@@ -28,8 +29,8 @@ const BRIEF_KEYS = Object.keys(BriefSchema.shape) as (keyof Brief)[];
 
 /**
  * brief.md = front matter + guidance for the analyst.
- * Each front-matter value is written as JSON, which is also valid YAML, so later
- * milestones can read it with a YAML library without changing the format.
+ * Each front-matter value is written as JSON, which is also valid YAML; it is read back as YAML,
+ * so hand edits without quotes work too.
  */
 export function renderBrief(brief: Brief, notes = DEFAULT_BRIEF_NOTES): string {
   const lines = BRIEF_KEYS.map((key) => `${key}: ${JSON.stringify(brief[key])}`);
@@ -57,19 +58,21 @@ Write anything else you want the analysis to know below this line.
 export function parseBrief(text: string): { brief: Brief; notes: string } {
   const match = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text.replace(/\r\n/g, "\n"));
   if (!match) throw new Error("the --- lines around the values at the top are missing");
-  const raw: Record<string, unknown> = {};
-  for (const line of match[1]!.split("\n")) {
-    if (!line.trim()) continue;
-    const colon = line.indexOf(":");
-    if (colon < 1) throw new Error(`line "${line}" is not "name: value"`);
-    const key = line.slice(0, colon).trim();
-    const value = line.slice(colon + 1).trim();
-    try {
-      raw[key] = value === "" ? undefined : JSON.parse(value);
-    } catch {
-      throw new Error(`the value of "${key}" needs quotes, for example ${key}: "text"`);
-    }
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(match[1]!);
+  } catch (error) {
+    throw new Error(`the values are not valid YAML (${(error as Error).message.split("\n")[0]})`, {
+      cause: error,
+    });
   }
+  if (parsed !== null && (typeof parsed !== "object" || Array.isArray(parsed))) {
+    throw new Error('the values must be "name: value" lines');
+  }
+  // An empty value ("deadline:") means "not set", so the default applies.
+  const raw = Object.fromEntries(
+    Object.entries((parsed ?? {}) as Record<string, unknown>).map(([k, v]) => [k, v ?? undefined]),
+  );
   const result = BriefSchema.safeParse(raw);
   if (!result.success) {
     throw new Error(result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));

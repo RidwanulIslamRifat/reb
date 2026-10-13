@@ -16,12 +16,22 @@ describe("brief.md format", () => {
     expect(parseBrief(text)).toEqual({ brief, notes: "\nMy own notes.\n" });
   });
 
-  it("explains a value that lost its quotes", () => {
-    const text = renderBrief(BriefSchema.parse({ product: "a.com", url: "https://a.com" })).replace(
-      'plan_tier: ""',
-      "plan_tier: Free trial",
+  it("reads hand-written YAML values without quotes", () => {
+    const text = renderBrief(BriefSchema.parse({ product: "a.com", url: "https://a.com" }))
+      .replace('plan_tier: ""', "plan_tier: Free trial")
+      .replace('deadline: ""', "deadline: 2026-11-01");
+    expect(parseBrief(text).brief).toMatchObject({
+      plan_tier: "Free trial",
+      deadline: "2026-11-01",
+    });
+  });
+
+  it("treats an empty value as not set and explains broken YAML", () => {
+    const base = renderBrief(BriefSchema.parse({ product: "a.com", url: "https://a.com" }));
+    expect(parseBrief(base.replace('deadline: ""', "deadline:")).brief.deadline).toBe("");
+    expect(() => parseBrief(base.replace('plan_tier: ""', 'plan_tier: "open'))).toThrow(
+      /not valid YAML/,
     );
-    expect(() => parseBrief(text)).toThrow(/plan_tier.*needs quotes/);
   });
 
   it("rejects an unknown report type", () => {
