@@ -1,5 +1,5 @@
 /** Published package name (ROADMAP decision 1). */
-export const PACKAGE_NAME = "@rifat/reb";
+export const PACKAGE_NAME = "@ridwanul/reb";
 
 /** Name of the MCP server entry written into each agent's config. */
 export const SERVER_NAME = "reb";
@@ -12,7 +12,7 @@ export interface ServerCommand {
 
 /**
  * How agents start reb:
- * - npx: `npx -y @rifat/reb@latest mcp`, always the newest release (ROADMAP decisions 2 and 18).
+ * - npx: `npx -y @ridwanul/reb@latest mcp`, always the newest release (ROADMAP decisions 2 and 18).
  * - local: this exact copy, `<node> <path to dist/cli.js> mcp`. Used when reb runs from a folder
  *   (for example a git checkout), so it works before reb is on npm.
  */

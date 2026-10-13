@@ -7,7 +7,7 @@ async function requireFile(relative: string): Promise<string> {
   if (text === null) {
     throw new RebError(
       `The handbook file handbook/${relative} is missing from this copy of reb.`,
-      "Reinstall reb (npx @rifat/reb setup), or restore the file from the reb repository.",
+      "Reinstall reb (npx @ridwanul/reb setup), or restore the file from the reb repository.",
     );
   }
   return text;

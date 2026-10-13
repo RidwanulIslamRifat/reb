@@ -39,8 +39,8 @@ reb never uses the product for you. When the plan needs someone to use it:
 ## Terminal commands (optional)
 
 You never have to use these; your agent calls the same functions for you. They are handy for
-checking things yourself. If reb is installed through npx, put `npx @rifat/reb` in front instead of
-`reb`, for example `npx @rifat/reb list`.
+checking things yourself. If reb is installed through npx, put `npx @ridwanul/reb` in front instead of
+`reb`, for example `npx @ridwanul/reb list`.
 
 Commands that work on one analysis use the most recently changed one, or the one you name with
 `--run <name>`.

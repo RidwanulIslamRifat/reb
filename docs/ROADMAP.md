@@ -521,9 +521,8 @@ How the owner checks it
 Goal: anyone can install reb with one command and use it end to end.
 
 Deliverables
-- [~] Published to npm as `@rifat/reb` (command still `reb`); `npx @rifat/reb setup` works from npm.
-      Everything is ready; the owner publishes by creating a GitHub release (docs/RELEASING.md). Blocked on
-      the npm name: the npm user `rifat` already exists (see follow-ups).
+- [~] Published to npm as `@ridwanul/reb` (command still `reb`); `npx @ridwanul/reb setup` works from npm.
+      Everything is ready; the owner publishes by creating a GitHub release (docs/RELEASING.md).
 - [x] End-to-end test: new run, plan, evidence, graph, audit, re-plan, report, using fixtures only.
 - [x] Safety review against SPEC 2: no login, no private API calls, no replay, no scraping, no click automation, no telemetry.
 - [x] README: install, daily use, terminal commands, where files live, privacy statement.
@@ -552,8 +551,8 @@ Notes from building it
   runs every check before `npm publish --provenance`.
 
 Follow-ups found in M10
-- [ ] Owner decision: the npm user `rifat` already exists (since 2017). If it is not the owner's, rename the
-      package (for example `@ridwanulislamrifat/reb`, free when checked) before the first release.
+- [x] The npm user `rifat` belongs to someone else, so the package is renamed to `@ridwanul/reb` (the owner's
+      npm username), changing decision 1. Fix branch M10-fix-package-name.
 - [ ] After the first release: switch the workflow to npm trusted publishing (no stored token).
 - [ ] After the first release: the M4 follow-ups about `reb update` and `--command npx` above.
 
@@ -570,7 +569,7 @@ How the owner checks it
 1. Before publishing: `npm ci`, `npm run build`, then
    `node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-13` shows the sample analysis.
 2. After the first release (docs/RELEASING.md), on any computer with Node.js 22:
-   `npx @rifat/reb --version` then `npx @rifat/reb doctor`
+   `npx @ridwanul/reb --version` then `npx @ridwanul/reb doctor`
 3. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"
    and confirm it starts by creating a run and a plan.
 
@@ -584,6 +583,8 @@ They are binding for the milestones they name unless the owner changes them.
 1. **npm package name (affects M1, M4, M10).** SPEC 13 allows a scoped name if "reb" is taken.
    *Decided:* the package is `@rifat/reb`; the command name stays `reb`. Install is `npx @rifat/reb setup`.
    Publishing needs an npm account or organisation called `rifat` (to check before M10).
+   *Changed in M10:* the npm user `rifat` is someone else's, so the package is `@ridwanul/reb` (the owner's npm
+   username). Install is `npx @ridwanul/reb setup`. Earlier mentions of `@rifat/reb` in this file are history.
 
 2. **Command that starts the MCP server (M4).** Not named in the spec. *Decided:* `reb mcp`, using stdio,
    registered in agents as `npx -y @rifat/reb mcp`.

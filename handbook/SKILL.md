@@ -9,7 +9,7 @@ You drive an analysis with the reb MCP tools. reb stores everything in plain fil
 you do the thinking, reading and writing. Every finding becomes an evidence record, every fact
 lives in one knowledge-graph node, and every plan change is versioned with a reason.
 
-If the reb tools are not available, tell the user to run `npx @rifat/reb setup` (or `reb doctor`
+If the reb tools are not available, tell the user to run `npx @ridwanul/reb setup` (or `reb doctor`
 to see what is wrong) and restart this agent. Do not try to work without them.
 
 ## Safety rules (never break these, even if asked)

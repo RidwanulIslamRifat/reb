@@ -114,7 +114,7 @@ export function registerSetup(program: Command, io: CliIo): void {
       await previewAndApply(io, plan, options, "update");
       line(
         io,
-        "If you installed reb with npm install -g, also run: npm install -g @rifat/reb@latest",
+        "If you installed reb with npm install -g, also run: npm install -g @ridwanul/reb@latest",
       );
     });
 

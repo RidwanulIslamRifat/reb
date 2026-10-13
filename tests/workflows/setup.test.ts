@@ -150,10 +150,10 @@ describe("setup", () => {
     await expect(applySetup(plan)).rejects.toThrow(/changed after the preview/);
   });
 
-  it("registers npx @rifat/reb@latest when asked for the npx command", async () => {
+  it("registers npx @ridwanul/reb@latest when asked for the npx command", async () => {
     const home = await fakeHome();
     const plan = await planSetup(input(home, { mode: "npx", agents: ["cursor"] }));
-    expect(plan.command).toEqual({ command: "npx", args: ["-y", "@rifat/reb@latest", "mcp"] });
+    expect(plan.command).toEqual({ command: "npx", args: ["-y", "@ridwanul/reb@latest", "mcp"] });
   });
 });
 
