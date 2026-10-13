@@ -12,12 +12,13 @@ with a recommended option.
 
 ## How to work
 1. One milestone or one fix per branch and pull request. Never push to main directly.
-2. Before coding, write a short plan in the pull request description: files to add or change, tests.
-3. Keep the architecture layers from SPEC.md section 4. Business logic never lives in the CLI or MCP layer.
-4. Write or update tests for every change. Run the full test suite and lint before saying you are done.
-5. Prefer small, readable code over clever code. Add comments only where intent is not obvious.
-6. Do not add a dependency without saying why in the pull request.
-7. Never commit secrets, API keys, personal data, real HAR files or run folders.
+2. Name milestone branches exactly M0, M1, M2 ... M10. Name fix branches M<n>-fix-<short-name>.
+3. Before coding, write a short plan in the pull request description: files to add or change, tests.
+4. Keep the architecture layers from SPEC.md section 4. Business logic never lives in the CLI or MCP layer.
+5. Write or update tests for every change. Run the full test suite and lint before saying you are done.
+6. Prefer small, readable code over clever code. Add comments only where intent is not obvious.
+7. Do not add a dependency without saying why in the pull request.
+8. Never commit secrets, API keys, personal data, real HAR files or run folders.
 
 ## Safety boundaries (from SPEC.md section 2)
 reb never logs in to products, never calls private APIs, never replays requests, never scrapes,
