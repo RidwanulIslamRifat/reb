@@ -164,12 +164,16 @@ export async function reportSampleRun(): Promise<string> {
   return dir;
 }
 
-/** Every file under a folder, as paths relative to it. */
+/** Every file under a folder, as paths relative to it, with forward slashes on every system. */
 export async function filesUnder(dir: string): Promise<string[]> {
   const { readdir } = await import("node:fs/promises");
   const entries = await readdir(dir, { recursive: true, withFileTypes: true });
   return entries
     .filter((e) => e.isFile())
-    .map((e) => join(e.parentPath, e.name).slice(dir.length + 1))
+    .map((e) =>
+      join(e.parentPath, e.name)
+        .slice(dir.length + 1)
+        .replace(/\\/g, "/"),
+    )
     .sort();
 }

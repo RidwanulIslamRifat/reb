@@ -11,15 +11,17 @@ import { readTomlEntry, registerToml } from "../../src/sources/agents/tomlConfig
 
 const cmd = { command: "/usr/bin/node", args: ["/opt/reb/dist/cli.js", "mcp"] };
 const e = { home: "/home/ana", env: {} };
+// Paths use the computer's own separator; compare them in the forward-slash form.
+const slash = (path: string) => path.replace(/\\/g, "/");
 
 describe("agent locations", () => {
   it("follows each agent's default folders", () => {
-    expect(claudeCode.configPath(e)).toBe("/home/ana/.claude.json");
-    expect(claudeCode.skillsDir(e)).toBe("/home/ana/.claude/skills");
-    expect(cursor.configPath(e)).toBe("/home/ana/.cursor/mcp.json");
-    expect(codex.configPath(e)).toBe("/home/ana/.codex/config.toml");
-    expect(geminiCli.configPath(e)).toBe("/home/ana/.gemini/settings.json");
-    expect(new Set(AGENTS.map((a) => a.skillsDir(e)))).toEqual(
+    expect(slash(claudeCode.configPath(e))).toBe("/home/ana/.claude.json");
+    expect(slash(claudeCode.skillsDir(e))).toBe("/home/ana/.claude/skills");
+    expect(slash(cursor.configPath(e))).toBe("/home/ana/.cursor/mcp.json");
+    expect(slash(codex.configPath(e))).toBe("/home/ana/.codex/config.toml");
+    expect(slash(geminiCli.configPath(e))).toBe("/home/ana/.gemini/settings.json");
+    expect(new Set(AGENTS.map((a) => slash(a.skillsDir(e))))).toEqual(
       new Set(["/home/ana/.claude/skills", "/home/ana/.agents/skills"]),
     );
   });
@@ -30,9 +32,9 @@ describe("agent locations", () => {
       CODEX_HOME: "/cfg/codex",
       GEMINI_CLI_HOME: "/cfg/g",
     };
-    expect(claudeCode.configPath({ ...e, env })).toBe("/cfg/claude/.claude.json");
-    expect(codex.configPath({ ...e, env })).toBe("/cfg/codex/config.toml");
-    expect(geminiCli.configPath({ ...e, env })).toBe("/cfg/g/.gemini/settings.json");
+    expect(slash(claudeCode.configPath({ ...e, env }))).toBe("/cfg/claude/.claude.json");
+    expect(slash(codex.configPath({ ...e, env }))).toBe("/cfg/codex/config.toml");
+    expect(slash(geminiCli.configPath({ ...e, env }))).toBe("/cfg/g/.gemini/settings.json");
   });
 });
 
