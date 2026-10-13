@@ -1,0 +1,302 @@
+{
+  "version": 12,
+  "product": "tidyhive.example",
+  "pipeline": "b2b-saas",
+  "reports": [
+    "feature"
+  ],
+  "tasks": [
+    {
+      "id": "company",
+      "title": "Map the company, product and modules from the home page, docs and about page",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 company node",
+        "at least 1 product node",
+        "at least 2 module nodes",
+        "every product node has evidence"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "pricing",
+      "title": "Find the pricing tiers and what each includes (seats, limits, add-ons)",
+      "role": "desk_researcher",
+      "depends_on": [
+        "company"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 pricing_tier node",
+        "every pricing_tier node has evidence"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "features",
+      "title": "List the features with evidence and link them to modules and tiers",
+      "role": "feature_analyst",
+      "depends_on": [
+        "company",
+        "pricing"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 5 feature nodes",
+        "every feature node has evidence",
+        "every feature node has a gated_by link"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "integrations",
+      "title": "Find the integrations from the integrations page and docs",
+      "role": "desk_researcher",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 integration node",
+        "every integration node has evidence"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "walkthrough",
+      "title": "Prepare a checklist for the user's own session (admin setup, inviting a teammate, a core workflow)",
+      "role": "walkthrough_coach",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "evidence/inbox/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "the user finished their own session in the product",
+        "what they saw is recorded as observed evidence"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "personas",
+      "title": "Describe buyer and user personas and their journeys",
+      "role": "business_analyst",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 2 persona nodes",
+        "at least 2 journey nodes",
+        "every journey node has a uses link",
+        "every persona node has a does link"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "curate",
+      "title": "Clean the knowledge graph until validate_graph is clean",
+      "role": "kb_curator",
+      "depends_on": [
+        "company",
+        "pricing",
+        "features",
+        "integrations",
+        "walkthrough",
+        "personas"
+      ],
+      "inputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "kb/graph.json",
+        "kb/stats.json"
+      ],
+      "done_when": [
+        "validate_graph is clean",
+        "no two nodes hold the same fact"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "audit",
+      "title": "Audit the graph against the brief and the requested reports (run_audit)",
+      "role": "auditor",
+      "depends_on": [
+        "curate"
+      ],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/",
+        "notes/"
+      ],
+      "outputs": [
+        "logs/audits/"
+      ],
+      "done_when": [
+        "the latest audit is acted on"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "report-feature",
+      "title": "Write the feature report",
+      "role": "report_writer",
+      "depends_on": [
+        "audit",
+        "audit-r1"
+      ],
+      "inputs": [
+        "kb/nodes/",
+        "notes/",
+        "logs/audits/"
+      ],
+      "outputs": [
+        "reports/feature.md"
+      ],
+      "done_when": [
+        "file reports/feature.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "a1-journey",
+      "title": "Find journey nodes for feature: Key journeys",
+      "role": "business_analyst",
+      "depends_on": [],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/"
+      ],
+      "outputs": [
+        "kb/nodes/"
+      ],
+      "done_when": [
+        "at least 2 journey nodes"
+      ],
+      "status": "done",
+      "added_in": 10,
+      "reason": "audit 1 item 1 [blocking]: No journey nodes, but the reports need at least 2"
+    },
+    {
+      "id": "a1-persona",
+      "title": "Find persona nodes for feature: Key journeys",
+      "role": "business_analyst",
+      "depends_on": [],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/"
+      ],
+      "outputs": [
+        "kb/nodes/"
+      ],
+      "done_when": [
+        "at least 1 persona node"
+      ],
+      "status": "done",
+      "added_in": 10,
+      "reason": "audit 1 item 2 [major]: No persona nodes, but the reports need at least 1"
+    },
+    {
+      "id": "a1-integration",
+      "title": "Find integration nodes for feature: Integrations",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/"
+      ],
+      "outputs": [
+        "kb/nodes/"
+      ],
+      "done_when": [
+        "at least 1 integration node",
+        "every integration node has evidence"
+      ],
+      "status": "pending",
+      "added_in": 10,
+      "reason": "audit 1 item 3 [major]: No integration nodes, but the reports need at least 1"
+    },
+    {
+      "id": "audit-r1",
+      "title": "Audit again after re-plan round 1",
+      "role": "auditor",
+      "depends_on": [
+        "a1-journey",
+        "a1-persona",
+        "a1-integration"
+      ],
+      "inputs": [
+        "logs/audits/audit-1.md"
+      ],
+      "outputs": [
+        "logs/audits/audit-2.md"
+      ],
+      "done_when": [
+        "the latest audit is acted on"
+      ],
+      "status": "pending",
+      "added_in": 10,
+      "reason": "re-plan round 1 of 3 after audit 1"
+    }
+  ]
+}
