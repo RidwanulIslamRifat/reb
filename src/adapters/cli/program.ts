@@ -7,6 +7,7 @@ import { registerList } from "./commands/list.js";
 import { registerLog } from "./commands/log.js";
 import { registerNew } from "./commands/new.js";
 import { registerPlan } from "./commands/plan.js";
+import { registerSetup } from "./commands/setup.js";
 import { defaultIo, type CliIo } from "./output.js";
 
 const require = createRequire(import.meta.url);
@@ -19,10 +20,6 @@ export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string
   { name: "audit", description: "Check the analysis for gaps" },
   { name: "report", description: "Render the requested reports" },
   { name: "dashboard", description: "Open the local read-only dashboard" },
-  { name: "doctor", description: "Check that reb is set up correctly" },
-  { name: "update", description: "Update reb and refresh agent registrations" },
-  { name: "setup", description: "Register reb with your AI agents" },
-  { name: "mcp", description: "Start the MCP server for AI agents" },
 ];
 
 export function buildProgram(io: CliIo = defaultIo): Command {
@@ -36,6 +33,7 @@ export function buildProgram(io: CliIo = defaultIo): Command {
   registerLog(program, io);
   registerEvidence(program, io);
   registerKb(program, io);
+  registerSetup(program, io);
 
   for (const { name, description } of PLANNED_COMMANDS) {
     program

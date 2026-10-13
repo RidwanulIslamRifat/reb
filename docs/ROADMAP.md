@@ -29,7 +29,7 @@ Deliverables
 
 Follow-ups found in M1
 - [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
-      M3: kb, evidence).
+      M3: kb, evidence; M4: setup, update, doctor, mcp).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -129,7 +129,7 @@ Follow-ups found in M3
 - [ ] There is no command to remove a link or a node yet; edit or delete the file in `kb/nodes/` by hand.
 - [ ] `record_evidence` accepts a subject node that does not exist yet (with a warning), so research can
       come before the graph; `validate_graph` reports it as a broken link until the node is created.
-- [ ] M4: expose the M3 workflows as MCP tools with the SPEC 9 names.
+- [x] M4: expose the M3 workflows as MCP tools with the SPEC 9 names. (Done in M4.)
 
 Files and folders
 - `src/domain/evidence.ts`, `node.ts`, `links.ts`, `validation.ts`, `graph.ts`
@@ -156,20 +156,43 @@ How the owner checks it
 Goal: an AI agent can use reb through MCP, guided by the handbook, after one install command.
 
 Deliverables
-- [ ] MCP server (`reb mcp`, stdio) exposing every workflow from M2 and M3 with the SPEC 9 names.
+- [x] MCP server (`reb mcp`, stdio) exposing every workflow from M2 and M3 with the SPEC 9 names.
       Thin adapter only: same workflow functions the CLI uses.
-- [ ] Handbook skill: main skill file that turns "Analyse <domain>; reports: <list>" into the workflow,
+- [x] Handbook skill: main skill file that turns "Analyse <domain>; reports: <list>" into the workflow,
       plus the 11 role prompt files with their allowed tool lists (SPEC 7). Sub-agent delegation when the host supports it.
-- [ ] `reb setup`: detect Claude Code, Cursor, Codex, Gemini CLI; show the exact changes; ask for approval;
+- [x] `reb setup`: detect Claude Code, Cursor, Codex, Gemini CLI; show the exact changes; ask for approval;
       back up each config file before editing; register the MCP server; install the handbook. Safe to re-run.
-- [ ] `reb doctor`: Node version, MCP registration per agent, runs root writable, REA present (optional).
-- [ ] `reb update`: refresh the package and registrations.
+- [x] `reb doctor`: Node version, MCP registration per agent, runs root writable, REA present (optional).
+- [x] `reb update`: refresh the package and registrations.
+
+Added in M4
+- [x] Handbook references: `handbook/references/evidence-protocol.md` and `graph-format.md`.
+- [x] `next_task` also returns the task's `role_prompt` and `role_tools` from the handbook (SPEC 7).
+- [x] MCP tool `save_plan` (the M2 workflow) so the planner role can write plans until `create_plan` lands in M6.
+- [x] The MCP server sends SKILL.md as its instructions, so agents without skill support still get the workflow.
+- [x] `reb setup --agent <ids>`, `--dry-run`, `--yes`, `--command auto|npx|local`. "auto" registers this local copy
+      (`node <path>/dist/cli.js mcp`) unless reb was started by npx; that way it works before reb is on npm.
+- [x] Skill folders follow REA: `~/.claude/skills/reb` for Claude Code, shared `~/.agents/skills/reb` for the others.
+      Changed handbook files are backed up to `~/reb/backups/<date>/` (not next to the skill, where an agent
+      would load the copy as a second skill).
+- [x] New dependency `@modelcontextprotocol/sdk` (named in SPEC 13).
+
+Follow-ups found in M4
+- [ ] Error fix hints name CLI commands (for example "reb kb add"); over MCP they could name the tool instead.
+- [ ] `reb update` prints the `npm install -g @rifat/reb@latest` command instead of running it (decision 18 says
+      run it after asking). Revisit in M10 when the package is on npm.
+- [ ] After the npm release (M10), switch registrations to npx: `reb update --command npx`.
+- [ ] Codex config is edited line by line (only reb's own table) instead of with a TOML library; a reb table
+      written in an unusual TOML form is rewritten.
+- [ ] M2 follow-up still open: should `list_runs` (which works on no single run) write to a runs-root log?
 
 Files and folders
 - `src/adapters/mcp/server.ts`, `src/adapters/mcp/tools/*.ts`
-- `src/workflows/setup.ts`, `doctor.ts`, `update.ts`
+- `src/workflows/setup.ts`, `doctor.ts`, `update.ts`, `handbook.ts`
 - `src/sources/agents/` (one small adapter per supported agent: where its config lives and how to register)
-- `handbook/SKILL.md`, `handbook/roles/<role>.md` (11 files)
+- `src/storage/handbook.ts`, `hostFiles.ts`; `src/domain/handbook.ts`, `registration.ts`
+- `src/adapters/cli/commands/setup.ts` (setup, update, doctor, mcp)
+- `handbook/SKILL.md`, `handbook/roles/<role>.md` (11 files), `handbook/references/*.md`
 - `tests/fixtures/agent-configs/` (fake config files for each agent)
 
 Tests

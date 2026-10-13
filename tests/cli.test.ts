@@ -34,25 +34,28 @@ describe("reb CLI", () => {
   it("lists the real commands and every planned one as not yet available in --help", async () => {
     const help = await run("--help");
     expect(help).toContain("Usage: reb");
-    for (const name of ["new", "list", "plan", "log", "evidence", "kb"]) {
+    for (const name of [
+      "new",
+      "list",
+      "plan",
+      "log",
+      "evidence",
+      "kb",
+      "setup",
+      "update",
+      "doctor",
+      "mcp",
+    ]) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b`, "m"));
     }
     for (const { name } of PLANNED_COMMANDS) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b.*\\(not yet available\\)`, "m"));
     }
-    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual([
-      "audit",
-      "report",
-      "dashboard",
-      "doctor",
-      "update",
-      "setup",
-      "mcp",
-    ]);
+    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["audit", "report", "dashboard"]);
   });
 
   it("explains how to proceed when a planned command is used", async () => {
-    await expect(run("doctor")).rejects.toThrow(RebError);
+    await expect(run("audit")).rejects.toThrow(RebError);
   });
 });
 
