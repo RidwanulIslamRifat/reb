@@ -1,0 +1,10 @@
+{
+  "product": "example.com",
+  "pipeline": "b2b-saas",
+  "reports": ["feature"],
+  "tasks": [
+    { "id": "t1", "title": "Read the home page", "role": "desk_researcher" },
+    { "id": "t2", "title": "Map the features", "role": "feature_analyst", "depends_on": ["t1"] },
+    { "id": "t3", "title": "Size the market", "role": "market_researcher" }
+  ]
+}

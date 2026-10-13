@@ -28,7 +28,7 @@ Deliverables
 - [x] `.gitignore` that excludes runs, HAR files, `.env`, `dist/`, `node_modules/`.
 
 Follow-ups found in M1
-- [ ] Replace placeholder commands with real ones as each milestone lands (M2 onwards).
+- [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -53,22 +53,32 @@ How the owner checks it
 Goal: reb can create a run folder, store a brief and a versioned plan, and log everything.
 
 Deliverables
-- [ ] Domain schemas (zod): brief, plan, task, task status, decision, event, role log entry (SPEC 6.1).
-- [ ] Storage for the run folder layout in SPEC 5, with runs root from `REB_HOME` (default `~/reb/runs`).
-- [ ] Safe writes: write to a temporary file then rename, so a crash never leaves half a file.
-- [ ] Workflows: `create_run`, `get_brief`, `update_brief`, `list_runs`, `get_plan`, `next_task`,
+- [x] Domain schemas (zod): brief, plan, task, task status, decision, event, role log entry (SPEC 6.1).
+- [x] Storage for the run folder layout in SPEC 5, with runs root from `REB_HOME` (default `~/reb/runs`).
+- [x] Safe writes: write to a temporary file then rename, so a crash never leaves half a file.
+- [x] Workflows: `create_run`, `get_brief`, `update_brief`, `list_runs`, `get_plan`, `next_task`,
       `update_task_status`, and a basic `save_plan` that copies the old plan to `plan/history/plan-v<N>.json`
       and bumps the version (never edits in place).
-- [ ] `next_task` returns the first pending task whose `depends_on` are all done.
-- [ ] Automatic event log: every workflow call appends one line to `logs/events.jsonl`, with secrets redacted.
-- [ ] `log_role_work` workflow writing to `logs/roles/<role>.md`; plan changes write a line to `logs/decisions.md`.
-- [ ] CLI: `reb new <domain>`, `reb plan show`, `reb plan next`, `reb plan set <task> <status>`.
+- [x] `next_task` returns the first pending task whose `depends_on` are all done.
+- [x] Automatic event log: every workflow call appends one line to `logs/events.jsonl`, with secrets redacted.
+- [x] `log_role_work` workflow writing to `logs/roles/<role>.md`; plan changes write a line to `logs/decisions.md`.
+- [x] CLI: `reb new <domain>`, `reb list`, `reb plan show`, `reb plan next`, `reb plan set-status <task> <status>`,
+      `reb plan save <file> --reason <why>`, `reb log tail`, `reb log role <role> <summary>`.
+
+Follow-ups found in M2
+- [ ] `list_runs` works on no single run, so it writes no event (each run has its own events file).
+      Decide in M4 whether a runs-root log is wanted. `reb log tail` (reading the log) is also not logged.
+- [ ] A task status change is a plan change, so it also makes a new plan version (SPEC 6.1 "every change").
+      If this makes history too long, M6 could group status changes; needs an owner decision.
+- [ ] Two plan saves at the very same moment could race; add the M3 file lock to `save_plan` too.
+- [ ] brief.md values are written as JSON (valid YAML); switch to the M3 YAML reader when it is added.
 
 Files and folders
-- `src/domain/brief.ts`, `plan.ts`, `event.ts`
-- `src/storage/runFolder.ts`, `atomicWrite.ts`, `jsonl.ts`
-- `src/workflows/runs.ts`, `plan.ts`, `logging.ts`, `redact.ts`
-- `src/adapters/cli/commands/new.ts`, `plan.ts`
+- `src/domain/brief.ts`, `plan.ts`, `event.ts`, `run.ts`
+- `src/storage/runFolder.ts`, `atomicWrite.ts`, `jsonl.ts`, `planFiles.ts`, `briefFile.ts`
+- `src/workflows/context.ts`, `runs.ts`, `plan.ts`, `logging.ts`, `logs.ts`, `redact.ts`
+- `src/adapters/cli/output.ts`, `commands/new.ts`, `list.ts`, `plan.ts`, `log.ts`
+- `tests/fixtures/plan-sample.json`
 
 Tests
 - Creating a run produces exactly the SPEC 5 folders and a valid `brief.md`.
@@ -81,7 +91,10 @@ How the owner checks it
 1. `REB_HOME=./tmp-runs node dist/cli.js new example.com`
 2. Open the `tmp-runs` folder: you should see one folder named `example-com-<today>` with `brief.md`,
    `plan/`, `kb/`, `evidence/`, `notes/`, `reports/` and `logs/` inside, and one line in `logs/events.jsonl`.
-3. Delete `tmp-runs` when done.
+3. `REB_HOME=./tmp-runs node dist/cli.js plan save tests/fixtures/plan-sample.json --reason "first plan"`,
+   then `... plan set-status t1 done`, then `... plan show`: t1 shows `[done]`, the plan is v2, and
+   `plan/history/plan-v1.json` holds the old version. `... log tail` lists every call.
+4. Delete `tmp-runs` when done.
 
 ---
 
