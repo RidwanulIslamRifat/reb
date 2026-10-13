@@ -30,7 +30,7 @@ Deliverables
 Follow-ups found in M1
 - [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
       M3: kb, evidence; M4: setup, update, doctor, mcp; M5: evidence read-page, stack, har; M6: audit,
-      plan create, plan gate, plan replan).
+      plan create, plan gate, plan replan; M7: evidence test-plan, dataset, import, rea).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -243,7 +243,7 @@ Follow-ups found in M5
 - [ ] Login detection is a rule of thumb (a password field on a short page). A public sign-up page is
       refused as a login page; a login page with lots of text could slip through.
 - [ ] The 100-page warning counts all sources in the run, including ones recorded by hand.
-- [ ] A HAR summary is not saved to disk; M7 `import_inbox` will save the redacted summary as evidence.
+- [x] A HAR summary is not saved to disk; M7 `import_inbox` will save the redacted summary as evidence. (Done in M7.)
 - [ ] Asset file names with a hash (for example `app.4f9c2b.js`) show as `:id` in HAR summaries.
 - [ ] Live pages are never used in tests; the owner check below is the only real-internet check.
 
@@ -355,29 +355,76 @@ How the owner checks it
 Goal: help the human do their own session in the product and turn what they saw into evidence.
 
 Deliverables
-- [ ] `make_test_plan`: a step-by-step checklist for the human, built from the graph's journeys and open questions,
+- [x] `make_test_plan`: a step-by-step checklist for the human, built from the graph's journeys and open questions,
       saying what to capture (screenshot, note, optional HAR).
-- [ ] `make_test_dataset`: clearly fake sample data (CSV or JSON) the human can type or upload by hand. Never real personal data.
-- [ ] `import_inbox`: reads `evidence/inbox/session-NN/` (screenshots, notes, HAR) and creates evidence records
+- [x] `make_test_dataset`: clearly fake sample data (CSV or JSON) the human can type or upload by hand. Never real personal data.
+- [x] `import_inbox`: reads `evidence/inbox/session-NN/` (screenshots, notes, HAR) and creates evidence records
       labelled observed, linked to nodes where the note says so; HAR goes through `summarize_har` redaction.
-- [ ] Walkthrough coach and tech observer roles updated to use these tools.
-- [ ] CLI: `reb evidence test-plan`, `reb evidence dataset`, `reb evidence import <session>`.
+- [x] Walkthrough coach and tech observer roles updated to use these tools.
+- [x] CLI: `reb evidence test-plan`, `reb evidence dataset`, `reb evidence import <session>`.
+
+Added in M7
+- [x] Test plan file: `notes/test-plan-session-NN.md`. It picks the next session (the latest empty inbox folder,
+      or a new one) and creates the empty inbox folder. Journeys list their features in `uses` order, with the
+      persona that `does` them; features `gated_by` a pricing tier get "if it is locked, screenshot only the lock
+      message". Features outside any journey without observed evidence get an extra step.
+- [x] Dataset is category-aware (b2b-saas, developer-tool, marketplace, consumer-app, ai-tool; unknown falls back to
+      b2b-saas with a warning) plus one table per `data_object` node. Files go to `notes/test-data/`. Every value is
+      checked against a pattern list (Test/Example names, example.com, +1 555 01xx phones ...) before writing.
+- [x] Inbox linking rules: a note bullet starts with `[node-id]` (a second tag becomes a link); a screenshot is named
+      `<node-id>--<n>.png` or is mentioned in a note bullet. Items naming no node go to `--subject`, else to the
+      only product node, else they are skipped with the reason. Unknown file types are listed as skipped.
+- [x] Each inbox file becomes a source record (path + sha256) and each item one evidence record citing it.
+      Re-import is detected from those records, so a second import adds only new items (for example a new note bullet).
+- [x] HAR import: the summary is made and redacted in memory, then checked against every cookie, auth header and
+      secret query value in the raw file; if any is still there, reb stops and writes nothing. Only the redacted
+      summary is stored, in `evidence/imports/session-NN/<file>.summary.json`. The raw file stays in the inbox
+      (decision 10) with a warning until `--delete-har` / `delete_raw_har` removes it.
+- [x] `summarize_har` also gives the slowest request per endpoint (`max_ms`), next to the average.
+- [x] Event-log redaction also removes secret-looking query values in addresses (`?session_id=...`, `&auth_code=...`).
+- [x] Optional REA bridge (owner request, changes decision 14): `record_rea_result` tool and `reb evidence rea`.
+      The tech observer may use REA's passive tools (`inspect_web_network_capture`, `inspect_web_page`,
+      `analyze_web_bundle`) when REA is installed and store their results; any other REA tool name is refused,
+      above all browser-driving ones. Results are redacted and saved in `evidence/rea/`; labels are capped
+      (capture: observed, page: documented, bundle: inferred). Role files get an `optional_tools` list
+      (REA passive tools only) and `next_task` returns it with a note.
+- [x] `tests/fixtures/run-sample/`: a small fake run with a graph and `evidence/inbox/session-01/` (screenshot, notes,
+      synthetic HAR with fake secrets). M9 extends it for reports.
+
+Follow-ups found in M7
+- [ ] reb never calls REA itself; it trusts the agent's word about which REA tool produced a result. A check that
+      REA is really installed (as `reb doctor` does) could be added to `record_rea_result` if needed.
+- [ ] Two imports of the same session at the very same moment could both record an item (no lock around the
+      whole import). Unlikely with one human; add a lock if it happens.
+- [ ] Screenshots are not looked at by reb; the finding is the file name plus the note that mentions it.
+      The agent can look at the image and add a more precise `record_evidence`.
+- [ ] Features above the user's plan tier are not checked on import; a note about one is still labelled observed
+      (the human did see the lock screen). The auditor could flag it.
 
 Files and folders
-- `src/workflows/handsOn.ts`, `src/storage/inbox.ts`
-- `tests/fixtures/inbox/session-01/` (fake screenshot, notes file, synthetic HAR)
-- `handbook/roles/walkthrough_coach.md`, `tech_observer.md`
+- `src/workflows/handsOn.ts`, `src/workflows/rea.ts`, `src/storage/inbox.ts`
+- `src/domain/inbox.ts`, `testPlan.ts`, `dataset.ts`, `rea.ts`
+- `src/adapters/mcp/tools/handsOn.ts`; CLI commands in `src/adapters/cli/commands/evidence.ts`
+- `tests/fixtures/run-sample/` (with `evidence/inbox/session-01/`: fake screenshot, notes file, synthetic HAR)
+- `handbook/roles/walkthrough_coach.md`, `tech_observer.md`, `handbook/SKILL.md`, `references/evidence-protocol.md`
 
 Tests
 - Test plan covers every journey node and every open question node.
 - Dataset contains only synthetic values (checked against a pattern list).
-- Import creates one evidence record per item, labels them observed, and never copies raw HAR secrets.
+- Import creates one evidence record per item, labels them observed, and never copies raw HAR secrets
+  (every file in the run folder except the raw HAR is searched for the planted `FAKE-SECRET` values).
 - Importing the same session twice does not create duplicates.
+- REA bridge refuses non-passive tools, redacts results and caps labels.
 
 How the owner checks it
-1. `node dist/cli.js evidence import session-01 --run tests/fixtures/run-sample --dry-run`
-2. You should see "Would import 3 items: 1 screenshot, 1 note, 1 HAR", each marked observed, and nothing is written
-   (`--dry-run` only shows what would happen).
+1. `npm run build && node dist/cli.js evidence import session-01 --run tests/fixtures/run-sample --dry-run`
+2. You should see "Would import 4 items: 1 screenshot, 2 notes, 1 HAR", each marked observed, the node each one
+   goes to, and "Dry run: nothing was imported." No evidence is written (only the call's line in the run's
+   `logs/events.jsonl`, which git ignores).
+3. `node dist/cli.js evidence test-plan --run tests/fixtures/run-sample` prints a 4-step checklist
+   ("Journey: Export notes", "Question: Which export formats are offered?" ...) and saves it in the fixture's
+   `notes/` folder; `node dist/cli.js evidence dataset --run tests/fixtures/run-sample` lists fake CSV files.
+   Both write into the fixture's `notes/` folder (ignored by git); delete it afterwards if you like.
 
 ---
 
@@ -513,6 +560,9 @@ They are binding for the milestones they name unless the owner changes them.
 
 14. **REA bridge (M5).** "Optional REA bridge" is not described. *Decided:* in v1 only `doctor` detects whether REA is
     installed; the bridge itself becomes a follow-up after v1.
+    *Changed by the owner in M7:* the bridge is built now, limited to REA's passive tools
+    (`inspect_web_network_capture`, `inspect_web_page`, `analyze_web_bundle`) used by the tech_observer when REA is
+    installed; results are stored as evidence with `record_rea_result`. REA tools that drive a browser are never used.
 
 15. **"plan tier" in the brief (M2).** Unclear whether it is reb's plan or the product's pricing plan.
     *Decided:* it is the product's pricing plan the analyst has access to (for example "Free trial"); features above it

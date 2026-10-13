@@ -43,6 +43,12 @@ export function runPaths(dir: string) {
     events: join(dir, "logs", "events.jsonl"),
     decisions: join(dir, "logs", "decisions.md"),
     role: (role: string) => join(dir, "logs", "roles", `${role}.md`),
+    inbox: join(dir, "evidence", "inbox"),
+    inboxSession: (session: string) => join(dir, "evidence", "inbox", session),
+    /** Redacted results reb derived from an inbox session (never the raw files). */
+    imports: (session: string) => join(dir, "evidence", "imports", session),
+    rea: join(dir, "evidence", "rea"),
+    notes: join(dir, "notes"),
   };
 }
 export type RunPaths = ReturnType<typeof runPaths>;

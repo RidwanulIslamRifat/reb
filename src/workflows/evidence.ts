@@ -129,53 +129,62 @@ export async function recordEvidence(
 ) {
   const run = await resolveRun(ctx, input.run as string | undefined);
   const args = argsOf(input);
-  return logged(ctx, "record_evidence", run, args, async () => {
-    const parsed = EvidenceInputSchema.safeParse(args);
-    if (!parsed.success) {
-      throw new RebError(
-        `The evidence is not valid: ${describeIssues(parsed.error)}.`,
-        "Each record needs role, subject, operation, source, finding and confidence.",
-      );
-    }
-    const data = parsed.data;
-    if (!looksLikeNodeId(data.subject)) {
-      throw new RebError(
-        `"${data.subject}" is not a node id.`,
-        'The subject is the node the finding is about, for example "feature-sso".',
-      );
-    }
-    const warnings: string[] = [];
-    if ((await readNodeText(run.paths, data.subject)) === null) {
-      warnings.push(`Node ${data.subject} does not exist yet; create it with "reb kb add".`);
-    }
-    const record = await appendLedgerRecord(run.paths, (records) => {
-      if (SOURCE_ID.test(data.source)) requireRecord(records, data.source, "source", "Source");
-      if (data.corrects) requireRecord(records, data.corrects, "evidence", "Evidence");
-      for (const link of data.links) {
-        if (isLedgerId(link)) {
-          requireRecord(
-            records,
-            link,
-            link.startsWith("S-") ? "source" : "evidence",
-            "Linked record",
-          );
-        }
+  return logged(ctx, "record_evidence", run, args, async () => ({
+    ...run,
+    ...(await appendEvidence(ctx, run, args)),
+  }));
+}
+
+/**
+ * Checks an evidence record and appends it to the ledger with the next E-NNN id, without logging
+ * an event. Used by record_evidence and by the tools that record evidence themselves (import_inbox).
+ */
+export async function appendEvidence(ctx: Context, run: RunRef, args: Record<string, unknown>) {
+  const parsed = EvidenceInputSchema.safeParse(args);
+  if (!parsed.success) {
+    throw new RebError(
+      `The evidence is not valid: ${describeIssues(parsed.error)}.`,
+      "Each record needs role, subject, operation, source, finding and confidence.",
+    );
+  }
+  const data = parsed.data;
+  if (!looksLikeNodeId(data.subject)) {
+    throw new RebError(
+      `"${data.subject}" is not a node id.`,
+      'The subject is the node the finding is about, for example "feature-sso".',
+    );
+  }
+  const warnings: string[] = [];
+  if ((await readNodeText(run.paths, data.subject)) === null) {
+    warnings.push(`Node ${data.subject} does not exist yet; create it with "reb kb add".`);
+  }
+  const record = await appendLedgerRecord(run.paths, (records) => {
+    if (SOURCE_ID.test(data.source)) requireRecord(records, data.source, "source", "Source");
+    if (data.corrects) requireRecord(records, data.corrects, "evidence", "Evidence");
+    for (const link of data.links) {
+      if (isLedgerId(link)) {
+        requireRecord(
+          records,
+          link,
+          link.startsWith("S-") ? "source" : "evidence",
+          "Linked record",
+        );
       }
-      // A correction links to the record it corrects (SPEC 6.2).
-      const links =
-        data.corrects && !data.links.includes(data.corrects)
-          ? [...data.links, data.corrects]
-          : data.links;
-      return EvidenceRecordSchema.parse({
-        kind: "evidence",
-        id: nextLedgerId(records, "evidence"),
-        ...data,
-        links,
-        at: ctx.now().toISOString(),
-      });
+    }
+    // A correction links to the record it corrects (SPEC 6.2).
+    const links =
+      data.corrects && !data.links.includes(data.corrects)
+        ? [...data.links, data.corrects]
+        : data.links;
+    return EvidenceRecordSchema.parse({
+      kind: "evidence",
+      id: nextLedgerId(records, "evidence"),
+      ...data,
+      links,
+      at: ctx.now().toISOString(),
     });
-    return { ...run, record, warnings };
   });
+  return { record, warnings };
 }
 
 /** list_evidence: ledger records, oldest first, each with `corrected_by` when a newer record replaces it. */

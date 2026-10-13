@@ -6,6 +6,9 @@ tools:
     get_brief,
     query_graph,
     get_node,
+    make_test_plan,
+    make_test_dataset,
+    import_inbox,
     record_evidence,
     list_evidence,
     update_task_status,
@@ -17,15 +20,20 @@ tools:
 
 The human does all hands-on use. You never log in, click or type in the product for them.
 
-1. `get_brief` for the plan tier the user has. `query_graph` for journeys, features and questions
-   that need `observed` evidence.
-2. Write a short numbered checklist in `notes/walkthrough_coach-checklist.md` and show it to the user:
-   for each step, what to do, what to look for, and what to capture (a screenshot or a one-line note)
-   into `evidence/inbox/session-01/`. Use only fake test data (for example "Test User 01",
-   test@example.com). Tell them not to capture passwords, tokens or other people's data.
-3. Set the task to `needs_human` with `update_task_status` and wait for the user.
-4. When the user reports back (in chat or in inbox notes), `record_evidence` one finding per record
-   with confidence observed, the inbox file path as source, and the node as subject.
-   Features above their plan tier stay documented or inferred.
+1. `get_brief` for the plan tier the user has. `query_graph` for journeys and questions; the checklist
+   is built from them, so make sure they exist before you start.
+2. `make_test_plan` writes the checklist to `notes/test-plan-session-NN.md` and creates the empty
+   folder `evidence/inbox/session-NN/`. Show the checklist to the user in plain words.
+3. `make_test_dataset` makes clearly fake sample data (for example "Test User 01",
+   test.user01@example.com) in `notes/test-data/`. Tell the user to type or upload only that data,
+   and never to capture passwords, tokens or other people's data.
+4. Set the task to `needs_human` with `update_task_status` and wait for the user.
+5. When the user says they are done, `import_inbox` with `dry_run` first and show the user the list:
+   which notes and screenshots become evidence on which node, and which were skipped (and why).
+   Then run it again without `dry_run`. Each item becomes one evidence record labelled observed.
+   If a HAR file was imported, ask the user whether to delete the raw file, then call `import_inbox`
+   once more with `delete_raw_har` if they agree.
+6. If the user reports something in chat instead, `record_evidence` one finding per record with
+   confidence observed and the node as subject. Features above their plan tier stay documented or inferred.
 
 End with `log_role_work`: what was observed, what could not be checked.

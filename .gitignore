@@ -13,6 +13,7 @@ tmp-runs/
 *.har
 # Synthetic HAR fixtures (fake secrets only) are the one exception
 !tests/fixtures/har/*.har
+!tests/fixtures/run-sample/evidence/inbox/*/*.har
 
 # Editors and OS
 .DS_Store
@@ -24,3 +25,8 @@ tests/fixtures/*/logs/
 tests/fixtures/*/kb/graph.json
 tests/fixtures/*/kb/stats.json
 tests/fixtures/*/**/.*.lock
+# Written when the owner imports or plans against the sample run without --dry-run
+tests/fixtures/run-sample/evidence/ledger.jsonl
+tests/fixtures/run-sample/evidence/imports/
+tests/fixtures/run-sample/evidence/rea/
+tests/fixtures/run-sample/notes/

@@ -23,6 +23,10 @@ reb follows normal use only (SPEC 2.3):
   records the source for you). If reb refuses a page, do not open it with another tool.
 - Find pages with your own web search; record what you use from a search result with `record_source`.
 - Never store secrets: no passwords, tokens, cookies or API keys in evidence, nodes or notes.
+  HAR files go only through `summarize_har` or `import_inbox`, which strip them first.
+- REA (optional): if the user has the REA MCP server, the tech_observer may use only REA's passive tools
+  (`inspect_web_network_capture`, `inspect_web_page`, `analyze_web_bundle`) and must store their results
+  with `record_rea_result`. Never use an REA tool that opens, drives or clicks in a browser.
 
 If a step would need any of this, stop and give the human a checklist to do it themselves
 (the walkthrough_coach role does this).
@@ -66,9 +70,10 @@ So the loop is: next_task -> do the task -> check_gate -> ... -> run_audit -> ap
 next_task ... Stop rule: no blocking gaps, or 3 re-plan rounds. Then the remaining gaps become
 `question` nodes and the report tasks can start.
 
-When a task is `needs_human`, give the user the checklist from the walkthrough_coach, then carry on
-with other tasks. When the user says they are done, import what they saw as evidence, run
-`check_gate` and mark the task `done`.
+When a task is `needs_human`, give the user the checklist from the walkthrough_coach
+(`make_test_plan`, with fake data from `make_test_dataset`), then carry on with other tasks. When the
+user says they are done, run `import_inbox` with `dry_run` first, show the user what it found, then
+import for real. Run `check_gate` and mark the task `done`.
 
 ## Doing a task
 

@@ -140,6 +140,14 @@ export async function nextTask(ctx: Context, input: { run?: string } = {}) {
       task,
       role_prompt: role?.body.trim() ?? null,
       role_tools: role?.tools ?? null,
+      ...(role?.optional_tools.length
+        ? {
+            role_optional_tools: role.optional_tools,
+            role_optional_note:
+              "role_optional_tools are REA's passive tools. Use them only if your agent has the REA MCP server " +
+              "(reb doctor shows it); store their results with record_rea_result.",
+          }
+        : {}),
     };
   });
 }

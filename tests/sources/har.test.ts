@@ -1,7 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { RebError } from "../../src/domain/errors.js";
-import { endpointPattern, summarizeHar } from "../../src/sources/har.js";
+import {
+  assertNoSecrets,
+  endpointPattern,
+  harSecretValues,
+  parseHar,
+  summarizeHar,
+} from "../../src/sources/har.js";
 
 const sample = await readFile("tests/fixtures/har/sample.har", "utf8");
 
@@ -61,5 +67,44 @@ describe("HAR summary", () => {
       expect(() => summarizeHar(text)).toThrow(RebError);
       expect(() => summarizeHar(text)).toThrow("not a HAR");
     }
+  });
+});
+
+describe("HAR secrets guard (M7)", () => {
+  const inbox = "tests/fixtures/run-sample/evidence/inbox/session-01/network.har";
+
+  it("measures request timing per endpoint: average and slowest", async () => {
+    const { endpoints } = summarizeHar(await readFile(inbox, "utf8"));
+    const status = endpoints.find((e) => e.pattern === "/api/v1/exports/status")!;
+    expect(status).toMatchObject({ count: 4, avg_ms: 40, max_ms: 42 });
+    expect(status.polling).toEqual({ every_seconds: 5, calls: 4 });
+    expect(endpoints.find((e) => e.pattern === "/api/v1/events")!.streaming).toBe(
+      "server-sent events",
+    );
+  });
+
+  it("finds every planted credential value, and the summary holds none of them", async () => {
+    const text = await readFile(inbox, "utf8");
+    const secrets = harSecretValues(parseHar(text));
+    for (const planted of [
+      "Bearer FAKE-SECRET-BEARER-TOKEN-0001",
+      "FAKE-SECRET-BEARER-TOKEN-0001",
+      "FAKE-SECRET-COOKIE-0001",
+      "FAKE-SECRET-SETCOOKIE-0001",
+      "FAKE-SECRET-APIKEY-0001",
+      "FAKE-SECRET-QUERY-TOKEN-0001",
+      "FAKE-SECRET-SESSION-QUERY-0001",
+    ]) {
+      expect(secrets).toContain(planted);
+    }
+    const summary = JSON.stringify(summarizeHar(text));
+    expect(() => assertNoSecrets(summary, secrets)).not.toThrow();
+    expect(summary).not.toContain("FAKE-SECRET");
+  });
+
+  it("stops before storing when a secret would leak", () => {
+    expect(() =>
+      assertNoSecrets('{"x":"FAKE-SECRET-COOKIE-0001"}', ["FAKE-SECRET-COOKIE-0001"]),
+    ).toThrow("reb stopped before storing a HAR summary");
   });
 });

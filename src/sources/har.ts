@@ -31,7 +31,8 @@ const EntrySchema = z.object({
       .default({}),
   }),
 });
-type Entry = z.infer<typeof EntrySchema>;
+export type HarEntry = z.infer<typeof EntrySchema>;
+type Entry = HarEntry;
 
 const HarSchema = z.object({ log: z.object({ entries: z.array(EntrySchema) }) });
 
@@ -129,6 +130,8 @@ export interface HarEndpoint {
   /** Query parameter names; values are never kept, and secret-looking ones show [REDACTED]. */
   query_params: string[];
   avg_ms: number;
+  /** Slowest single request, in milliseconds. */
+  max_ms: number;
   /** Set when the same endpoint is called again and again at a steady interval. */
   polling?: { every_seconds: number; calls: number };
   streaming?: Streaming;
@@ -174,7 +177,7 @@ export function summarizeHarEntries(entries: Entry[]): HarSummary {
   };
   const groups = new Map<
     string,
-    Omit<HarEndpoint, "avg_ms" | "polling" | "content_types" | "query_params"> & {
+    Omit<HarEndpoint, "avg_ms" | "max_ms" | "polling" | "content_types" | "query_params"> & {
       times: number[];
       starts: number[];
       types: Set<string>;
@@ -254,6 +257,7 @@ export function summarizeHarEntries(entries: Entry[]): HarSummary {
       content_types: [...types].sort(),
       query_params: [...params].sort(),
       avg_ms: times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0,
+      max_ms: times.length ? Math.round(Math.max(...times)) : 0,
       ...(rest.streaming ? {} : { polling: pollingOf(starts) }),
     }),
   );
@@ -275,4 +279,50 @@ export function summarizeHarEntries(entries: Entry[]): HarSummary {
 /** Parses and summarises HAR text in one step. */
 export function summarizeHar(text: string): HarSummary {
   return summarizeHarEntries(parseHar(text));
+}
+
+/**
+ * Every credential value in a HAR: cookie values, auth header values and secret query values.
+ * Used to prove a summary holds none of them before it is stored (see assertNoSecrets).
+ */
+export function harSecretValues(entries: Entry[]): string[] {
+  const found = new Set<string>();
+  const add = (value: string | undefined) => {
+    const v = value?.trim();
+    if (v && v.length >= 6) found.add(v);
+  };
+  const cookieValues = (header: string) => {
+    for (const part of header.split(/[;,]/)) add(part.split("=").slice(1).join("="));
+  };
+  for (const { request, response } of entries) {
+    for (const c of [...request.cookies, ...response.cookies]) {
+      add((c as { value?: string } | null)?.value);
+    }
+    for (const h of [...request.headers, ...response.headers]) {
+      const name = h.name.toLowerCase();
+      if (AUTH_HEADER.test(name)) {
+        add(h.value);
+        add(h.value?.replace(/^\S+\s+/, ""));
+      } else if (name === "cookie" || name === "set-cookie") {
+        cookieValues(h.value ?? "");
+      }
+    }
+    if (URL.canParse(request.url)) {
+      for (const [name, value] of new URL(request.url).searchParams) {
+        if (SECRET_PARAM.test(name)) add(value);
+      }
+    }
+  }
+  return [...found];
+}
+
+/** Throws if any of `secrets` appears in `text`. A last check before a HAR-derived file is written. */
+export function assertNoSecrets(text: string, secrets: string[]): void {
+  const leaked = secrets.filter((s) => text.includes(s));
+  if (leaked.length) {
+    throw new RebError(
+      `reb stopped before storing a HAR summary: ${leaked.length} secret value(s) were still in it.`,
+      "Nothing was written. Please report this as a bug in reb, without attaching the HAR file.",
+    );
+  }
 }

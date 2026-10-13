@@ -6,6 +6,8 @@ import {
   recordSourceFromFile,
   recordSource,
 } from "../../../workflows/evidence.js";
+import { importInbox, makeTestDataset, makeTestPlan } from "../../../workflows/handsOn.js";
+import { recordReaResultFromFile } from "../../../workflows/rea.js";
 import { detectTechStack, readPublicPage, summarizeHarFile } from "../../../workflows/research.js";
 import { line, noteRun, type CliIo } from "../output.js";
 
@@ -161,7 +163,7 @@ export function registerEvidence(program: Command, io: CliIo): void {
         `${summary.requests} requests to ${summary.hosts.join(", ")} over ${summary.duration_seconds} s.`,
       );
       line(io);
-      line(io, "COUNT  KIND   ENDPOINT");
+      line(io, "COUNT  KIND   AVG/MAX MS   ENDPOINT");
       for (const e of summary.endpoints) {
         const query = e.query_params.length ? `?${e.query_params.join("&")}` : "";
         const extra = [
@@ -170,7 +172,8 @@ export function registerEvidence(program: Command, io: CliIo): void {
         ].filter(Boolean);
         line(
           io,
-          `${String(e.count).padStart(5)}  ${e.kind.padEnd(5)}  ${e.method} ${e.host}${e.pattern}${query}` +
+          `${String(e.count).padStart(5)}  ${e.kind.padEnd(5)}  ${`${e.avg_ms}/${e.max_ms}`.padEnd(11)}  ` +
+            `${e.method} ${e.host}${e.pattern}${query}` +
             (extra.length ? `  [${extra.join(", ")}]` : ""),
         );
       }
@@ -184,4 +187,126 @@ export function registerEvidence(program: Command, io: CliIo): void {
       );
       if ("note" in result) line(io, `Note: ${result.note}`);
     });
+
+  evidence
+    .command("test-plan")
+    .description("Make a checklist for your own session in the product (what to do and capture)")
+    .option(
+      "--session <name>",
+      "inbox session, for example session-02 (default: the next free one)",
+    )
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(async (options: RunOption & { session?: string }) => {
+      const result = await makeTestPlan(ctx(), options);
+      noteRun(io, result);
+      line(
+        io,
+        `Test plan for ${result.session}: ${result.steps.length} steps, saved to ${result.file}.`,
+      );
+      line(io, `Save your screenshots and notes into ${result.inbox}/`);
+      for (const step of result.steps) {
+        line(io);
+        line(io, `${step.n}. ${step.title}`);
+        for (const d of step.do) line(io, `   [ ] ${d}`);
+        for (const c of step.capture) line(io, `   capture ${c.kind}: ${c.as}`);
+      }
+      for (const warning of result.warnings) line(io, `Note: ${warning}`);
+    });
+
+  evidence
+    .command("dataset")
+    .description("Make clearly fake sample data to type or upload in your own session")
+    .option("--format <format>", "csv or json", "csv")
+    .option("--rows <n>", "rows per table (1 to 50)", "5")
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(async (options: RunOption & { format: string; rows: string }) => {
+      const result = await makeTestDataset(ctx(), {
+        run: options.run,
+        format: options.format as "csv" | "json",
+        rows: Number(options.rows),
+      });
+      noteRun(io, result);
+      line(io, `Fake sample data for a ${result.category} product:`);
+      for (const [i, table] of result.tables.entries()) {
+        line(io, `  ${result.files[i]}  (${table.rows.length} rows) ${table.description}`);
+      }
+      line(io, result.note);
+      for (const warning of result.warnings) line(io, `Note: ${warning}`);
+    });
+
+  evidence
+    .command("import")
+    .description(
+      "Turn the screenshots, notes and HAR files of an inbox session into observed evidence",
+    )
+    .argument("<session>", "inbox session folder, for example session-01")
+    .option("--subject <node>", "node for items that name none (default: the product node)")
+    .option("--dry-run", "only show what would be imported")
+    .option("--delete-har", "delete the raw .har files after import (they hold secrets)")
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(
+      async (
+        session: string,
+        options: RunOption & { subject?: string; dryRun?: boolean; deleteHar?: boolean },
+      ) => {
+        const result = await importInbox(ctx(), {
+          run: options.run,
+          session,
+          subject: options.subject,
+          dry_run: options.dryRun,
+          delete_raw_har: options.deleteHar,
+        });
+        noteRun(io, result);
+        line(io, result.summary);
+        for (const item of result.items) {
+          const status =
+            item.status === "new"
+              ? (item.record ?? "new")
+              : item.status === "skipped"
+                ? `skipped: ${item.reason}`
+                : "already imported";
+          const subject = item.subject ? ` -> ${item.subject}` : "";
+          line(
+            io,
+            `  ${item.kind.padEnd(10)} ${item.confidence}  ${item.file}${subject}  [${status}]`,
+          );
+          if (item.status === "new") line(io, `             "${item.finding}"`);
+        }
+        for (const file of result.deleted) line(io, `Deleted raw HAR ${file}.`);
+        if (result.dry_run) line(io, "Dry run: nothing was imported.");
+        for (const warning of result.warnings) line(io, `Note: ${warning}`);
+      },
+    );
+
+  evidence
+    .command("rea")
+    .description("Store the saved result of a passive REA tool as evidence (optional REA bridge)")
+    .argument("<tool>", "inspect_web_network_capture, inspect_web_page or analyze_web_bundle")
+    .argument("<result-file>", "JSON or text file holding what the REA tool returned")
+    .requiredOption("--subject <node>", "node the finding is about")
+    .requiredOption("--source <where>", "what REA looked at: public url or capture file path")
+    .requiredOption("--finding <text>", "what the result shows")
+    .option("--confidence <label>", "observed, documented, inferred or unknown")
+    .option("--run <name>", "run name or folder (default: the most recently changed)")
+    .action(
+      async (
+        tool: string,
+        resultFile: string,
+        options: RunOption & {
+          subject: string;
+          source: string;
+          finding: string;
+          confidence?: string;
+        },
+      ) => {
+        const out = await recordReaResultFromFile(ctx(), { ...options, tool, file: resultFile });
+        noteRun(io, out);
+        line(
+          io,
+          `Recorded ${out.record.id} about ${out.record.subject} (${out.record.confidence}).`,
+        );
+        line(io, `Redacted REA result saved to ${out.file}.`);
+        for (const warning of out.warnings) line(io, `Note: ${warning}`);
+      },
+    );
 }
