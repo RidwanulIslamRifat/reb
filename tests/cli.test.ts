@@ -41,6 +41,7 @@ describe("reb CLI", () => {
       "log",
       "evidence",
       "kb",
+      "audit",
       "setup",
       "update",
       "doctor",
@@ -51,11 +52,11 @@ describe("reb CLI", () => {
     for (const { name } of PLANNED_COMMANDS) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b.*\\(not yet available\\)`, "m"));
     }
-    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["audit", "report", "dashboard"]);
+    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["report", "dashboard"]);
   });
 
   it("explains how to proceed when a planned command is used", async () => {
-    await expect(run("audit")).rejects.toThrow(RebError);
+    await expect(run("report")).rejects.toThrow(RebError);
   });
 });
 
@@ -220,5 +221,54 @@ describe("research tools from the CLI", () => {
         "local or private address",
       );
     }
+  });
+});
+
+describe("planner and auditor from the CLI", () => {
+  it("plan create, plan gate, audit and plan replan work together", async () => {
+    const home = join(await tempDir(), "runs");
+    await cli(
+      home,
+      "new",
+      "example.com",
+      "--category",
+      "b2b-saas",
+      "--reports",
+      "business,feature",
+    );
+    const created = await cli(home, "plan", "create");
+    expect(created).toContain("Created plan v1 from pipeline b2b-saas.");
+    expect(created).toMatch(/^1\. \[pending\] company .*\(desk_researcher\)$/m);
+    expect(created).toMatch(/\[pending\] pricing .*\(desk_researcher\) {2}after: company$/m);
+
+    const gate = await cli(home, "plan", "gate", "company");
+    expect(gate).toContain("[fail] at least 1 company node: found 0 company nodes, need 1");
+    expect(gate).toContain("Not done yet");
+    expect(await cli(home, "plan", "gate", "walkthrough")).toContain("[check yourself]");
+
+    const audit = await cli(home, "audit");
+    expect(audit).toMatch(/^Audit 1: \d+ gaps \(\d+ blocking/m);
+    expect(audit).toMatch(/^1\. \[blocking\] No company nodes/m);
+    expect(audit).toContain("Next: reb plan replan");
+    const [slug] = await readdir(home);
+    const file = join(home, slug!, "logs", "audits", "audit-1.md");
+    expect(audit).toContain(`Written to ${file}`);
+
+    const replan = await cli(home, "plan", "replan");
+    expect(replan).toMatch(/^Re-plan round 1 from audit 1: plan is now v2\.$/m);
+    expect(replan).toMatch(/- added task a1-company .*\(audit 1 item 1 \[blocking\]/);
+    const decisions = await readFile(join(home, slug!, "logs", "decisions.md"), "utf8");
+    expect(decisions).toContain("audit 1 item 1 [blocking]");
+  });
+
+  it("replan reads explicit changes from a file", async () => {
+    const home = join(await tempDir(), "runs");
+    await cli(home, "new", "example.com", "--category", "ai-tool", "--reports", "build");
+    await cli(home, "plan", "create");
+    await cli(home, "audit");
+    const file = join(home, "..", "changes.json");
+    await writeFile(file, JSON.stringify([{ op: "drop", gap: 1, task: "tech" }]));
+    const out = await cli(home, "plan", "replan", "--changes", file, "--audit", "1");
+    expect(out).toContain("- dropped task tech (audit 1 item 1");
   });
 });

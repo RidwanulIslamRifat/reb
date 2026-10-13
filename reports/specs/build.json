@@ -1,0 +1,55 @@
+{
+  "report": "build",
+  "title": "Build-it assessment",
+  "sections": [
+    {
+      "id": "scope",
+      "title": "Modules and features to build",
+      "needs": [
+        {
+          "type": "module",
+          "min": 2
+        },
+        {
+          "type": "feature",
+          "min": 5,
+          "evidence": true
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data model",
+      "needs": [
+        {
+          "type": "data_object",
+          "min": 3,
+          "evidence": true
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Integrations",
+      "needs": [
+        {
+          "type": "integration",
+          "min": 1,
+          "evidence": true,
+          "severity": "major"
+        }
+      ]
+    },
+    {
+      "id": "how",
+      "title": "How it is likely built",
+      "needs": [
+        {
+          "type": "hypothesis",
+          "min": 1,
+          "severity": "major"
+        }
+      ]
+    }
+  ]
+}

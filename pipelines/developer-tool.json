@@ -1,0 +1,181 @@
+{
+  "id": "developer-tool",
+  "title": "Developer tool",
+  "description": "A product for software developers: APIs, SDKs, CLIs, docs, usage-based or seat pricing, open-source alternatives.",
+  "focus": {
+    "after": ["features"],
+    "before": ["curate"]
+  },
+  "tasks": [
+    {
+      "id": "company",
+      "title": "Map the company, product and modules (API, SDKs, CLI, dashboard) from the home page and docs",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 1 company node",
+        "at least 1 product node",
+        "at least 2 module nodes",
+        "every product node has evidence"
+      ]
+    },
+    {
+      "id": "docs",
+      "title": "Read the public docs and API reference: what developers can build and with which SDKs",
+      "role": "desk_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 feature nodes",
+        "at least 2 integration nodes",
+        "every integration node has evidence"
+      ]
+    },
+    {
+      "id": "pricing",
+      "title": "Find the pricing tiers, free tier and usage limits",
+      "role": "desk_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 1 pricing_tier node", "every pricing_tier node has evidence"]
+    },
+    {
+      "id": "features",
+      "title": "List the features with evidence and link them to modules, tiers and SDKs",
+      "role": "feature_analyst",
+      "depends_on": ["docs", "pricing"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 5 feature nodes",
+        "every feature node has evidence",
+        "every feature node has a gated_by link"
+      ]
+    },
+    {
+      "id": "market",
+      "title": "Find competitors, including open-source alternatives, and the developer segments they target",
+      "role": "market_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 competitor nodes",
+        "at least 1 market_segment node",
+        "every competitor node has evidence"
+      ],
+      "reports": ["market", "business"]
+    },
+    {
+      "id": "tech",
+      "title": "Detect the tech stack from public pages and the docs site",
+      "role": "tech_observer",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/ledger.jsonl", "notes/tech_observer-stack.md"],
+      "done_when": ["at least 1 evidence record", "file notes/tech_observer-stack.md exists"],
+      "reports": ["build"]
+    },
+    {
+      "id": "walkthrough",
+      "title": "Prepare a checklist for the user's own session (sign up, first API call or install, a quickstart)",
+      "role": "walkthrough_coach",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/inbox/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "the user finished their own session in the product",
+        "what they saw is recorded as observed evidence"
+      ]
+    },
+    {
+      "id": "personas",
+      "title": "Describe developer and buyer personas and the path from first call to paid use",
+      "role": "business_analyst",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 persona nodes",
+        "at least 2 journey nodes",
+        "every journey node has a uses link"
+      ],
+      "reports": ["business", "feature"]
+    },
+    {
+      "id": "business-model",
+      "title": "Describe the business model: free tier, usage pricing, self-serve versus sales",
+      "role": "business_analyst",
+      "depends_on": ["pricing", "personas"],
+      "inputs": ["brief.md"],
+      "outputs": ["notes/business_analyst-model.md"],
+      "done_when": [
+        "file notes/business_analyst-model.md exists",
+        "the draft cites node ids or E-/S- ids for every claim"
+      ],
+      "reports": ["business"]
+    },
+    {
+      "id": "architecture",
+      "title": "Describe data objects, APIs and how it is likely built",
+      "role": "architect",
+      "depends_on": ["features", "tech"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "notes/architect-build.md"],
+      "done_when": [
+        "at least 3 data_object nodes",
+        "every data_object node has evidence",
+        "file notes/architect-build.md exists",
+        "at least 2 integration nodes"
+      ],
+      "reports": ["build"]
+    },
+    {
+      "id": "curate",
+      "title": "Clean the knowledge graph until validate_graph is clean",
+      "role": "kb_curator",
+      "depends_on": [
+        "company",
+        "docs",
+        "pricing",
+        "features",
+        "market",
+        "tech",
+        "walkthrough",
+        "personas",
+        "business-model",
+        "architecture"
+      ],
+      "inputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "outputs": ["kb/nodes/", "kb/graph.json", "kb/stats.json"],
+      "done_when": ["validate_graph is clean", "no two nodes hold the same fact"]
+    },
+    {
+      "id": "audit",
+      "title": "Audit the graph against the brief and the requested reports (run_audit)",
+      "role": "auditor",
+      "depends_on": ["curate"],
+      "inputs": ["brief.md", "kb/nodes/", "notes/"],
+      "outputs": ["logs/audits/"],
+      "done_when": ["the latest audit is acted on"]
+    },
+    {
+      "id": "report",
+      "title": "Write the {report} report",
+      "role": "report_writer",
+      "depends_on": ["audit"],
+      "inputs": ["kb/nodes/", "notes/", "logs/audits/"],
+      "outputs": ["reports/{report}.md"],
+      "done_when": [
+        "file reports/{report}.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "per_report": true
+    }
+  ]
+}
