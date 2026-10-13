@@ -29,7 +29,8 @@ Deliverables
 
 Follow-ups found in M1
 - [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
-      M3: kb, evidence; M4: setup, update, doctor, mcp; M5: evidence read-page, stack, har).
+      M3: kb, evidence; M4: setup, update, doctor, mcp; M5: evidence read-page, stack, har; M6: audit,
+      plan create, plan gate, plan replan).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -275,25 +276,65 @@ How the owner checks it
 Goal: reb builds a plan from the brief, checks each task, audits the result and re-plans with reasons.
 
 Deliverables
-- [ ] Pipeline templates: `b2b-saas`, `developer-tool`, `marketplace`, `consumer-app`, `ai-tool` (SPEC 8).
-- [ ] `create_plan`: picks a pipeline from `brief.category`, adapts it to requested reports and focus questions.
-- [ ] `check_gate`: evaluates code-checkable `done_when` rules (node counts, required links, evidence present)
+- [x] Pipeline templates: `b2b-saas`, `developer-tool`, `marketplace`, `consumer-app`, `ai-tool` (SPEC 8).
+- [x] `create_plan`: picks a pipeline from `brief.category`, adapts it to requested reports and focus questions.
+- [x] `check_gate`: evaluates code-checkable `done_when` rules (node counts, required links, evidence present)
       and returns the rest as a checklist.
-- [ ] Report specs (data only): for each report type, its sections and the node types each section needs.
+- [x] Report specs (data only): for each report type, its sections and the node types each section needs.
       Used by the auditor now and by the report templates in M9.
-- [ ] `run_audit`: compares graph and drafts with focus questions and report specs; writes
+- [x] `run_audit`: compares graph and drafts with focus questions and report specs; writes
       `logs/audits/audit-<N>.md` with numbered gaps, severity (blocking, major, minor) and a suggested task each.
-- [ ] `apply_replan`: add, split, reorder, drop tasks; versions the plan; one line per change in `decisions.md`
+- [x] `apply_replan`: add, split, reorder, drop tasks; versions the plan; one line per change in `decisions.md`
       citing the audit item.
-- [ ] Stop rule: no blocking gaps, or 3 re-plan rounds; remaining gaps become question nodes.
-- [ ] CLI: `reb plan create`, `reb plan gate <task>`, `reb audit`, `reb plan replan`.
-- [ ] Handbook updated: planner and auditor roles call these tools.
+- [x] Stop rule: no blocking gaps, or 3 re-plan rounds; remaining gaps become question nodes.
+- [x] CLI: `reb plan create`, `reb plan gate <task>`, `reb audit`, `reb plan replan`.
+- [x] Handbook updated: planner and auditor roles call these tools.
+
+Added in M6
+- [x] Pipeline task ids are short names (`company`, `pricing`, `features` ...). A task can be limited to some
+      reports, and the report task is copied once per requested report (`report-business`, `report-feature`).
+      When a task is left out, tasks that waited on it wait on its own dependencies instead.
+- [x] One task per focus question (`focus-1` ...), answered in `notes/focus-<n>.md`. reb guesses the role and
+      the node types from the question's words (for example "pricing" -> desk_researcher, pricing_tier).
+- [x] `done_when` rules code can check use fixed wording: "at least N <type> nodes", "every <type> node has
+      evidence", "every <type> node has a <link> link", "at least N sources", "validate_graph is clean",
+      "validate_graph has no <rule> problems", "file <path> exists", "the latest audit is acted on".
+      Anything else comes back from `check_gate` as a checklist item. `check_gate` never changes the plan.
+- [x] Audit gaps are grouped (one gap per node type and per validation rule) and listed most severe first.
+      Next to `audit-<N>.md`, reb writes `audit-<N>.json` (the same gaps as data, and which plan version
+      re-planned it), used to count re-plan rounds.
+- [x] `apply_replan` without changes adds the suggested task of every blocking and major gap. Every re-plan
+      round also adds a re-audit task (`audit-r<N>`) after the new tasks, and pending report tasks wait for it,
+      so the loop audits again before reports are written.
+- [x] Stop rule question nodes are named `question-audit-<N>-gap-<n>`, label unknown.
+- [x] Owner test fixes: re-plan does not add a task for a gap that a pending or running task already covers
+      (same node type, same focus-answer file, or the same validation clean-up); `decisions.md` says which task
+      covers it, and a re-plan that changes nothing is not counted as a round. `force` adds it anyway.
+- [x] One shared role table (`src/domain/nodeRoles.ts`) for pipelines, focus tasks and audit suggestions;
+      reading a pipeline fails when a task's role disagrees with it. Integrations now go to desk_researcher.
+- [x] `reb plan create` and `reb audit` warn when brief.md is still empty or has no focus questions.
+- [x] `reb plan replan` says which minor gaps are not turned into tasks.
+- [x] `reb plan show` on a run without a plan now points to `reb plan create`. `save_plan` stays for custom plans.
+
+Follow-ups found in M6
+- [ ] A task whose dependency is set to `dropped` with `reb plan set-status` never starts (only `apply_replan`'s
+      drop moves the waiting tasks on). For example, skipping the user's own session (walkthrough) stalls the
+      plan. Decide whether a dropped dependency should count as finished.
+- [ ] The audit counts nodes and evidence; it does not judge whether the content is good. Report drafts in
+      `reports/` are not checked yet (M9).
+- [ ] Focus-question hints work on English words only.
+- [ ] Question nodes made by the stop rule have no `about` link; the kb_curator adds them by hand.
 
 Files and folders
 - `pipelines/*.json` (5 files)
 - `src/domain/pipeline.ts`, `reportSpec.ts`, `audit.ts`
 - `reports/specs/*.json` (business, feature, market, build)
 - `src/workflows/createPlan.ts`, `gate.ts`, `audit.ts`, `replan.ts`
+- Also: `src/domain/gate.ts` (done_when rules), `replan.ts` (re-plan changes); `src/workflows/specs.ts`
+  (loads pipelines and report specs); `src/storage/packageFiles.ts`, `auditFiles.ts`;
+  `src/adapters/cli/commands/audit.ts`; handbook `SKILL.md`, `roles/planner.md`, `roles/auditor.md`
+- Tests: `tests/domain/pipeline.test.ts`, `gate.test.ts`, `tests/workflows/plannerAuditor.test.ts`
+  (fixture graphs are built in the test with `addNodes` in `tests/helpers.ts`)
 
 Tests
 - Each pipeline file is valid and has no dependency cycles.

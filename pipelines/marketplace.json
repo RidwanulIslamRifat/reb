@@ -1,0 +1,176 @@
+{
+  "id": "marketplace",
+  "title": "Marketplace",
+  "description": "A platform that matches two sides (buyers and sellers, hosts and guests): supply and demand journeys, trust and safety, take rate.",
+  "focus": {
+    "after": ["features"],
+    "before": ["curate"]
+  },
+  "tasks": [
+    {
+      "id": "company",
+      "title": "Map the company, product and modules (buyer side, seller side, payments, trust) from public pages",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 1 company node",
+        "at least 1 product node",
+        "at least 2 module nodes",
+        "every product node has evidence"
+      ]
+    },
+    {
+      "id": "sides",
+      "title": "Describe both sides of the marketplace: who supplies, who buys, and how they meet",
+      "role": "business_analyst",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 persona nodes",
+        "at least 2 market_segment nodes",
+        "every persona node has a belongs_to link"
+      ]
+    },
+    {
+      "id": "pricing",
+      "title": "Find the fees on each side: take rate, listing fees, subscriptions",
+      "role": "desk_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 1 pricing_tier node", "every pricing_tier node has evidence"]
+    },
+    {
+      "id": "features",
+      "title": "List the features for each side with evidence, including trust and safety",
+      "role": "feature_analyst",
+      "depends_on": ["sides", "pricing"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 5 feature nodes", "every feature node has evidence"]
+    },
+    {
+      "id": "market",
+      "title": "Find competing marketplaces and the segments each side comes from",
+      "role": "market_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 competitor nodes",
+        "at least 1 market_segment node",
+        "every competitor node has evidence"
+      ],
+      "reports": ["market", "business"]
+    },
+    {
+      "id": "tech",
+      "title": "Detect the tech stack from public pages",
+      "role": "tech_observer",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/ledger.jsonl", "notes/tech_observer-stack.md"],
+      "done_when": ["at least 1 evidence record", "file notes/tech_observer-stack.md exists"],
+      "reports": ["build"]
+    },
+    {
+      "id": "walkthrough",
+      "title": "Prepare a checklist for the user's own session as a buyer (search, compare, contact or book)",
+      "role": "walkthrough_coach",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/inbox/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "the user finished their own session in the product",
+        "what they saw is recorded as observed evidence"
+      ]
+    },
+    {
+      "id": "journeys",
+      "title": "Map the supply and demand journeys from first visit to completed transaction",
+      "role": "business_analyst",
+      "depends_on": ["sides", "features"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 journey nodes",
+        "every journey node has a uses link",
+        "every persona node has a does link"
+      ],
+      "reports": ["business", "feature"]
+    },
+    {
+      "id": "business-model",
+      "title": "Describe the business model: take rate, liquidity, who is charged and why",
+      "role": "business_analyst",
+      "depends_on": ["pricing", "journeys"],
+      "inputs": ["brief.md"],
+      "outputs": ["notes/business_analyst-model.md"],
+      "done_when": [
+        "file notes/business_analyst-model.md exists",
+        "the draft cites node ids or E-/S- ids for every claim"
+      ],
+      "reports": ["business"]
+    },
+    {
+      "id": "architecture",
+      "title": "Describe data objects (listings, orders, reviews, payouts) and how it is likely built",
+      "role": "architect",
+      "depends_on": ["features", "tech"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "notes/architect-build.md"],
+      "done_when": [
+        "at least 3 data_object nodes",
+        "every data_object node has evidence",
+        "file notes/architect-build.md exists"
+      ],
+      "reports": ["build"]
+    },
+    {
+      "id": "curate",
+      "title": "Clean the knowledge graph until validate_graph is clean",
+      "role": "kb_curator",
+      "depends_on": [
+        "company",
+        "sides",
+        "pricing",
+        "features",
+        "market",
+        "tech",
+        "walkthrough",
+        "journeys",
+        "business-model",
+        "architecture"
+      ],
+      "inputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "outputs": ["kb/nodes/", "kb/graph.json", "kb/stats.json"],
+      "done_when": ["validate_graph is clean", "no two nodes hold the same fact"]
+    },
+    {
+      "id": "audit",
+      "title": "Audit the graph against the brief and the requested reports (run_audit)",
+      "role": "auditor",
+      "depends_on": ["curate"],
+      "inputs": ["brief.md", "kb/nodes/", "notes/"],
+      "outputs": ["logs/audits/"],
+      "done_when": ["the latest audit is acted on"]
+    },
+    {
+      "id": "report",
+      "title": "Write the {report} report",
+      "role": "report_writer",
+      "depends_on": ["audit"],
+      "inputs": ["kb/nodes/", "notes/", "logs/audits/"],
+      "outputs": ["reports/{report}.md"],
+      "done_when": [
+        "file reports/{report}.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "per_report": true
+    }
+  ]
+}

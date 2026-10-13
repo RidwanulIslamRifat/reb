@@ -1,0 +1,70 @@
+{
+  "report": "feature",
+  "title": "Feature report",
+  "sections": [
+    {
+      "id": "product",
+      "title": "Product and modules",
+      "needs": [
+        {
+          "type": "product",
+          "min": 1,
+          "evidence": true
+        },
+        {
+          "type": "module",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "title": "Features",
+      "needs": [
+        {
+          "type": "feature",
+          "min": 5,
+          "evidence": true
+        }
+      ]
+    },
+    {
+      "id": "journeys",
+      "title": "Key journeys",
+      "needs": [
+        {
+          "type": "journey",
+          "min": 2
+        },
+        {
+          "type": "persona",
+          "min": 1,
+          "severity": "major"
+        }
+      ]
+    },
+    {
+      "id": "plans",
+      "title": "What each plan includes",
+      "needs": [
+        {
+          "type": "pricing_tier",
+          "min": 1,
+          "evidence": true
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Integrations",
+      "needs": [
+        {
+          "type": "integration",
+          "min": 1,
+          "evidence": true,
+          "severity": "major"
+        }
+      ]
+    }
+  ]
+}

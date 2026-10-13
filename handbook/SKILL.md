@@ -35,28 +35,40 @@ If a step would need any of this, stop and give the human a checklist to do it t
 2. Call `list_runs`. If a run for this product exists and the user wants to continue, use it.
    Otherwise call `create_run` with the domain and what you know. Remember the returned `run` and
    pass it to every later tool call.
-3. Run the planner role (see "Doing a task") to write the first plan with `save_plan`.
-4. Work the plan (next section) until no task can start.
-5. Run the auditor role. If it finds blocking gaps, the planner adds tasks with `save_plan`
-   (the reason cites the audit item) and you continue. Stop after 3 audit rounds; remaining gaps
-   become `question` nodes.
-6. Run the report_writer role for each requested report, then tell the user where the reports are
-   and the most important open questions.
+3. Run the planner role (see "Doing a task"): it checks the brief's category, reports and focus
+   questions, then calls `create_plan`. reb builds the plan from a pipeline template in code.
+4. Work the plan (next section). The plan itself contains an `audit` task and, per requested
+   report, a report task, so the loop below audits, re-plans and writes the reports in order.
+5. When `next_task` returns no task and nothing is running or waiting for the user, tell the user
+   where the reports are (`reports/<type>.md`) and the most important open questions.
 
-## Working the plan
+## Working the plan: the loop
 
-Repeat:
+Repeat until `next_task` returns no task:
 
 1. `next_task` returns the next runnable task with its role, inputs, outputs, `done_when` and
-   `role_prompt` (the role's instructions). If it returns no task, go to step 5 above.
+   `role_prompt` (the role's instructions).
 2. `update_task_status` to `running`.
 3. Do the task (below).
-4. Check every `done_when` item yourself. Then `update_task_status` to `done`, or to
-   `needs_human` (waiting for the user's hands-on session), or `blocked` with a reason.
+4. `check_gate` for the task. It checks the `done_when` rules code can check (node counts,
+   required links, evidence present, files, a clean graph) and returns the rest as a checklist.
+   - `passed` is true and every checklist item holds: `update_task_status` to `done`.
+   - Something fails: keep working on the task (or hand it back to its role) and check again.
+     If it cannot pass, set it `blocked` with the reason.
+   - The task waits for the user's own session: set it `needs_human`.
+5. When the task is an auditor task (`audit`, or a re-audit `audit-r<N>` added by a re-plan):
+   - the auditor calls `run_audit`, which writes `logs/audits/audit-<N>.md` with numbered gaps;
+   - if the audit says `stop` is false, the planner calls `apply_replan`: reb adds the suggested
+     tasks, a re-audit task after them, and makes the report tasks wait for it;
+   - then `check_gate` passes for the auditor task, set it done and go back to step 1.
+
+So the loop is: next_task -> do the task -> check_gate -> ... -> run_audit -> apply_replan ->
+next_task ... Stop rule: no blocking gaps, or 3 re-plan rounds. Then the remaining gaps become
+`question` nodes and the report tasks can start.
 
 When a task is `needs_human`, give the user the checklist from the walkthrough_coach, then carry on
-with other tasks. When the user says they are done, import what they saw as evidence and mark the
-task `done`.
+with other tasks. When the user says they are done, import what they saw as evidence, run
+`check_gate` and mark the task `done`.
 
 ## Doing a task
 
@@ -67,6 +79,9 @@ sub-agent. Give it:
 - the run name, the task (id, title, inputs, outputs, done_when),
 - the rule that it may only use the reb tools listed in the role's `tools`, plus your web search
   to find public pages (pages are read with `read_public_page`).
+
+Write each output at exactly the path the task lists (for example `notes/focus-1.md` for a focus
+question, `notes/architect-build.md`): `check_gate` looks for those files.
 
 Independent tasks (no `depends_on` between them) may run in parallel; reb assigns evidence ids
 safely. If sub-agents are not available, do the task yourself following the role prompt.

@@ -96,3 +96,42 @@ export async function fakeWeb() {
   };
   return { web, requests, sleeps };
 }
+
+/**
+ * Adds `count` nodes of a type to a run, each backed by one documented evidence record
+ * (unless `evidence` is false). Returns the node ids. Used to build thin and complete graphs.
+ */
+export async function addNodes(
+  ctx: Context,
+  run: string,
+  type: string,
+  count: number,
+  options: { evidence?: boolean; prefix?: string } = {},
+): Promise<string[]> {
+  const { upsertNode } = await import("../src/workflows/graph.js");
+  const { recordEvidence, recordSource } = await import("../src/workflows/evidence.js");
+  const ids: string[] = [];
+  for (let i = 1; i <= count; i++) {
+    const name = `${options.prefix ?? "Sample"} ${type.replace(/_/g, " ")} ${String.fromCharCode(96 + i)}`;
+    const { node } = await upsertNode(ctx, { run, type, name, label: "documented" });
+    ids.push(node.meta.id);
+    if (options.evidence === false) continue;
+    const source = await recordSource(ctx, {
+      run,
+      url: `https://example.com/${node.meta.id}`,
+      title: `Page about ${name}`,
+      published: "2026-09-01",
+      content: `text about ${name}`,
+    });
+    await recordEvidence(ctx, {
+      run,
+      role: "desk_researcher",
+      subject: node.meta.id,
+      operation: "read public page",
+      source: source.record.id,
+      finding: `The site describes ${name}.`,
+      confidence: "documented",
+    });
+  }
+  return ids;
+}

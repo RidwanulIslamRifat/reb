@@ -147,3 +147,16 @@ export async function openRunFolder(
   }
   return { slug: isPath ? basename(paths.dir) : slugOrPath, paths };
 }
+
+/**
+ * Of the given run-folder paths (relative, already checked to stay inside the folder),
+ * those that exist and are not empty.
+ */
+export async function existingRunFiles(paths: RunPaths, relative: string[]): Promise<Set<string>> {
+  const found = new Set<string>();
+  for (const rel of relative) {
+    const text = await readTextIfExists(join(paths.dir, ...rel.split("/"))).catch(() => null);
+    if (text !== null && text.trim() !== "") found.add(rel);
+  }
+  return found;
+}

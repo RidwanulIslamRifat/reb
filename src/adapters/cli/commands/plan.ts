@@ -1,7 +1,10 @@
 import type { Command } from "commander";
 import type { Plan, Task } from "../../../domain/plan.js";
 import { createContext } from "../../../workflows/context.js";
+import { createPlan } from "../../../workflows/createPlan.js";
+import { checkGate } from "../../../workflows/gate.js";
 import { getPlan, nextTask, savePlanFromFile, updateTaskStatus } from "../../../workflows/plan.js";
+import { applyReplan, applyReplanFromFile } from "../../../workflows/replan.js";
 import { line, noteRun, type CliIo } from "../output.js";
 
 type RunOption = { run?: string };
@@ -21,8 +24,22 @@ function printPlan(io: CliIo, plan: Plan): void {
 }
 
 export function registerPlan(program: Command, io: CliIo): void {
-  const plan = program.command("plan").description("Show and update the analysis plan");
+  const plan = program.command("plan").description("Make, show and update the analysis plan");
+  registerPlanGate(plan, io);
   const ctx = () => createContext("cli", io.env);
+
+  plan
+    .command("create")
+    .description("Make the first plan from the brief's category, reports and focus questions")
+    .option("--run <name>", "run to use (default: the most recently changed)")
+    .action(async (options: RunOption) => {
+      const result = await createPlan(ctx(), options);
+      noteRun(io, result);
+      for (const w of result.warnings) line(io, `Warning: ${w}`);
+      line(io, `Created plan v${result.plan.version} from pipeline ${result.plan.pipeline}.`);
+      printPlan(io, result.plan);
+      line(io, 'Next: "reb plan next" shows the first task to do.');
+    });
 
   plan
     .command("show")
@@ -35,7 +52,7 @@ export function registerPlan(program: Command, io: CliIo): void {
       else
         line(
           io,
-          `Run ${result.slug} has no plan yet. Save one with: reb plan save <file.json> --reason "<why>"`,
+          `Run ${result.slug} has no plan yet. Make one from the brief with: reb plan create`,
         );
     });
 
@@ -82,5 +99,56 @@ export function registerPlan(program: Command, io: CliIo): void {
       const result = await savePlanFromFile(ctx(), { ...options, file });
       noteRun(io, result);
       line(io, `Saved plan v${result.plan.version} with ${result.plan.tasks.length} tasks.`);
+    });
+}
+
+export function registerPlanGate(plan: Command, io: CliIo): void {
+  const ctx = () => createContext("cli", io.env);
+
+  plan
+    .command("gate")
+    .description("Check a task's done_when rules")
+    .argument("<task>", "task id")
+    .option("--run <name>", "run to use (default: the most recently changed)")
+    .action(async (task: string, options: RunOption) => {
+      const result = await checkGate(ctx(), { ...options, task });
+      noteRun(io, result);
+      line(io, `Gate for ${task}: ${result.task.title}`);
+      for (const c of result.checks) line(io, `  [${c.status}] ${c.rule}: ${c.detail}`);
+      for (const item of result.checklist) line(io, `  [check yourself] ${item}`);
+      line(
+        io,
+        result.passed
+          ? result.checklist.length
+            ? "Every rule reb can check passes. Confirm the items marked [check yourself], then set the task done."
+            : `Every rule passes. Set the task done: reb plan set-status ${task} done`
+          : "Not done yet: fix the rules marked [fail] first.",
+      );
+    });
+
+  plan
+    .command("replan")
+    .description(
+      "Change the plan after the latest audit (default: add a task for each blocking and major gap)",
+    )
+    .option("--audit <n>", "audit number (default: the latest)")
+    .option("--changes <file>", "JSON file with a list of changes (add, split, reorder, drop)")
+    .option("--run <name>", "run to use (default: the most recently changed)")
+    .action(async (options: RunOption & { audit?: string; changes?: string }) => {
+      const audit = options.audit === undefined ? undefined : Number(options.audit);
+      const input = { run: options.run, audit };
+      const result = options.changes
+        ? await applyReplanFromFile(ctx(), { ...input, file: options.changes })
+        : await applyReplan(ctx(), input);
+      noteRun(io, result);
+      line(
+        io,
+        result.changed
+          ? `Re-plan round ${result.round} from audit ${result.audit.number}: plan is now v${result.plan.version}.`
+          : `No new tasks from audit ${result.audit.number}: every gap is covered by a task already in the plan. Plan stays v${result.plan.version}.`,
+      );
+      for (const d of result.decisions) line(io, `- ${d.change} (${d.reason})`);
+      if (result.minor_note) line(io, result.minor_note);
+      line(io, "Each change is written to logs/decisions.md.");
     });
 }

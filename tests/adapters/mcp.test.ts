@@ -42,17 +42,13 @@ const SPEC_TOOLS = [
   "log_role_work",
 ];
 const LATER = [
-  "create_plan",
-  "check_gate",
-  "run_audit",
-  "apply_replan",
   "make_test_plan",
   "make_test_dataset",
   "import_inbox",
   "render_report",
   "open_dashboard",
 ];
-/** Used until create_plan (M6) exists: the agent's planner writes the plan with it. */
+/** Not in SPEC 9: lets the planner save a whole hand-written plan (create_plan covers the usual case). */
 const EXTRA = ["save_plan"];
 
 async function connect(home: string) {
@@ -166,6 +162,34 @@ describe("MCP server", () => {
       await readFile(join(cliHome, cliRun.slug, "plan", "plan.json"), "utf8"),
     );
     expect(mcpPlan).toEqual(cliPlan);
+  });
+
+  it("runs the planner and auditor loop: create_plan, next_task, check_gate, run_audit, apply_replan", async () => {
+    const { call } = await connect(join(await tempDir(), "runs"));
+    const run = (
+      await call("create_run", {
+        domain: "example.com",
+        category: "marketplace",
+        reports: ["feature"],
+      })
+    ).data.slug as string;
+    expect((await call("create_plan", { run })).data.plan.pipeline).toBe("marketplace");
+    const next = await call("next_task", { run });
+    expect(next.data.task.id).toBe("company");
+    const gate = await call("check_gate", { run, task: "company" });
+    expect(gate.data.passed).toBe(false);
+    expect(gate.data.checks[0]).toMatchObject({ status: "fail" });
+    const audit = await call("run_audit", { run });
+    expect(audit.data.audit).toMatchObject({ number: 1, stop: false });
+    expect(audit.data.file).toMatch(/audit-1\.md$/);
+    const replan = await call("apply_replan", {
+      run,
+      changes: [{ op: "add", gap: 1, force: true, task: { title: "Map the company first" } }],
+    });
+    expect(replan.data.plan.version).toBe(2);
+    expect(replan.data.decisions[0].reason).toMatch(/^audit 1 item 1 \[blocking\]/);
+    const bad = await call("apply_replan", { run, changes: [{ op: "move", gap: 1 }] });
+    expect(bad.isError).toBe(true);
   });
 
   it("returns reb errors as tool errors with Problem and Fix, and rejects invalid input", async () => {

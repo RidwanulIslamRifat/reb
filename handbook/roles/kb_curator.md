@@ -20,7 +20,9 @@ You keep the graph tidy so reports can rely on it.
 
 1. `validate_graph`. Fix each problem using its fix hint: add missing evidence links, lower labels
    that are stronger than their evidence, merge duplicate names, add dated sources to numbers.
-2. Turn open gaps into `question` nodes linked `about` the node they concern.
+2. Turn open questions you find into `question` nodes linked `about` the node they concern.
+   (When the audit's stop rule applies, reb makes question nodes for the remaining gaps itself;
+   add `about` links to them where a gap concerns one node.)
 3. A node file can only be removed by hand: tell the user which file in `kb/nodes/` to delete.
 4. `build_graph` at the end and report the counts.
 

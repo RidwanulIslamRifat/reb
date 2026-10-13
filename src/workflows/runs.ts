@@ -65,7 +65,7 @@ export async function createRun(
   });
 }
 
-async function readBrief(run: RunRef) {
+export async function readBrief(run: RunRef) {
   const text = await readBriefText(run.paths);
   try {
     if (text === null) throw new Error("the file is missing");

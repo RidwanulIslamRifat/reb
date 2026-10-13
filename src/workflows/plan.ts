@@ -16,7 +16,7 @@ import { getRoleFile } from "./handbook.js";
 import { appendDecision, logged, type RunRef } from "./logging.js";
 import { resolveRun, type ResolvedRun } from "./runs.js";
 
-async function readCurrentPlan(run: RunRef): Promise<{ plan: Plan; text: string } | null> {
+export async function readCurrentPlan(run: RunRef): Promise<{ plan: Plan; text: string } | null> {
   const text = await readPlanText(run.paths);
   if (text === null) return null;
   let data: unknown;
@@ -31,7 +31,7 @@ async function readCurrentPlan(run: RunRef): Promise<{ plan: Plan; text: string 
   return { plan: parsePlan(data, run.paths.plan), text };
 }
 
-async function requirePlan(run: RunRef) {
+export async function requirePlan(run: RunRef) {
   const current = await readCurrentPlan(run);
   if (!current) {
     throw new RebError(
@@ -45,14 +45,14 @@ async function requirePlan(run: RunRef) {
 /**
  * Writes `next` as the new current plan, one version above the old one.
  * The old plan.json is copied unchanged to plan/history first; nothing is edited in place (SPEC 6.1).
+ * Each change gets its own line in logs/decisions.md. Call it under the plan lock.
  */
-async function storeNewVersion(
+export async function storeNewVersion(
   ctx: Context,
   run: RunRef,
   previous: { plan: Plan; text: string } | null,
   next: Omit<Plan, "version">,
-  change: string,
-  reason: string,
+  decisions: Array<{ change: string; reason: string }>,
 ): Promise<Plan> {
   const version = (previous?.plan.version ?? 0) + 1;
   const plan = parsePlan({ ...next, version }, "the new plan");
@@ -61,7 +61,7 @@ async function storeNewVersion(
     previous && { version: previous.plan.version, text: previous.text },
     JSON.stringify(plan, null, 2) + "\n",
   );
-  await appendDecision(ctx, run.paths, version, change, reason);
+  for (const d of decisions) await appendDecision(ctx, run.paths, version, d.change, d.reason);
   return plan;
 }
 
@@ -115,14 +115,9 @@ export async function savePlan(
           ...draft.data,
           tasks: draft.data.tasks.map((t) => ({ ...t, added_in: t.added_in ?? version })),
         };
-        const plan = await storeNewVersion(
-          ctx,
-          run,
-          previous,
-          next,
-          `plan saved with ${next.tasks.length} tasks`,
-          reason,
-        );
+        const plan = await storeNewVersion(ctx, run, previous, next, [
+          { change: `plan saved with ${next.tasks.length} tasks`, reason },
+        ]);
         return { ...run, plan };
       });
     },
@@ -185,14 +180,9 @@ async function changeStatus(
     ...previous.plan,
     tasks: previous.plan.tasks.map((t) => (t.id === task.id ? { ...t, status } : t)),
   };
-  const plan = await storeNewVersion(
-    ctx,
-    run,
-    previous,
-    next,
-    `task ${task.id}: ${task.status} -> ${status}`,
-    reason,
-  );
+  const plan = await storeNewVersion(ctx, run, previous, next, [
+    { change: `task ${task.id}: ${task.status} -> ${status}`, reason },
+  ]);
   return { ...run, plan, task: findTask(plan, task.id), changed: true };
 }
 

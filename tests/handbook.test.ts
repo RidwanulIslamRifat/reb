@@ -31,7 +31,7 @@ describe("handbook", () => {
       // Tools named in the prose as `tool_name` must exist too.
       for (const [, name] of file.body.matchAll(/`([a-z]+_[a-z_]+)`/g)) {
         if (
-          /^(needs_human|plan_tier|role_prompt|done_when|depends_on|data_object|pricing_tier|market_segment|gated_by|also_offers|belongs_to|reads_writes|connects_to)$/.test(
+          /^(needs_human|plan_tier|role_prompt|done_when|depends_on|data_object|pricing_tier|market_segment|gated_by|also_offers|belongs_to|reads_writes|connects_to|focus_questions)$/.test(
             name!,
           )
         )

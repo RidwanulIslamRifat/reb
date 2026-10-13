@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { Command } from "commander";
 import { RebError } from "../../domain/errors.js";
+import { registerAudit } from "./commands/audit.js";
 import { registerEvidence } from "./commands/evidence.js";
 import { registerKb } from "./commands/kb.js";
 import { registerList } from "./commands/list.js";
@@ -17,7 +18,6 @@ export const VERSION = version;
 
 /** Commands from SPEC 3 and ROADMAP that are not built yet. Each milestone removes the ones it adds. */
 export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string }> = [
-  { name: "audit", description: "Check the analysis for gaps" },
   { name: "report", description: "Render the requested reports" },
   { name: "dashboard", description: "Open the local read-only dashboard" },
 ];
@@ -33,6 +33,7 @@ export function buildProgram(io: CliIo = defaultIo): Command {
   registerLog(program, io);
   registerEvidence(program, io);
   registerKb(program, io);
+  registerAudit(program, io);
   registerSetup(program, io);
 
   for (const { name, description } of PLANNED_COMMANDS) {
