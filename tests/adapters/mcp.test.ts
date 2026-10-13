@@ -46,9 +46,6 @@ const LATER = [
   "check_gate",
   "run_audit",
   "apply_replan",
-  "read_public_page",
-  "detect_tech_stack",
-  "summarize_har",
   "make_test_plan",
   "make_test_dataset",
   "import_inbox",
@@ -179,5 +176,18 @@ describe("MCP server", () => {
     const invalid = await call("upsert_node", { type: "nonsense", name: "x", label: "observed" });
     expect(invalid.isError).toBe(true);
     expect(invalid.text).toMatch(/Input validation error/);
+  });
+
+  it("offers the M5 research tools: HAR summary without secrets, and safe page refusals", async () => {
+    const home = join(await tempDir(), "runs");
+    const { call } = await connect(home);
+    const har = await call("summarize_har", { file: "tests/fixtures/har/sample.har" });
+    expect(har.data.summary.requests).toBe(15);
+    expect(har.text).not.toContain("FAKE-SECRET");
+    const run = (await call("create_run", { domain: "example.com" })).data.slug as string;
+    // Refused before any network request: a private address is never read.
+    const refused = await call("read_public_page", { run, url: "http://localhost:3000/" });
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toMatch(/^Problem: localhost is a local or private address/);
   });
 });

@@ -1,7 +1,8 @@
-import { cp, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach } from "vitest";
+import type { Web } from "../src/sources/web.js";
 import type { Context } from "../src/workflows/context.js";
 
 const made: string[] = [];
@@ -51,3 +52,47 @@ export const testHost = {
   cliPath: "/opt/reb/dist/cli.js",
   platform: "linux" as NodeJS.Platform,
 };
+
+/**
+ * A fake web that serves tests/fixtures/pages/site.json, so tests never touch the real internet.
+ * `requests` lists every address asked for, in order; unknown addresses fail like a network error.
+ */
+export async function fakeWeb() {
+  const dir = join("tests", "fixtures", "pages");
+  const site = JSON.parse(await readFile(join(dir, "site.json"), "utf8")) as {
+    responses: Record<
+      string,
+      {
+        status: number;
+        headers: Record<string, string>;
+        cookies?: string[];
+        file?: string;
+        body?: string;
+      }
+    >;
+  };
+  const requests: string[] = [];
+  const sleeps: number[] = [];
+  const web: Web = {
+    sleep: async (ms) => {
+      sleeps.push(ms);
+    },
+    fetch: async (url) => {
+      requests.push(url);
+      const r = site.responses[url];
+      if (!r) throw new Error(`fake network: nothing at ${url}`);
+      const body = r.file
+        ? new Uint8Array(await readFile(join(dir, r.file)))
+        : new TextEncoder().encode(r.body ?? "");
+      return {
+        url,
+        status: r.status,
+        headers: r.headers,
+        cookieNames: r.cookies ?? [],
+        body,
+        truncated: false,
+      };
+    },
+  };
+  return { web, requests, sleeps };
+}

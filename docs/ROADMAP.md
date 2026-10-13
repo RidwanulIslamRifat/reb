@@ -29,7 +29,7 @@ Deliverables
 
 Follow-ups found in M1
 - [~] Replace placeholder commands with real ones as each milestone lands (M2: new, plan; added list, log;
-      M3: kb, evidence; M4: setup, update, doctor, mcp).
+      M3: kb, evidence; M4: setup, update, doctor, mcp; M5: evidence read-page, stack, har).
 - [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
@@ -212,19 +212,47 @@ How the owner checks it
 Goal: reb can read public pages, guess the tech stack and summarise a HAR file, safely.
 
 Deliverables
-- [ ] `read_public_page`: one public URL per call; obey robots.txt; no login, no forms, no crawling;
+- [x] `read_public_page`: one public URL per call; obey robots.txt; no login, no forms, no crawling;
       returns readable text and records a source (S-NNN) with `content_sha256`.
-- [ ] `detect_tech_stack`: from one public page's HTML and response headers, using a small signature list in the repo.
-- [ ] `summarize_har`: group requests by endpoint pattern, detect polling and streaming, strip cookies,
+- [x] `detect_tech_stack`: from one public page's HTML and response headers, using a small signature list in the repo.
+- [x] `summarize_har`: group requests by endpoint pattern, detect polling and streaming, strip cookies,
       auth headers, tokens and API keys before anything is written to disk.
-- [ ] CLI equivalents: `reb evidence read-page <url>`, `reb evidence stack <url>`, `reb evidence har <file>`.
-- [ ] Clear refusals: "robots.txt disallows this page", "this page needs a login", "file is not a HAR".
+- [x] CLI equivalents: `reb evidence read-page <url>`, `reb evidence stack <url>`, `reb evidence har <file>`.
+- [x] Clear refusals: "robots.txt disallows this page", "this page needs a login", "file is not a HAR".
+
+Added in M5
+- [x] Desk researcher and market researcher role prompts rewritten with an ordered source checklist each
+      (SPEC 9 Sources); tech observer uses `detect_tech_stack` and `summarize_har`.
+- [x] SKILL.md and the evidence protocol tell agents to read pages with `read_public_page` and never open a
+      refused page with another tool.
+- [x] Politeness (decision 12): user agent `reb/<version>`, robots.txt checked again on every redirect,
+      1 second between reads of the same site, a warning from 100 sources in a run.
+- [x] Also refused: private and local addresses (localhost, 10.x, 192.168.x ...), addresses with a password
+      in them, PDFs and other files that are not web pages, 401/403 answers and redirects to /login.
+- [x] Pages with little text get a limitation saying they probably need JavaScript and a screenshot (decision 11).
+- [x] `detect_tech_stack` records the page as a source too, so its findings can be cited.
+- [x] `summarize_har` works without a run (then nothing is logged); with a run it logs only the file name.
+- [x] No new dependency: the HTML-to-text reader and robots.txt parser are small hand-written files.
+
+Follow-ups found in M5
+- [ ] reb reads the web with Node's built-in fetch, which ignores proxy settings. Users behind a company proxy
+      cannot read pages yet; add proxy support if an owner needs it.
+- [ ] The private-address check looks at the address as typed; a public name that points to a private
+      address is not caught. Low risk on a personal computer; revisit before any shared use.
+- [ ] Login detection is a rule of thumb (a password field on a short page). A public sign-up page is
+      refused as a login page; a login page with lots of text could slip through.
+- [ ] The 100-page warning counts all sources in the run, including ones recorded by hand.
+- [ ] A HAR summary is not saved to disk; M7 `import_inbox` will save the redacted summary as evidence.
+- [ ] Asset file names with a hash (for example `app.4f9c2b.js`) show as `:id` in HAR summaries.
+- [ ] Live pages are never used in tests; the owner check below is the only real-internet check.
 
 Files and folders
-- `src/sources/publicPage.ts`, `robots.ts`, `techStack.ts`, `techSignatures.json`, `har.ts`
-- `src/workflows/research.ts`
+- `src/sources/web.ts`, `publicPage.ts`, `robots.ts`, `techStack.ts`, `techSignatures.json`, `har.ts`
+- `src/workflows/research.ts`; `appendSource` shared with `record_source` in `src/workflows/evidence.ts`
+- `src/adapters/mcp/tools/research.ts`; CLI commands in `src/adapters/cli/commands/evidence.ts`
+- `handbook/roles/desk_researcher.md`, `market_researcher.md`, `tech_observer.md`
 - `tests/fixtures/har/` (synthetic HAR files only, with fake secrets planted for the redaction tests)
-- `tests/fixtures/pages/` (saved sample HTML; tests never hit the real internet)
+- `tests/fixtures/pages/` (saved sample HTML and a `site.json` fake site; tests never hit the real internet)
 
 Tests
 - robots.txt allow and disallow cases.
@@ -236,6 +264,10 @@ How the owner checks it
 1. `node dist/cli.js evidence har tests/fixtures/har/sample.har`
 2. You should see a short table of endpoint patterns with counts, and the word `[REDACTED]` where the fake
    token was. Searching the output for `FAKE-SECRET` should find nothing.
+3. Optional, real internet: `REB_HOME=./tmp-runs node dist/cli.js new example.com`, then
+   `REB_HOME=./tmp-runs node dist/cli.js evidence read-page https://example.com/` prints
+   "Recorded S-001" and the page text; `... evidence stack https://example.com/` lists tools found.
+   Delete `tmp-runs` when done.
 
 ---
 

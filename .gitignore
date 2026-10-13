@@ -11,6 +11,8 @@ coverage/
 runs/
 tmp-runs/
 *.har
+# Synthetic HAR fixtures (fake secrets only) are the one exception
+!tests/fixtures/har/*.har
 
 # Editors and OS
 .DS_Store

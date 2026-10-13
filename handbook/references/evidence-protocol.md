@@ -6,6 +6,7 @@ The ledger is append-only: records are never edited or deleted.
 ## Two kinds of record
 
 **Source (S-NNN)**: something that was read. Record it with `record_source` before citing it.
+`read_public_page` and `detect_tech_stack` record the page they read for you and return its id.
 
 - `url`, `title`, `publisher` (if known), `published` (date like 2026-09-01, 2026-09 or 2026, if known).
 - `content`: the text you read (reb stores only its sha256 hash), or `content_sha256` if you have it.
