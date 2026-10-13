@@ -17,15 +17,19 @@ under 2 minutes.
 Goal: an empty but correctly shaped project that builds, tests, lints and runs a `reb` command.
 
 Deliverables
-- [ ] TypeScript project on Node.js 22+, ES modules, MIT license (SPEC 13).
-- [ ] Package name `@rifat/reb` in `package.json`, with the command name `reb`.
-- [ ] Folder layout for every layer in SPEC 4, each with a short README saying what belongs there.
-- [ ] Lint rule that blocks imports pointing the wrong way between layers (for example domain importing storage).
-- [ ] `reb` CLI entry point with `--help` and `--version`, listing the planned commands
+- [x] TypeScript project on Node.js 22+, ES modules, MIT license (SPEC 13).
+- [x] Package name `@rifat/reb` in `package.json`, with the command name `reb`.
+- [x] Folder layout for every layer in SPEC 4, each with a short README saying what belongs there.
+- [x] Lint rule that blocks imports pointing the wrong way between layers (for example domain importing storage).
+- [x] `reb` CLI entry point with `--help` and `--version`, listing the planned commands
       (`new, plan, kb, evidence, audit, report, dashboard, doctor, update, setup, mcp`) as "not yet available".
-- [ ] Shared error type that always carries "what went wrong" and "how to fix it" (SPEC 14).
-- [ ] GitHub Actions workflow: install, lint, test, build on every pull request.
-- [ ] `.gitignore` that excludes runs, HAR files, `.env`, `dist/`, `node_modules/`.
+- [x] Shared error type that always carries "what went wrong" and "how to fix it" (SPEC 14).
+- [x] GitHub Actions workflow: install, lint, test, build on every pull request.
+- [x] `.gitignore` that excludes runs, HAR files, `.env`, `dist/`, `node_modules/`.
+
+Follow-ups found in M1
+- [ ] Replace placeholder commands with real ones as each milestone lands (M2 onwards).
+- [ ] TypeScript is pinned to 6.0 because typescript-eslint does not yet support TypeScript 7; upgrade when it does.
 
 Files and folders
 - `package.json`, `package-lock.json`, `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `vitest.config.ts`
