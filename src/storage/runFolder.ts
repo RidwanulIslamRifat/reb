@@ -49,6 +49,8 @@ export function runPaths(dir: string) {
     imports: (session: string) => join(dir, "evidence", "imports", session),
     rea: join(dir, "evidence", "rea"),
     notes: join(dir, "notes"),
+    reports: join(dir, "reports"),
+    report: (name: string) => join(dir, "reports", name),
   };
 }
 export type RunPaths = ReturnType<typeof runPaths>;

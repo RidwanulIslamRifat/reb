@@ -1,8 +1,8 @@
 import type { ReportType } from "../domain/brief.js";
 import { RebError } from "../domain/errors.js";
 import { CATEGORIES, CategorySchema, parsePipeline, type Pipeline } from "../domain/pipeline.js";
-import { parseReportSpec, type ReportSpec } from "../domain/reportSpec.js";
-import { readPipelineText, readReportSpecText } from "../storage/packageFiles.js";
+import { parseReportTemplate, type ReportTemplate } from "../domain/reportSpec.js";
+import { readPipelineText, readReportTemplateText } from "../storage/packageFiles.js";
 
 function parseJson(text: string, where: string): unknown {
   try {
@@ -31,16 +31,21 @@ export async function loadPipeline(category: string): Promise<Pipeline> {
   return parsePipeline(parseJson(text, where), where);
 }
 
-/** The report specs (ROADMAP decision 17) of the given report types, in that order. */
-export async function loadReportSpecs(reports: readonly ReportType[]): Promise<ReportSpec[]> {
+/**
+ * The report templates (SPEC 11) of the given report types, in that order. Their front matter is
+ * the report spec: the sections and the node types each one needs (used by run_audit too).
+ */
+export async function loadReportTemplates(
+  reports: readonly ReportType[],
+): Promise<ReportTemplate[]> {
   return Promise.all(
     reports.map(async (report) => {
-      const where = `reports/specs/${report}.json`;
-      const text = await readReportSpecText(report);
+      const where = `reports/templates/${report}.md`;
+      const text = await readReportTemplateText(report);
       if (text === null) {
         throw new RebError(`The file ${where} is missing from this copy of reb.`, "Reinstall reb.");
       }
-      return parseReportSpec(parseJson(text, where), where);
+      return parseReportTemplate(text, where);
     }),
   );
 }

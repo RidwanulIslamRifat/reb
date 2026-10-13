@@ -18,6 +18,10 @@ Small, fake sample files used by tests. Never put real HAR files, real run folde
   `network.har` with fake secrets (all containing `FAKE-SECRET`) in headers, cookies, query strings, a path and
   bodies. The M7 tests import copies of it and prove no fake secret is stored. Owner checks that write into it
   (`logs/`, `notes/`, a ledger or imports) leave files that git ignores. M9 extends it for reports.
+- `report-sample/`: a made-up Acme Notes run complete enough to render all four reports (M9): 28 nodes covering
+  every node type, an evidence ledger with 7 sources and 21 evidence records (one a correction), and a report
+  writer's draft `notes/report-feature.md`. `node dist/cli.js report feature --docx --run tests/fixtures/report-sample`
+  writes into its `reports/` folder, which git ignores. Competitor names are fictional.
 - `dashboard-sample/`: a fuller made-up Acme Notes run for the dashboard (M8), built with reb's own workflows:
   a plan with 11 versions, 20 nodes, an evidence ledger with one correction, logs (events, decisions, role notes,
   one audit) and a sample `reports/feature.md`. Its `logs/` folder is kept in git on purpose. The dashboard only

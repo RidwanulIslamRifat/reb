@@ -32,3 +32,5 @@ tests/fixtures/run-sample/evidence/rea/
 tests/fixtures/run-sample/notes/
 # The dashboard sample run keeps its logs: they are part of what the dashboard shows
 !tests/fixtures/dashboard-sample/logs/
+# Written when the owner renders reports from the report sample run
+tests/fixtures/report-sample/reports/

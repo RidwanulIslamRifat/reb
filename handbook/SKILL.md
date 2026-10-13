@@ -117,7 +117,8 @@ Each has a prompt file in `roles/<role>.md` with its allowed reb tools; `next_ta
 
 The run folder (default `~/reb/runs/<product>-<date>/`) holds `brief.md`, `plan/`, `kb/nodes/`,
 `evidence/ledger.jsonl`, `notes/`, `reports/` and `logs/`. Drafts go in `notes/<role>-<topic>.md`;
-reports in `reports/<type>.md`. Every reb tool call is logged in `logs/events.jsonl` automatically.
+the report_writer's report drafts in `notes/report-<type>.md`, which `render_report` turns into
+`reports/<type>.md` (and `.docx` when asked). Every reb tool call is logged in `logs/events.jsonl` automatically.
 
 ## Showing the user their analysis
 

@@ -76,7 +76,7 @@ const strongest = (list: Severity[]) => list.reduce((a, b) => (rank(b) < rank(a)
 export interface AuditInput {
   number: number;
   brief: Brief;
-  /** Specs of the requested reports only. */
+  /** Specs (template front matter) of the requested reports only. */
   specs: ReportSpec[];
   nodes: NodeMeta[];
   records: LedgerRecord[];

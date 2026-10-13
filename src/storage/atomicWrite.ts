@@ -6,7 +6,7 @@ import { basename, dirname, join } from "node:path";
  * Writes a whole file safely: first to a temporary file next to it, then renames it into place.
  * A crash leaves either the old file or the new one, never half a file.
  */
-export async function writeFileAtomic(path: string, data: string): Promise<void> {
+export async function writeFileAtomic(path: string, data: string | Uint8Array): Promise<void> {
   const temp = join(dirname(path), `.${basename(path)}.${randomBytes(6).toString("hex")}.tmp`);
   try {
     const handle = await open(temp, "wx");

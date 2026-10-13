@@ -9,6 +9,7 @@ import { registerList } from "./commands/list.js";
 import { registerLog } from "./commands/log.js";
 import { registerNew } from "./commands/new.js";
 import { registerPlan } from "./commands/plan.js";
+import { registerReport } from "./commands/report.js";
 import { registerSetup } from "./commands/setup.js";
 import { defaultIo, type CliIo } from "./output.js";
 
@@ -18,9 +19,7 @@ const { version } = require("../../../package.json") as { version: string };
 export const VERSION = version;
 
 /** Commands from SPEC 3 and ROADMAP that are not built yet. Each milestone removes the ones it adds. */
-export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string }> = [
-  { name: "report", description: "Render the requested reports" },
-];
+export const PLANNED_COMMANDS: ReadonlyArray<{ name: string; description: string }> = [];
 
 export function buildProgram(io: CliIo = defaultIo): Command {
   const program = new Command("reb")
@@ -34,6 +33,7 @@ export function buildProgram(io: CliIo = defaultIo): Command {
   registerEvidence(program, io);
   registerKb(program, io);
   registerAudit(program, io);
+  registerReport(program, io);
   registerDashboard(program, io);
   registerSetup(program, io);
 

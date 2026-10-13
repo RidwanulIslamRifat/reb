@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildProgram, PLANNED_COMMANDS } from "../src/adapters/cli/program.js";
 import { RebError } from "../src/domain/errors.js";
-import { samplePlan, sampleRun, tempDir } from "./helpers.js";
+import { reportSampleRun, samplePlan, sampleRun, tempDir } from "./helpers.js";
 
 // Runs the CLI in-process with REB_HOME set to `home` and returns what it printed.
 async function cli(home: string, ...args: string[]): Promise<string> {
@@ -53,11 +53,8 @@ describe("reb CLI", () => {
     for (const { name } of PLANNED_COMMANDS) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b.*\\(not yet available\\)`, "m"));
     }
-    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["report"]);
-  });
-
-  it("explains how to proceed when a planned command is used", async () => {
-    await expect(run("report")).rejects.toThrow(RebError);
+    expect(PLANNED_COMMANDS).toEqual([]);
+    expect(help).toMatch(/^\s+report\b/m);
   });
 });
 
@@ -345,5 +342,18 @@ describe("hands-on tools from the CLI", () => {
     await expect(
       cli("unused", "evidence", "rea", "browser_navigate", file, ...args, "--finding", "x"),
     ).rejects.toThrow("never used");
+  });
+
+  it("report writes the Markdown and, with --docx, the Word copy", async () => {
+    const dir = await reportSampleRun();
+    const output = await cli("unused", "report", "feature", "--docx", "--run", dir);
+    expect(output).toMatch(
+      /The feature report has 5 sections, \d+ cited ids, 4 sources and 1 open question\./,
+    );
+    expect(output).toContain(join(dir, "reports", "feature.md"));
+    expect(output).toContain(join(dir, "reports", "feature.docx"));
+    await expect(cli("unused", "report", "summary", "--run", dir)).rejects.toThrow(
+      '"summary" is not a report type',
+    );
   });
 });

@@ -9,6 +9,7 @@ import { graphTools } from "./tools/graph.js";
 import { handsOnTools } from "./tools/handsOn.js";
 import { logTools } from "./tools/logs.js";
 import { planTools } from "./tools/plan.js";
+import { reportTools } from "./tools/reports.js";
 import { researchTools } from "./tools/research.js";
 import { runTools } from "./tools/runs.js";
 
@@ -20,6 +21,7 @@ export const TOOLS: readonly ToolDef[] = [
   ...graphTools,
   ...researchTools,
   ...handsOnTools,
+  ...reportTools,
   ...dashboardTools,
   ...logTools,
 ];
