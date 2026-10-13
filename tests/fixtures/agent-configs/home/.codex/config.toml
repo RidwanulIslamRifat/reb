@@ -1,0 +1,9 @@
+# Codex settings written by the user
+model = "gpt-5"
+
+[mcp_servers.other]
+command = "other-tool"
+args = ["serve"]
+
+[mcp_servers.other.env]
+TOKEN_FILE = "~/.other/token"

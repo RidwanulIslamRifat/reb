@@ -12,6 +12,7 @@ import {
 import { readTextIfExists } from "../storage/jsonl.js";
 import { readPlanText, withPlanLock, writePlanVersion } from "../storage/planFiles.js";
 import type { Context } from "./context.js";
+import { getRoleFile } from "./handbook.js";
 import { appendDecision, logged, type RunRef } from "./logging.js";
 import { resolveRun, type ResolvedRun } from "./runs.js";
 
@@ -128,12 +129,23 @@ export async function savePlan(
   );
 }
 
-/** next_task: the first pending task whose dependencies are all done, or null. */
+/**
+ * next_task: the first pending task whose dependencies are all done, or null.
+ * With the task comes its role's prompt from the handbook (SPEC 7), so an agent can hand it to a sub-agent.
+ */
 export async function nextTask(ctx: Context, input: { run?: string } = {}) {
   const run = await resolveRun(ctx, input.run);
   return logged(ctx, "next_task", run, {}, async () => {
     const { plan } = await requirePlan(run);
-    return { ...run, plan, task: nextRunnableTask(plan) };
+    const task = nextRunnableTask(plan);
+    const role = task ? await getRoleFile(task.role) : null;
+    return {
+      ...run,
+      plan,
+      task,
+      role_prompt: role?.body.trim() ?? null,
+      role_tools: role?.tools ?? null,
+    };
   });
 }
 

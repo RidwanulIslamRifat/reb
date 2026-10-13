@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach } from "vitest";
@@ -36,4 +36,18 @@ export const samplePlan = {
     { id: "t2", title: "Map the features", role: "feature_analyst", depends_on: ["t1"] },
     { id: "t3", title: "Size the market", role: "market_researcher" },
   ],
+};
+
+/** A copy of tests/fixtures/agent-configs/home: a fake home folder with every agent's config. */
+export async function fakeHome(): Promise<string> {
+  const home = join(await tempDir(), "home");
+  await cp(join("tests", "fixtures", "agent-configs", "home"), home, { recursive: true });
+  return home;
+}
+
+/** Host facts for setup tests: a local reb copy that agents start with node. */
+export const testHost = {
+  execPath: "/usr/local/bin/node",
+  cliPath: "/opt/reb/dist/cli.js",
+  platform: "linux" as NodeJS.Platform,
 };
