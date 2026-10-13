@@ -12,6 +12,7 @@ export function registerAudit(program: Command, io: CliIo): void {
     .action(async (options: { run?: string }) => {
       const result = await runAudit(createContext("cli", io.env), options);
       noteRun(io, result);
+      for (const w of result.warnings) line(io, `Warning: ${w}`);
       const { audit } = result;
       const c = countBySeverity(audit.gaps);
       line(

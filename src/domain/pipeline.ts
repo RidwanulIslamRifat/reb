@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { ReportTypeSchema, type Brief, type ReportType } from "./brief.js";
 import { RebError } from "./errors.js";
+import { parseGateRule } from "./gate.js";
 import type { NodeType } from "./links.js";
+import { ROLE_FOR_TYPE } from "./nodeRoles.js";
 import { describeIssues, RoleSchema, type Role, type Task } from "./plan.js";
 
 /** Product categories with a pipeline in pipelines/<category>.json (SPEC 8). */
@@ -60,6 +62,16 @@ export const PipelineSchema = z
     for (const id of [...p.focus.after, ...p.focus.before]) {
       if (!ids.has(id)) ctx.addIssue({ code: "custom", message: `focus names unknown "${id}"` });
     }
+    for (const t of p.tasks) {
+      const types = producedTypes(t.done_when);
+      if (types.length && !types.some((type) => ROLE_FOR_TYPE[type] === t.role)) {
+        const expected = [...new Set(types.map((type) => ROLE_FOR_TYPE[type]))].join(" or ");
+        ctx.addIssue({
+          code: "custom",
+          message: `Task "${t.id}" makes ${types.join(", ")} nodes, so its role should be ${expected} (the shared role table), not ${t.role}`,
+        });
+      }
+    }
     const cycle = findCycle(p.tasks);
     if (cycle) ctx.addIssue({ code: "custom", message: `Dependency cycle: ${cycle.join(" -> ")}` });
   });
@@ -74,6 +86,18 @@ export function parsePipeline(data: unknown, where: string): Pipeline {
     );
   }
   return result.data;
+}
+
+/**
+ * Node types a task makes, read from its done_when rules ("at least N <type> nodes",
+ * "every <type> node has evidence"). Used to check roles and to see what a task covers.
+ */
+export function producedTypes(doneWhen: string[]): NodeType[] {
+  const types = doneWhen.flatMap((d) => {
+    const rule = parseGateRule(d);
+    return rule?.kind === "node_count" || rule?.kind === "nodes_have_evidence" ? [rule.type] : [];
+  });
+  return [...new Set(types)];
 }
 
 /** The first dependency cycle found, as a list of ids that starts and ends with the same id. */
@@ -102,41 +126,34 @@ export function findCycle(tasks: Array<{ id: string; depends_on: string[] }>): s
 }
 
 /** Words in a focus question that point at the node types and role that answer it. */
-const FOCUS_HINTS: Array<{ words: RegExp; types: NodeType[]; role: Role }> = [
+const FOCUS_HINTS: Array<{ words: RegExp; types: NodeType[] }> = [
   {
     words: /\b(price|prices|pricing|plan|plans|tier|tiers|cost|costs|pay|paid)\b/i,
     types: ["pricing_tier"],
-    role: "desk_researcher",
   },
   {
     words: /\b(competitor|competitors|compete|competes|alternative|alternatives|rival|rivals)\b/i,
     types: ["competitor"],
-    role: "market_researcher",
   },
   {
     words: /\b(market|markets|segment|segments|industry|industries)\b/i,
     types: ["market_segment"],
-    role: "market_researcher",
   },
   {
     words: /\b(buyer|buyers|customer|customers|user|users|persona|personas|who)\b/i,
     types: ["persona"],
-    role: "business_analyst",
   },
   {
     words: /\b(integration|integrations|integrate|integrates|api|apis|connect|connects)\b/i,
     types: ["integration"],
-    role: "architect",
   },
   {
     words: /\b(build|built|stack|architecture|data|database|tech|technology)\b/i,
     types: ["data_object"],
-    role: "architect",
   },
   {
     words: /\b(feature|features|workflow|workflows|journey|journeys|onboarding)\b/i,
     types: ["feature"],
-    role: "feature_analyst",
   },
 ];
 
@@ -145,7 +162,7 @@ export function focusHint(question: string): { types: NodeType[]; role: Role } {
   const hits = FOCUS_HINTS.filter((h) => h.words.test(question));
   return {
     types: [...new Set(hits.flatMap((h) => h.types))],
-    role: hits[0]?.role ?? "business_analyst",
+    role: hits[0] ? ROLE_FOR_TYPE[hits[0].types[0]!] : "business_analyst",
   };
 }
 

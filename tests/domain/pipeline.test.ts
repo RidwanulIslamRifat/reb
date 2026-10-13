@@ -9,8 +9,10 @@ import {
   focusHint,
   parsePipeline,
   PipelineSchema,
+  producedTypes,
   type Pipeline,
 } from "../../src/domain/pipeline.js";
+import { ROLE_FOR_TYPE } from "../../src/domain/nodeRoles.js";
 import { PlanSchema } from "../../src/domain/plan.js";
 import { parseReportSpec } from "../../src/domain/reportSpec.js";
 import { REPORT_TYPES } from "../../src/domain/brief.js";
@@ -57,6 +59,38 @@ describe("pipeline files", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("gives each task the role the shared role table names for the nodes it makes", async () => {
+    for (const id of CATEGORIES) {
+      for (const t of (await pipeline(id)).tasks) {
+        const types = producedTypes(t.done_when);
+        if (types.length === 0) continue;
+        expect(
+          types.map((type) => ROLE_FOR_TYPE[type]),
+          `${id}/${t.id} (${t.role})`,
+        ).toContain(t.role);
+      }
+    }
+  });
+
+  it("refuses a pipeline task whose role disagrees with the shared role table", () => {
+    const result = PipelineSchema.safeParse({
+      id: "b2b-saas",
+      title: "x",
+      description: "x",
+      focus: { after: [], before: [] },
+      tasks: [
+        {
+          id: "integrations",
+          title: "Find integrations",
+          role: "architect",
+          done_when: ["at least 1 integration node"],
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error!.issues[0]!.message).toMatch(/role should be desk_researcher/);
   });
 
   it("has a valid report spec for every report type", async () => {
@@ -161,7 +195,7 @@ describe("adaptPipeline", () => {
   it("guesses node types and a role from the words of a focus question", () => {
     expect(focusHint("Which integrations does it offer?")).toEqual({
       types: ["integration"],
-      role: "architect",
+      role: "desk_researcher",
     });
     expect(focusHint("Why do people like it?").role).toBe("business_analyst");
   });

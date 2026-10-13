@@ -106,7 +106,8 @@ export const planTools = [
     name: "apply_replan",
     description:
       "Change the plan after the latest audit. Without changes, adds the suggested task of every blocking and major " +
-      "gap. Or pass changes: add (a gap's suggested task, fields in task override it), split (a task into smaller " +
+      "gap that no pending or running task already covers (covered gaps are logged, not duplicated; minor gaps are " +
+      "never turned into tasks). Or pass changes: add (a gap's suggested task, fields in task override it), split (a task into smaller " +
       "ones), reorder (new depends_on) or drop; each cites the gap number. Makes a new plan version, adds a re-audit " +
       "task, and writes one line per change to logs/decisions.md citing the audit item. Refused after 3 rounds.",
     input: {

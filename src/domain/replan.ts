@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { MAX_REPLAN_ROUNDS, type AuditRecord, type Gap } from "./audit.js";
 import { RebError } from "./errors.js";
-import { findCycle } from "./pipeline.js";
+import { parseGateRule } from "./gate.js";
+import { findCycle, producedTypes } from "./pipeline.js";
 import { RoleSchema, type Plan, type Task } from "./plan.js";
 
 const TaskPartSchema = z.object({
@@ -16,13 +17,23 @@ const TaskPartSchema = z.object({
 
 /**
  * One re-plan change (SPEC 8). Every change cites the audit gap (`gap`, its number) it answers.
- * - add: adds the gap's suggested task; fields in `task` replace the suggested ones.
+ * - add: adds the gap's suggested task; fields in `task` replace the suggested ones. When a pending
+ *   or running task already covers the gap (it makes the same node type, writes the same file, or
+ *   cleans the same validation problems), nothing is added unless `force` is set.
  * - split: replaces a task with smaller ones; tasks that waited on it wait on all of them.
  * - reorder: gives a task new dependencies.
  * - drop: marks a task dropped; tasks that waited on it wait on its dependencies instead.
  */
 export const ReplanChangeSchema = z.discriminatedUnion("op", [
-  z.object({ op: z.literal("add"), gap: z.number().int().min(1), task: TaskPartSchema.optional() }),
+  z.object({
+    op: z.literal("add"),
+    gap: z.number().int().min(1),
+    task: TaskPartSchema.optional(),
+    force: z
+      .boolean()
+      .optional()
+      .describe("Add the task even when a pending or running task already covers the gap."),
+  }),
   z.object({
     op: z.literal("split"),
     gap: z.number().int().min(1),
@@ -51,10 +62,51 @@ export function defaultChanges(audit: AuditRecord): ReplanChange[] {
 /** Id of the re-audit task a re-plan round adds. */
 export const reauditIdFor = (round: number) => `audit-r${round}`;
 
+/**
+ * The pending or running task that already covers a gap, or null: a task that makes the gap's node
+ * type, writes its focus-answer file, or cleans its validation problems.
+ */
+export function coveringTask(gap: Gap, tasks: Task[]): Task | null {
+  const open = tasks.filter((t) => t.status === "pending" || t.status === "running");
+  const wanted = gap.suggested_task.done_when.map(parseGateRule);
+  const covers = (t: Task): boolean => {
+    const rules = t.done_when.map(parseGateRule);
+    switch (gap.kind) {
+      case "report_need":
+      case "evidence": {
+        const types = producedTypes(gap.suggested_task.done_when);
+        return producedTypes(t.done_when).some((type) => types.includes(type));
+      }
+      case "focus_question": {
+        const files = wanted.flatMap((r) => (r?.kind === "file_exists" ? [r.path] : []));
+        return files.some(
+          (f) =>
+            t.outputs.includes(f) || rules.some((r) => r?.kind === "file_exists" && r.path === f),
+        );
+      }
+      case "validation": {
+        const rule = wanted.find((r) => r?.kind === "graph_clean");
+        return rules.some(
+          (r) =>
+            r?.kind === "graph_clean" &&
+            (!r.rule || (rule?.kind === "graph_clean" && r.rule === rule.rule)),
+        );
+      }
+    }
+  };
+  return open.find(covers) ?? null;
+}
+
 export interface ReplanResult {
   tasks: Task[];
   /** One line per change for logs/decisions.md. */
   decisions: Array<{ change: string; reason: string }>;
+  /** False when every gap was already covered and the plan stays as it is. */
+  changed: boolean;
+  /** Gaps an existing task already covers, with that task's id. */
+  covered: Array<{ gap: number; task: string }>;
+  /** Minor gaps no change cites: they stay in the audit and are not turned into tasks. */
+  minorNotAdded: number[];
 }
 
 /**
@@ -78,6 +130,8 @@ export function applyReplanChanges(
   let tasks: Task[] = plan.tasks.map((t) => ({ ...t, depends_on: [...t.depends_on] }));
   const decisions: ReplanResult["decisions"] = [];
   const added: string[] = [];
+  const covered: ReplanResult["covered"] = [];
+  let changed = false;
 
   const gapOf = (n: number): Gap => {
     const gap = audit.gaps.find((g) => g.n === n);
@@ -141,6 +195,16 @@ export function applyReplanChanges(
     const gap = gapOf(change.gap);
     switch (change.op) {
       case "add": {
+        const existing = change.force ? null : coveringTask(gap, tasks);
+        if (existing) {
+          covered.push({ gap: gap.n, task: existing.id });
+          decisions.push({
+            change: `no new task: gap ${gap.n} is covered by existing task ${existing.id} "${existing.title}" (${existing.status})`,
+            reason: cite(gap),
+          });
+          break;
+        }
+        changed = true;
         const task = newTask(change.task ?? {}, gap.suggested_task, gap);
         tasks.push(task);
         added.push(task.id);
@@ -152,6 +216,7 @@ export function applyReplanChanges(
       }
       case "split": {
         const old = changeable(change.task);
+        changed = true;
         const parts = change.into.map((part) =>
           newTask(part, { role: old.role, depends_on: old.depends_on, inputs: old.inputs }, gap),
         );
@@ -179,6 +244,7 @@ export function applyReplanChanges(
       }
       case "reorder": {
         const task = changeable(change.task);
+        changed = true;
         for (const d of change.depends_on) find(d);
         task.depends_on = [...new Set(change.depends_on)];
         decisions.push({
@@ -189,6 +255,7 @@ export function applyReplanChanges(
       }
       case "drop": {
         const old = changeable(change.task);
+        changed = true;
         tasks = tasks.map((t) =>
           t.id === old.id
             ? { ...t, status: "dropped" as const }
@@ -207,7 +274,12 @@ export function applyReplanChanges(
     }
   }
 
-  if (added.length) {
+  // Re-audit after the new tasks (and the existing tasks that cover gaps), unless an auditor task
+  // is still to come anyway. A running auditor task is the audit being acted on now.
+  const covering = [...new Set(covered.map((c) => c.task))];
+  const auditPending = tasks.some((t) => t.role === "auditor" && t.status === "pending");
+  if (added.length || (covering.length && !auditPending)) {
+    changed = true;
     const id = freshId(reauditIdFor(round));
     for (const t of tasks) {
       if (t.role === "report_writer" && t.status === "pending") t.depends_on.push(id);
@@ -216,7 +288,7 @@ export function applyReplanChanges(
       id,
       title: `Audit again after re-plan round ${round}`,
       role: "auditor",
-      depends_on: added,
+      depends_on: [...new Set([...added, ...covering])],
       inputs: [`logs/audits/audit-${audit.number}.md`],
       outputs: [`logs/audits/audit-${audit.number + 1}.md`],
       done_when: ["the latest audit is acted on"],
@@ -237,5 +309,9 @@ export function applyReplanChanges(
       "Change the depends_on lists so no task waits on itself.",
     );
   }
-  return { tasks, decisions };
+  const cited = new Set(changes.map((c) => c.gap));
+  const minorNotAdded = audit.gaps
+    .filter((g) => g.severity === "minor" && !cited.has(g.n))
+    .map((g) => g.n);
+  return { tasks, decisions, changed, covered, minorNotAdded };
 }

@@ -2,6 +2,8 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RebError } from "../../src/domain/errors.js";
+import { ROLE_FOR_TYPE } from "../../src/domain/nodeRoles.js";
+import { producedTypes } from "../../src/domain/pipeline.js";
 import { runAudit } from "../../src/workflows/audit.js";
 import { createPlan } from "../../src/workflows/createPlan.js";
 import { checkGate } from "../../src/workflows/gate.js";
@@ -22,6 +24,20 @@ async function setup(input: Partial<RunInput> = {}) {
     ...input,
   });
   return { ctx, run, slug: run.slug };
+}
+
+/**
+ * Marks every research and analysis task done (as if the agent did them), so the audit that
+ * follows sees work that is finished rather than still to come. Auditor and report tasks stay.
+ */
+async function finishResearch(ctx: Awaited<ReturnType<typeof setup>>["ctx"], slug: string) {
+  const plan = (await getPlan(ctx, { run: slug })).plan!;
+  const tasks = plan.tasks.map((t) =>
+    t.role === "auditor" || t.role === "report_writer" || t.status === "dropped"
+      ? t
+      : { ...t, status: "done" as const },
+  );
+  await savePlan(ctx, { run: slug, plan: { ...plan, tasks }, reason: "test: research done" });
 }
 
 /** Every node type the feature report spec needs, at its minimum, with evidence. */
@@ -171,6 +187,7 @@ describe("audit and re-plan when nodes are missing", () => {
     await addNodes(ctx, slug, "persona", 1);
     await addNodes(ctx, slug, "integration", 1);
     await addNodes(ctx, slug, "competitor", 1);
+    await finishResearch(ctx, slug);
 
     const { audit } = await runAudit(ctx, { run: slug });
     const byType = Object.fromEntries(audit.gaps.map((g) => [g.suggested_task.id, g]));
@@ -285,6 +302,8 @@ describe("audit and re-plan when nodes are missing", () => {
     await expect(
       applyReplan(ctx, { run: slug, changes: [{ op: "drop", gap: 1, task: "nope" }] }),
     ).rejects.toThrow(/no task "nope"/);
+    await finishResearch(ctx, slug);
+    await runAudit(ctx, { run: slug });
     await applyReplan(ctx, { run: slug });
     await expect(applyReplan(ctx, { run: slug })).rejects.toThrow(/already re-planned/);
   });
@@ -293,6 +312,8 @@ describe("audit and re-plan when nodes are missing", () => {
     const { ctx, slug, run } = await setup();
     await createPlan(ctx, { run: slug });
     for (let round = 1; round <= 3; round++) {
+      // The agent works every task but finds nothing, so the same gaps come back.
+      await finishResearch(ctx, slug);
       const { audit } = await runAudit(ctx, { run: slug });
       expect(audit).toMatchObject({ number: round, stop: false, rounds_before: round - 1 });
       expect((await applyReplan(ctx, { run: slug })).round).toBe(round);
@@ -312,6 +333,88 @@ describe("audit and re-plan when nodes are missing", () => {
       /Remaining gaps became question nodes: question-audit-4-gap-1/,
     );
     expect((await checkGate(ctx, { run: slug, task: "audit-r3" })).passed).toBe(true);
+  });
+
+  it("adds no task on a fresh plan: every gap is covered by a pipeline task still to do", async () => {
+    const { ctx, run, slug } = await setup({
+      reports: ["business", "feature"],
+      focus_questions: ["What does it cost?"],
+    });
+    const before = (await createPlan(ctx, { run: slug })).plan;
+    const { audit } = await runAudit(ctx, { run: slug });
+    const coveredBy = (id: string) => audit.gaps.find((g) => g.suggested_task.id === id)!.n;
+
+    const result = await applyReplan(ctx, { run: slug });
+    expect(result.changed).toBe(false);
+    expect(result.plan.version).toBe(before.version);
+    expect(result.plan.tasks.map((t) => t.id)).toEqual(before.tasks.map((t) => t.id));
+    expect(await readdir(run.paths.history)).toEqual([]);
+    expect(result.covered).toEqual(
+      expect.arrayContaining([
+        { gap: coveredBy("a1-company"), task: "company" },
+        { gap: coveredBy("a1-pricing-tier"), task: "pricing" },
+        { gap: coveredBy("a1-feature"), task: "features" },
+        { gap: coveredBy("a1-integration"), task: "integrations" },
+        { gap: coveredBy("a1-focus-1"), task: "focus-1" },
+      ]),
+    );
+    const decisions = await readFile(run.paths.decisions, "utf8");
+    expect(decisions).toMatch(
+      /plan v1 \| no new task: gap \d+ is covered by existing task pricing "Find the pricing tiers.*" \(pending\) \| reason: audit 1 item \d+ \[blocking\]: No pricing_tier nodes/,
+    );
+    // Nothing changed, so it is not a re-plan round, and the audit counts as acted on.
+    expect((await runAudit(ctx, { run: slug })).audit.rounds_before).toBe(0);
+  });
+
+  it("adds tasks only for the gaps no pending or running task covers", async () => {
+    const { ctx, slug } = await setup();
+    const { plan } = await createPlan(ctx, { run: slug });
+    // The first research task is done but found nothing; pricing is under way.
+    const tasks = plan.tasks.map((t) =>
+      t.id === "company"
+        ? { ...t, status: "done" as const }
+        : t.id === "pricing"
+          ? { ...t, status: "running" as const }
+          : t,
+    );
+    await savePlan(ctx, { run: slug, plan: { ...plan, tasks }, reason: "test: company done" });
+    await runAudit(ctx, { run: slug });
+    const result = await applyReplan(ctx, { run: slug });
+    const added = result.plan.tasks.filter((t) => t.added_in === result.plan.version);
+    expect(added.map((t) => t.id)).toEqual(["a1-product", "a1-module", "audit-r1"]);
+    expect(result.covered.map((c) => c.task)).toEqual(
+      expect.arrayContaining(["pricing", "features", "personas", "integrations"]),
+    );
+    expect(result.covered.map((c) => c.task)).not.toContain("company");
+    // The re-audit also waits for the existing tasks that cover gaps.
+    expect(result.plan.tasks.find((t) => t.id === "audit-r1")!.depends_on).toEqual(
+      expect.arrayContaining(["a1-product", "a1-module", "pricing", "features"]),
+    );
+  });
+
+  it("says minor gaps are not turned into tasks", async () => {
+    const { ctx, slug } = await setup({ reports: ["business"] });
+    await createPlan(ctx, { run: slug });
+    await finishResearch(ctx, slug);
+    const { audit } = await runAudit(ctx, { run: slug });
+    const minor = audit.gaps.filter((g) => g.severity === "minor").map((g) => g.n);
+    expect(minor.length).toBeGreaterThan(0);
+    const result = await applyReplan(ctx, { run: slug });
+    expect(result.minor_not_added).toEqual(minor);
+    expect(result.minor_note).toMatch(/not turned into tasks/);
+    expect(result.plan.tasks.some((t) => t.id === "a1-hypothesis")).toBe(false);
+  });
+
+  it("adds a covered task anyway with force", async () => {
+    const { ctx, slug } = await setup({ reports: ["business"] });
+    await createPlan(ctx, { run: slug });
+    const { audit } = await runAudit(ctx, { run: slug });
+    const gap = audit.gaps.find((g) => g.suggested_task.id === "a1-company")!.n;
+    const { plan } = await applyReplan(ctx, {
+      run: slug,
+      changes: [{ op: "add", gap, force: true }],
+    });
+    expect(plan.tasks.map((t) => t.id)).toContain("a1-company");
   });
 
   it("treats a written focus answer as a draft the audit can see", async () => {
@@ -334,5 +437,38 @@ describe("audit and re-plan when nodes are missing", () => {
     await runAudit(ctx, { run: slug });
     const { plan } = await applyReplan(ctx, { run: slug });
     expect(plan.tasks.at(-1)!.id).toBe("audit-r1");
+  });
+});
+
+describe("one role table for pipelines and the audit", () => {
+  it("suggests the same role for a gap as the pipeline task that makes those nodes", async () => {
+    const { ctx, slug } = await setup({ reports: ["feature", "build"] });
+    const { plan } = await createPlan(ctx, { run: slug });
+    await finishResearch(ctx, slug);
+    const { audit } = await runAudit(ctx, { run: slug });
+    const integration = audit.gaps.find((g) => g.suggested_task.id === "a1-integration")!;
+    expect(integration.suggested_task.role).toBe("desk_researcher");
+    expect(plan.tasks.find((t) => t.id === "integrations")!.role).toBe("desk_researcher");
+    // Every node-type gap goes to the role in the shared table, the same one the pipelines use.
+    for (const gap of audit.gaps.filter((g) => g.kind === "report_need")) {
+      const [type] = producedTypes(gap.suggested_task.done_when);
+      expect(gap.suggested_task.role, gap.suggested_task.id).toBe(ROLE_FOR_TYPE[type!]);
+    }
+  });
+});
+
+describe("brief warnings", () => {
+  it("warns about an empty brief, then about missing focus questions", async () => {
+    const empty = await setup();
+    expect((await createPlan(empty.ctx, { run: empty.slug })).warnings[0]).toMatch(
+      /brief.md is still empty/,
+    );
+    expect((await runAudit(empty.ctx, { run: empty.slug })).warnings[0]).toMatch(/still empty/);
+    const some = await setup({ plan_tier: "Free trial" });
+    expect((await createPlan(some.ctx, { run: some.slug })).warnings).toEqual([
+      expect.stringMatching(/has no focus questions/),
+    ]);
+    const full = await setup({ focus_questions: ["Who buys it?"] });
+    expect((await createPlan(full.ctx, { run: full.slug })).warnings).toEqual([]);
   });
 });

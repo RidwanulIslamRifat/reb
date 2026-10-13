@@ -1,3 +1,4 @@
+import { briefWarnings } from "../domain/brief.js";
 import { RebError } from "../domain/errors.js";
 import { adaptPipeline } from "../domain/pipeline.js";
 import { withPlanLock } from "../storage/planFiles.js";
@@ -15,7 +16,7 @@ import { loadPipeline } from "./specs.js";
 export async function createPlan(ctx: Context, input: { run?: string } = {}) {
   const run = await resolveRun(ctx, input.run);
   return logged(ctx, "create_plan", run, {}, async () => {
-    const { brief } = await readBrief(run);
+    const { brief, notes } = await readBrief(run);
     const pipeline = await loadPipeline(brief.category);
     if (brief.reports.length === 0) {
       throw new RebError(
@@ -53,7 +54,7 @@ export async function createPlan(ctx: Context, input: { run?: string } = {}) {
           },
         ],
       );
-      return { ...run, plan };
+      return { ...run, plan, warnings: briefWarnings(brief, notes) };
     });
   });
 }

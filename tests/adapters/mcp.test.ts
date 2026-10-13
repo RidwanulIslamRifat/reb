@@ -184,7 +184,7 @@ describe("MCP server", () => {
     expect(audit.data.file).toMatch(/audit-1\.md$/);
     const replan = await call("apply_replan", {
       run,
-      changes: [{ op: "add", gap: 1, task: { title: "Map the company first" } }],
+      changes: [{ op: "add", gap: 1, force: true, task: { title: "Map the company first" } }],
     });
     expect(replan.data.plan.version).toBe(2);
     expect(replan.data.decisions[0].reason).toMatch(/^audit 1 item 1 \[blocking\]/);

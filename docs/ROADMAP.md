@@ -307,6 +307,13 @@ Added in M6
       round also adds a re-audit task (`audit-r<N>`) after the new tasks, and pending report tasks wait for it,
       so the loop audits again before reports are written.
 - [x] Stop rule question nodes are named `question-audit-<N>-gap-<n>`, label unknown.
+- [x] Owner test fixes: re-plan does not add a task for a gap that a pending or running task already covers
+      (same node type, same focus-answer file, or the same validation clean-up); `decisions.md` says which task
+      covers it, and a re-plan that changes nothing is not counted as a round. `force` adds it anyway.
+- [x] One shared role table (`src/domain/nodeRoles.ts`) for pipelines, focus tasks and audit suggestions;
+      reading a pipeline fails when a task's role disagrees with it. Integrations now go to desk_researcher.
+- [x] `reb plan create` and `reb audit` warn when brief.md is still empty or has no focus questions.
+- [x] `reb plan replan` says which minor gaps are not turned into tasks.
 - [x] `reb plan show` on a run without a plan now points to `reb plan create`. `save_plan` stays for custom plans.
 
 Follow-ups found in M6

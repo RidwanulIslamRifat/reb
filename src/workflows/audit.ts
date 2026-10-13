@@ -7,6 +7,7 @@ import {
   type AuditRecord,
   type Gap,
 } from "../domain/audit.js";
+import { briefWarnings } from "../domain/brief.js";
 import { RebError } from "../domain/errors.js";
 import { renderNode } from "../domain/node.js";
 import { focusNotePath } from "../domain/pipeline.js";
@@ -58,9 +59,12 @@ export async function loadAudits(paths: RunPaths): Promise<AuditRecord[]> {
   return Promise.all(numbers.map((n) => loadAudit(paths, n)));
 }
 
-/** Re-plan rounds done so far: audits that apply_replan turned into a new plan version. */
+/**
+ * Re-plan rounds done so far: audits that apply_replan turned into a new plan version.
+ * A re-plan that found every gap already covered changed nothing, so it is not a round.
+ */
 export const roundsDone = (audits: AuditRecord[]) =>
-  audits.filter((a) => a.replanned_in !== null).length;
+  audits.filter((a) => a.replanned_in !== null && a.replan_changed !== false).length;
 
 /** Writes an audit's .md and .json again after a change (for example after a re-plan). */
 export async function saveAudit(paths: RunPaths, audit: AuditRecord, product: string) {
@@ -111,7 +115,7 @@ async function gapsToQuestions(paths: RunPaths, audit: number, gaps: Gap[]): Pro
 export async function runAudit(ctx: Context, input: { run?: string } = {}) {
   const run = await resolveRun(ctx, input.run);
   return logged(ctx, "run_audit", run, {}, async () => {
-    const { brief } = await readBrief(run);
+    const { brief, notes } = await readBrief(run);
     const { plan } = await requirePlan(run);
     const specs = await loadReportSpecs(brief.reports.length ? brief.reports : plan.reports);
     const graph = await loadGraph(run.paths);
@@ -143,6 +147,7 @@ export async function runAudit(ctx: Context, input: { run?: string } = {}) {
         stop,
         stop_reason: reason,
         replanned_in: null,
+        replan_changed: null,
         questions,
       };
       await writeNewAudit(
@@ -151,7 +156,12 @@ export async function runAudit(ctx: Context, input: { run?: string } = {}) {
         renderAudit(audit, brief.product),
         JSON.stringify(audit, null, 2) + "\n",
       );
-      return { ...run, audit, file: auditMarkdownPath(run.paths, number) };
+      return {
+        ...run,
+        audit,
+        file: auditMarkdownPath(run.paths, number),
+        warnings: briefWarnings(brief, notes),
+      };
     });
   });
 }

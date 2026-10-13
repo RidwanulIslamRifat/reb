@@ -7,7 +7,7 @@ import { readTextIfExists } from "../storage/jsonl.js";
 import { withPlanLock } from "../storage/planFiles.js";
 import { loadAudits, roundsDone, saveAudit } from "./audit.js";
 import type { Context } from "./context.js";
-import { logged } from "./logging.js";
+import { appendDecision, logged } from "./logging.js";
 import { requirePlan, storeNewVersion } from "./plan.js";
 import { resolveRun } from "./runs.js";
 
@@ -47,7 +47,7 @@ export async function applyReplan(
         if (audit.replanned_in !== null) {
           throw new RebError(
             `Audit ${audit.number} was already re-planned in plan v${audit.replanned_in}.`,
-            'Work the new tasks, then run a new audit ("reb audit").',
+            'Work the open tasks in the plan, then run a new audit ("reb audit").',
           );
         }
         const rounds = roundsDone(audits);
@@ -70,20 +70,48 @@ export async function applyReplan(
         }
         const previous = await requirePlan(run);
         const version = previous.plan.version + 1;
-        const { tasks, decisions } = applyReplanChanges(previous.plan, audit, changes, version);
-        const plan = await storeNewVersion(
-          ctx,
-          run,
-          previous,
-          { ...previous.plan, tasks },
-          decisions,
-        );
-        const updated = { ...audit, replanned_in: plan.version };
+        const result = applyReplanChanges(previous.plan, audit, changes, version);
+        let plan = previous.plan;
+        if (result.changed) {
+          plan = await storeNewVersion(
+            ctx,
+            run,
+            previous,
+            { ...previous.plan, tasks: result.tasks },
+            result.decisions,
+          );
+        } else {
+          // Every gap is covered by a task already in the plan: no new version, but the
+          // decision is still written down.
+          for (const d of result.decisions) {
+            await appendDecision(ctx, run.paths, plan.version, d.change, d.reason);
+          }
+        }
+        const updated = { ...audit, replanned_in: plan.version, replan_changed: result.changed };
         await saveAudit(run.paths, updated, plan.product);
-        return { ...run, plan, audit: updated, round: rounds + 1, decisions };
+        return {
+          ...run,
+          plan,
+          audit: updated,
+          changed: result.changed,
+          round: result.changed ? rounds + 1 : rounds,
+          decisions: result.decisions,
+          covered: result.covered,
+          minor_not_added: result.minorNotAdded,
+          minor_note: minorNote(result.minorNotAdded),
+        };
       }),
     );
   });
+}
+
+/** Says which minor gaps were left out of the re-plan, or null when none were. */
+export function minorNote(gaps: number[]): string | null {
+  if (gaps.length === 0) return null;
+  return (
+    `Minor gap${gaps.length === 1 ? "" : "s"} ${gaps.join(", ")} ${gaps.length === 1 ? "is" : "are"} not turned into tasks. ` +
+    "They stay in the audit and become question nodes when the stop rule applies."
+  );
 }
 
 /** Reads a JSON list of re-plan changes. */

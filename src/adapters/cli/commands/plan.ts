@@ -35,6 +35,7 @@ export function registerPlan(program: Command, io: CliIo): void {
     .action(async (options: RunOption) => {
       const result = await createPlan(ctx(), options);
       noteRun(io, result);
+      for (const w of result.warnings) line(io, `Warning: ${w}`);
       line(io, `Created plan v${result.plan.version} from pipeline ${result.plan.pipeline}.`);
       printPlan(io, result.plan);
       line(io, 'Next: "reb plan next" shows the first task to do.');
@@ -142,9 +143,12 @@ export function registerPlanGate(plan: Command, io: CliIo): void {
       noteRun(io, result);
       line(
         io,
-        `Re-plan round ${result.round} from audit ${result.audit.number}: plan is now v${result.plan.version}.`,
+        result.changed
+          ? `Re-plan round ${result.round} from audit ${result.audit.number}: plan is now v${result.plan.version}.`
+          : `No new tasks from audit ${result.audit.number}: every gap is covered by a task already in the plan. Plan stays v${result.plan.version}.`,
       );
       for (const d of result.decisions) line(io, `- ${d.change} (${d.reason})`);
+      if (result.minor_note) line(io, result.minor_note);
       line(io, "Each change is written to logs/decisions.md.");
     });
 }

@@ -79,3 +79,24 @@ export function parseBrief(text: string): { brief: Brief; notes: string } {
   }
   return { brief: result.data, notes: match[2]! };
 }
+
+/**
+ * Warnings about a brief that is still mostly empty, shown by create_plan and run_audit.
+ * They do not stop the work: reb can plan from the category and reports alone.
+ */
+export function briefWarnings(brief: Brief, notes: string): string[] {
+  const warnings: string[] = [];
+  const untouched = notes.trim() === "" || notes.trim() === DEFAULT_BRIEF_NOTES.trim();
+  if (untouched && !brief.plan_tier && !brief.deadline && brief.focus_questions.length === 0) {
+    warnings.push(
+      "brief.md is still empty: only the template text, with no focus questions, plan_tier, deadline or notes. " +
+        "Fill it in so the plan and the audit match what you want to know.",
+    );
+  } else if (brief.focus_questions.length === 0) {
+    warnings.push(
+      "brief.md has no focus questions, so the plan has no focus tasks and the audit cannot check your own questions. " +
+        'Add them to focus_questions, for example ["Who is the main buyer?"].',
+    );
+  }
+  return warnings;
+}

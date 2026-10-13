@@ -3,6 +3,7 @@ import type { Brief } from "./brief.js";
 import { nodesWithEvidence } from "./gate.js";
 import { NodeTypeSchema, type NodeType } from "./links.js";
 import type { NodeMeta } from "./node.js";
+import { ROLE_FOR_TYPE } from "./nodeRoles.js";
 import { focusHint, focusNotePath, focusTask } from "./pipeline.js";
 import { RoleSchema, type Role } from "./plan.js";
 import { SEVERITIES, SeveritySchema, type ReportSpec, type Severity } from "./reportSpec.js";
@@ -37,7 +38,7 @@ export type Gap = z.infer<typeof GapSchema>;
 
 /**
  * logs/audits/audit-<N>.json, the data behind audit-<N>.md. `replanned_in` is the plan version
- * apply_replan made from it; `questions` the question nodes made when the stop rule applied.
+ * apply_replan made from it (or kept, when nothing needed changing); `questions` the question nodes made when the stop rule applied.
  */
 export const AuditRecordSchema = z.object({
   number: z.number().int().min(1),
@@ -48,26 +49,11 @@ export const AuditRecordSchema = z.object({
   stop: z.boolean(),
   stop_reason: z.string(),
   replanned_in: z.number().int().nullable().default(null),
+  /** False when the re-plan found every gap already covered and left the plan as it was. */
+  replan_changed: z.boolean().nullable().default(null),
   questions: z.array(z.string()).default([]),
 });
 export type AuditRecord = z.infer<typeof AuditRecordSchema>;
-
-/** The role that usually finds nodes of each type. */
-export const ROLE_FOR_TYPE: Record<NodeType, Role> = {
-  company: "desk_researcher",
-  product: "desk_researcher",
-  module: "desk_researcher",
-  pricing_tier: "desk_researcher",
-  feature: "feature_analyst",
-  journey: "business_analyst",
-  persona: "business_analyst",
-  competitor: "market_researcher",
-  market_segment: "market_researcher",
-  data_object: "architect",
-  integration: "architect",
-  hypothesis: "architect",
-  question: "kb_curator",
-};
 
 const VALIDATION_SEVERITY: Record<ValidationRule, Severity> = {
   bad_node_file: "major",

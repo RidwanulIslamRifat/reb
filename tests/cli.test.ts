@@ -254,11 +254,17 @@ describe("planner and auditor from the CLI", () => {
     const file = join(home, slug!, "logs", "audits", "audit-1.md");
     expect(audit).toContain(`Written to ${file}`);
 
+    // On a fresh plan every gap is covered by a pipeline task still to do: no duplicates.
     const replan = await cli(home, "plan", "replan");
-    expect(replan).toMatch(/^Re-plan round 1 from audit 1: plan is now v2\.$/m);
-    expect(replan).toMatch(/- added task a1-company .*\(audit 1 item 1 \[blocking\]/);
+    expect(replan).toContain(
+      "No new tasks from audit 1: every gap is covered by a task already in the plan. Plan stays v1.",
+    );
+    expect(replan).toMatch(/- no new task: gap 1 is covered by existing task company /);
+    expect(replan).toMatch(/Minor gap \d+ is not turned into tasks/);
     const decisions = await readFile(join(home, slug!, "logs", "decisions.md"), "utf8");
-    expect(decisions).toContain("audit 1 item 1 [blocking]");
+    expect(decisions).toContain("covered by existing task company");
+    expect(audit).toContain("Warning: brief.md is still empty");
+    expect(created).toContain("Warning: brief.md is still empty");
   });
 
   it("replan reads explicit changes from a file", async () => {

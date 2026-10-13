@@ -46,6 +46,10 @@ The auditor runs `run_audit`. When it does not stop, you re-plan from that audit
    - `{ "op": "reorder", "gap": 1, "task": "personas", "depends_on": ["pricing"] }`,
    - `{ "op": "drop", "gap": 4, "task": "tech" }` drops a task that no longer makes sense.
      Every change cites the gap it answers. Tasks that are done are never changed.
+     If a pending or running task already makes the node type a gap asks for (for example `pricing`
+     for missing pricing tiers), reb does not add a duplicate; it writes in `logs/decisions.md` which
+     task covers the gap. Add `"force": true` to an add only when that task really cannot close it.
+     Minor gaps are never turned into tasks.
 3. reb makes a new plan version, adds a re-audit task, makes pending report tasks wait for it, and
    writes one line per change to `logs/decisions.md` citing the audit item.
 
