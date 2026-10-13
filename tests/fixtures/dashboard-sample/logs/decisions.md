@@ -1,0 +1,16 @@
+- 2026-10-01T08:33:25.000Z | plan v1 | plan created from pipeline b2b-saas with 14 tasks | reason: brief category b2b-saas, reports feature, business, 2 focus question(s)
+- 2026-10-01T08:35:28.000Z | plan v2 | task company: pending -> running | reason: desk researcher started
+- 2026-10-01T08:53:14.000Z | plan v3 | task company: running -> done | reason: gate passed
+- 2026-10-01T08:55:17.000Z | plan v4 | task pricing: pending -> running | reason: desk researcher started
+- 2026-10-01T09:07:35.000Z | plan v5 | task pricing: running -> done | reason: gate passed
+- 2026-10-01T09:09:38.000Z | plan v6 | task features: pending -> running | reason: feature analyst started
+- 2026-10-01T09:49:57.000Z | plan v7 | task features: running -> done | reason: gate passed
+- 2026-10-01T09:52:00.000Z | plan v8 | task personas: pending -> running | reason: business analyst started
+- 2026-10-01T10:18:39.000Z | plan v9 | task personas: running -> needs_human | reason: please try the team setup flow by hand
+- 2026-10-01T10:20:42.000Z | plan v10 | task market: pending -> running | reason: market researcher started
+- 2026-10-01T10:26:51.000Z | plan v11 | no new task: gap 1 is covered by existing task focus-1 "Answer focus question 1: Which export formats are offered?" (pending) | reason: audit 1 item 1 [blocking]: Focus question 1 has no answer yet
+- 2026-10-01T10:27:32.000Z | plan v11 | no new task: gap 2 is covered by existing task focus-2 "Answer focus question 2: What does the Business plan add?" (pending) | reason: audit 1 item 2 [blocking]: Focus question 2 has no answer yet
+- 2026-10-01T10:28:13.000Z | plan v11 | added task a1-feature "Find feature nodes for feature: Features" (feature_analyst) | reason: audit 1 item 3 [major]: Only 4 of 5 feature nodes the reports need
+- 2026-10-01T10:28:54.000Z | plan v11 | no new task: gap 4 is covered by existing task integrations "Find the integrations from the integrations page and docs" (pending) | reason: audit 1 item 4 [major]: 1 integration node has no evidence
+- 2026-10-01T10:29:35.000Z | plan v11 | no new task: gap 5 is covered by existing task market "Find competitors and the market segments they sell to" (running) | reason: audit 1 item 5 [major]: Only 1 of 2 competitor nodes the reports need
+- 2026-10-01T10:30:16.000Z | plan v11 | added task audit-r1 "Audit again after re-plan round 1" (auditor); pending report tasks wait for it | reason: re-plan round 1 of 3 after audit 1: check the new tasks closed the gaps

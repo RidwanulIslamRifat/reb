@@ -1,0 +1,340 @@
+{
+  "version": 4,
+  "product": "acme-notes.example",
+  "pipeline": "b2b-saas",
+  "reports": [
+    "feature",
+    "business"
+  ],
+  "tasks": [
+    {
+      "id": "company",
+      "title": "Map the company, product and modules from the home page, docs and about page",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 company node",
+        "at least 1 product node",
+        "at least 2 module nodes",
+        "every product node has evidence"
+      ],
+      "status": "done",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "pricing",
+      "title": "Find the pricing tiers and what each includes (seats, limits, add-ons)",
+      "role": "desk_researcher",
+      "depends_on": [
+        "company"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 pricing_tier node",
+        "every pricing_tier node has evidence"
+      ],
+      "status": "running",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "features",
+      "title": "List the features with evidence and link them to modules and tiers",
+      "role": "feature_analyst",
+      "depends_on": [
+        "company",
+        "pricing"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 5 feature nodes",
+        "every feature node has evidence",
+        "every feature node has a gated_by link"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "integrations",
+      "title": "Find the integrations from the integrations page and docs",
+      "role": "desk_researcher",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 1 integration node",
+        "every integration node has evidence"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "market",
+      "title": "Find competitors and the market segments they sell to",
+      "role": "market_researcher",
+      "depends_on": [
+        "company"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 3 competitor nodes",
+        "at least 1 market_segment node",
+        "every competitor node has evidence"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "walkthrough",
+      "title": "Prepare a checklist for the user's own session (admin setup, inviting a teammate, a core workflow)",
+      "role": "walkthrough_coach",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "evidence/inbox/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "the user finished their own session in the product",
+        "what they saw is recorded as observed evidence"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "personas",
+      "title": "Describe buyer and user personas and their journeys",
+      "role": "business_analyst",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "done_when": [
+        "at least 2 persona nodes",
+        "at least 2 journey nodes",
+        "every journey node has a uses link",
+        "every persona node has a does link"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "business-model",
+      "title": "Describe the business model: who pays, pricing logic, sales motion",
+      "role": "business_analyst",
+      "depends_on": [
+        "pricing",
+        "personas"
+      ],
+      "inputs": [
+        "brief.md"
+      ],
+      "outputs": [
+        "notes/business_analyst-model.md"
+      ],
+      "done_when": [
+        "file notes/business_analyst-model.md exists",
+        "the draft cites node ids or E-/S- ids for every claim"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "focus-1",
+      "title": "Answer focus question 1: Which export formats are offered?",
+      "role": "business_analyst",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/"
+      ],
+      "outputs": [
+        "notes/focus-1.md"
+      ],
+      "done_when": [
+        "file notes/focus-1.md exists",
+        "the answer cites node ids or E-/S- ids for every claim"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "focus question 1 from the brief"
+    },
+    {
+      "id": "focus-2",
+      "title": "Answer focus question 2: What does the Business plan add?",
+      "role": "desk_researcher",
+      "depends_on": [
+        "features"
+      ],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/"
+      ],
+      "outputs": [
+        "notes/focus-2.md"
+      ],
+      "done_when": [
+        "at least 1 pricing_tier node",
+        "file notes/focus-2.md exists",
+        "the answer cites node ids or E-/S- ids for every claim"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "focus question 2 from the brief"
+    },
+    {
+      "id": "curate",
+      "title": "Clean the knowledge graph until validate_graph is clean",
+      "role": "kb_curator",
+      "depends_on": [
+        "company",
+        "pricing",
+        "features",
+        "integrations",
+        "market",
+        "walkthrough",
+        "personas",
+        "business-model",
+        "focus-1",
+        "focus-2"
+      ],
+      "inputs": [
+        "kb/nodes/",
+        "evidence/ledger.jsonl"
+      ],
+      "outputs": [
+        "kb/nodes/",
+        "kb/graph.json",
+        "kb/stats.json"
+      ],
+      "done_when": [
+        "validate_graph is clean",
+        "no two nodes hold the same fact"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "audit",
+      "title": "Audit the graph against the brief and the requested reports (run_audit)",
+      "role": "auditor",
+      "depends_on": [
+        "curate"
+      ],
+      "inputs": [
+        "brief.md",
+        "kb/nodes/",
+        "notes/"
+      ],
+      "outputs": [
+        "logs/audits/"
+      ],
+      "done_when": [
+        "the latest audit is acted on"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "report-feature",
+      "title": "Write the feature report",
+      "role": "report_writer",
+      "depends_on": [
+        "audit"
+      ],
+      "inputs": [
+        "kb/nodes/",
+        "notes/",
+        "logs/audits/"
+      ],
+      "outputs": [
+        "reports/feature.md"
+      ],
+      "done_when": [
+        "file reports/feature.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    },
+    {
+      "id": "report-business",
+      "title": "Write the business report",
+      "role": "report_writer",
+      "depends_on": [
+        "audit"
+      ],
+      "inputs": [
+        "kb/nodes/",
+        "notes/",
+        "logs/audits/"
+      ],
+      "outputs": [
+        "reports/business.md"
+      ],
+      "done_when": [
+        "file reports/business.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "status": "pending",
+      "added_in": 1,
+      "reason": "from pipeline b2b-saas"
+    }
+  ]
+}

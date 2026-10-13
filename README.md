@@ -29,6 +29,16 @@ every config file it edits (next to the file, named `*.reb-backup-<date>`). Runn
 nothing. Restart your agent, then ask it: `Analyse example.com; reports: feature`.
 `node dist/cli.js update` refreshes the registration and handbook after you pull a newer reb.
 
+## See an analysis in your browser
+
+```sh
+node dist/cli.js dashboard                                   # the most recent analyses
+node dist/cli.js dashboard --run tests/fixtures/dashboard-sample   # a made-up sample run
+```
+
+A page opens on your computer only (127.0.0.1) with the plan, knowledge graph, evidence, activity log and
+reports. It only reads your files. Press Ctrl+C to stop it. You can also ask your agent to "open the dashboard".
+
 ## Checks
 
 ```sh

@@ -46,13 +46,14 @@ describe("reb CLI", () => {
       "update",
       "doctor",
       "mcp",
+      "dashboard",
     ]) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b`, "m"));
     }
     for (const { name } of PLANNED_COMMANDS) {
       expect(help).toMatch(new RegExp(`^\\s+${name}\\b.*\\(not yet available\\)`, "m"));
     }
-    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["report", "dashboard"]);
+    expect(PLANNED_COMMANDS.map((c) => c.name)).toEqual(["report"]);
   });
 
   it("explains how to proceed when a planned command is used", async () => {

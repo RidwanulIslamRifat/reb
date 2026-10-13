@@ -432,12 +432,12 @@ How the owner checks it
 Goal: a local, read-only web page to look at a run.
 
 Deliverables
-- [ ] `reb dashboard` serves on localhost only (127.0.0.1) and opens the browser; `open_dashboard` MCP tool does the same.
-- [ ] Pages: runs list; plan board by status with version history and diff; knowledge graph (zoom, drag,
+- [x] `reb dashboard` serves on localhost only (127.0.0.1) and opens the browser; `open_dashboard` MCP tool does the same.
+- [x] Pages: runs list; plan board by status with version history and diff; knowledge graph (zoom, drag,
       filter by type and label, search, node card with evidence, highlight path between two nodes);
       evidence ledger table; logs timeline; reports viewer (SPEC 10).
-- [ ] Read-only: no page can change files.
-- [ ] Built into the package so users need nothing extra.
+- [x] Read-only: no page can change files.
+- [x] Built into the package so users need nothing extra.
 
 Files and folders
 - `src/dashboard/server.ts` (tiny read-only HTTP server over storage)
@@ -451,9 +451,18 @@ Tests
 - Smoke test: each page renders without errors in a headless browser.
 
 How the owner checks it
-1. `node dist/cli.js dashboard --run tests/fixtures/run-sample`
+1. `npm run build`, then `node dist/cli.js dashboard --run tests/fixtures/dashboard-sample`
 2. Your browser opens a page. Click "Knowledge graph": you should see dots and lines; click one dot and a card
    with its evidence appears. Click "Plan" to see tasks in columns. Press Ctrl+C in the terminal to stop.
+
+Notes from building it
+- The owner check uses a new fixture, `tests/fixtures/dashboard-sample/` (a fuller made-up Acme Notes run with
+  11 plan versions, a ledger, logs, an audit and a sample report), because `run-sample` has no plan, ledger or logs.
+- The CLI and MCP adapters do not import the dashboard (SPEC 4): `src/cli.ts` hands the dashboard starter to them.
+- The browser smoke test needs Chromium (`npx playwright-core install chromium`); CI installs it. Without one,
+  `npm test` skips only that file and says so.
+- Follow-up: the graph uses one automatic layout; very large graphs (hundreds of nodes) may need a faster layout
+  or grouping. Revisit after real runs.
 
 ---
 

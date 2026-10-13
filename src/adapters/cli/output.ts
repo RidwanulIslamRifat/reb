@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import type { Host } from "../../domain/registration.js";
+import type { Context } from "../../workflows/context.js";
 
 /** How CLI commands print and ask. Tests pass their own `out`, `env` and the optional fields. */
 export interface CliIo {
@@ -14,6 +15,10 @@ export interface CliIo {
   /** Facts about the running reb used to register it with agents. */
   host?: Host;
   nodeVersion?: string;
+  /** Starts the dashboard server; the entry point (src/cli.ts) passes the real one. */
+  dashboard?: Context["dashboard"];
+  /** Opens an address in the browser; the entry point passes the real one. */
+  openBrowser?: Context["openBrowser"];
 }
 
 /** Reads one answer from the terminal; with no terminal (for example in a script) the answer is "". */

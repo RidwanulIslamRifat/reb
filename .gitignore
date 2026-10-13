@@ -30,3 +30,5 @@ tests/fixtures/run-sample/evidence/ledger.jsonl
 tests/fixtures/run-sample/evidence/imports/
 tests/fixtures/run-sample/evidence/rea/
 tests/fixtures/run-sample/notes/
+# The dashboard sample run keeps its logs: they are part of what the dashboard shows
+!tests/fixtures/dashboard-sample/logs/
