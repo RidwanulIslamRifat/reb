@@ -37,4 +37,4 @@ jobs:
       - run: npm test
       - name: Update npm (trusted publishing needs npm 11.5.1 or newer)
         run: npm install -g npm@latest
-      - run: npm publish --provenance --access public
+      - run: npm stage publish --access public
