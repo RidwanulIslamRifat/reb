@@ -33,7 +33,15 @@ The human does all hands-on use. You never log in, click or type in the product 
    Then run it again without `dry_run`. Each item becomes one evidence record labelled observed.
    If a HAR file was imported, ask the user whether to delete the raw file, then call `import_inbox`
    once more with `delete_raw_har` if they agree.
-6. If the user reports something in chat instead, `record_evidence` one finding per record with
+6. For a rebuild-level analysis, ask the user to also capture, per screen they visit: a screenshot
+   named `screen-<name>--1.png`, the fields of each form (name, type, required), what each user
+   role can and cannot do, and any limit or error message they meet (a business rule). Notes like
+   `- [screen-invoices] Filters: status, customer, date range.` become observed evidence.
+7. Documents the business handed over (in an audit or due-diligence engagement) go in
+   `evidence/inbox/provided/`, never in a session folder; `import_inbox` with session `provided`
+   records them as `provided` evidence. Ask the user to add a notes file summarising what each
+   document says, one bullet per fact, starting with the node id.
+8. If the user reports something in chat instead, `record_evidence` one finding per record with
    confidence observed and the node as subject. Features above their plan tier stay documented or inferred.
 
 End with `log_role_work`: what was observed, what could not be checked.

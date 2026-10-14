@@ -63,10 +63,13 @@ const VALIDATION_SEVERITY: Record<ValidationRule, Severity> = {
   label_stronger_than_evidence: "major",
   number_without_dated_source: "minor",
   duplicate_name: "minor",
+  bad_field: "major",
+  stale_metric: "minor",
 };
 const VALIDATION_ROLE: Partial<Record<ValidationRule, Role>> = {
   feature_without_evidence: "feature_analyst",
   number_without_dated_source: "desk_researcher",
+  stale_metric: "financial_analyst",
 };
 
 const kebab = (s: string) => s.replace(/_/g, "-");

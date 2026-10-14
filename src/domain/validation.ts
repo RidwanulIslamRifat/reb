@@ -10,6 +10,7 @@ import {
 } from "./evidence.js";
 import { describeAllowed, isAllowedLink } from "./links.js";
 import { linksOf, type GraphNode } from "./node.js";
+import { fieldProblems } from "./nodeFields.js";
 
 /** Validation rules (SPEC 6.3 and ROADMAP M3), in the order problems are listed. */
 export const VALIDATION_RULES = {
@@ -21,6 +22,10 @@ export const VALIDATION_RULES = {
   label_stronger_than_evidence:
     "A node is labelled stronger (for example observed) than its strongest evidence.",
   duplicate_name: "Two nodes of the same type have the same name.",
+  bad_field:
+    "A node is missing a typed field its type needs (for example a risk's likelihood), or a field has a value reb does not know.",
+  stale_metric:
+    "A metric is more than 18 months older than the newest evidence in the run, so it may be out of date.",
 } as const;
 export type ValidationRule = keyof typeof VALIDATION_RULES;
 const RULE_ORDER = Object.keys(VALIDATION_RULES) as ValidationRule[];
@@ -164,7 +169,7 @@ export function validateGraph(input: GraphInput): Problem[] {
   // label_stronger_than_evidence (only nodes that have evidence; features without any are listed above)
   for (const node of input.nodes) {
     const { meta } = node;
-    if (meta.label !== "observed" && meta.label !== "documented") continue;
+    if (meta.label === "inferred" || meta.label === "unknown") continue;
     const labels: Confidence[] = [];
     for (const id of meta.links.evidence ?? []) {
       const record = records.get(newestId(id, corrected));
@@ -201,8 +206,54 @@ export function validateGraph(input: GraphInput): Problem[] {
     });
   }
 
+  // bad_field (v2 typed fields)
+  for (const node of input.nodes) {
+    for (const issue of fieldProblems(node.meta.type, node.meta)) {
+      add({
+        rule: "bad_field",
+        subject: node.meta.id,
+        message: `${node.meta.id} ${issue}.`,
+        fix: `Set the field in the front matter of kb/nodes/${node.meta.id}.md, or with upsert_node's fields.`,
+      });
+    }
+  }
+
+  // stale_metric: compared with the newest date in the ledger, so the check needs no clock.
+  const newest = input.records
+    .map((r) => (r.kind === "source" ? r.read_at : r.at).slice(0, 10))
+    .sort()
+    .at(-1);
+  if (newest) {
+    const cutoff = monthsBefore(newest, 18);
+    for (const node of input.nodes) {
+      if (node.meta.type !== "metric") continue;
+      const asOf = String(node.meta["as_of"] ?? "");
+      if (!/^\d{4}/.test(asOf) || padDate(asOf) >= cutoff) continue;
+      add({
+        rule: "stale_metric",
+        subject: node.meta.id,
+        message: `${node.meta.id} is as of ${asOf}, more than 18 months before the newest evidence (${newest}).`,
+        fix: "Look for a newer figure and record it, or say in the report that the number is old.",
+      });
+    }
+  }
+
   return problems.sort(
     (a, b) =>
       RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.subject.localeCompare(b.subject),
   );
+}
+
+/** "2025" -> "2025-01-01", "2025-03" -> "2025-03-01". */
+function padDate(date: string): string {
+  return `${date}-01-01`.slice(0, 10);
+}
+
+/** The YYYY-MM-DD date `months` months before `date` (YYYY-MM-DD). */
+export function monthsBefore(date: string, months: number): string {
+  const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  const total = y * 12 + (m - 1) - months;
+  const year = Math.floor(total / 12);
+  const month = (total % 12) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }

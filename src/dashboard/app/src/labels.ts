@@ -21,11 +21,12 @@ export const STATUS_ORDER: Status[] = [
 
 export const LABEL: Record<Label, { name: string; hint: string }> = {
   observed: { name: "Seen", hint: "Seen in your own use of the product" },
+  provided: { name: "Provided", hint: "From a document the business handed over itself" },
   documented: { name: "Published", hint: "Stated publicly by the company or another source" },
   inferred: { name: "Educated guess", hint: "Reasoned from other facts, not confirmed" },
   unknown: { name: "Not confirmed", hint: "No evidence yet" },
 };
-export const LABELS: Label[] = ["observed", "documented", "inferred", "unknown"];
+export const LABELS: Label[] = ["observed", "provided", "documented", "inferred", "unknown"];
 
 export const ROLE: Record<string, string> = {
   planner: "Planner",
@@ -39,6 +40,9 @@ export const ROLE: Record<string, string> = {
   architect: "Architect",
   kb_curator: "Knowledge keeper",
   report_writer: "Report writer",
+  financial_analyst: "Financial analyst",
+  strategy_analyst: "Strategy analyst",
+  risk_analyst: "Risk analyst",
 };
 export const roleName = (role: string) => ROLE[role] ?? humanize(role);
 
@@ -57,6 +61,27 @@ export const NODE_TYPES: Record<string, { name: string; family: string; shape: s
   competitor: { name: "Competitor", family: "market", shape: "octagon" },
   hypothesis: { name: "Idea to check", family: "thinking", shape: "round-diamond" },
   question: { name: "Open question", family: "thinking", shape: "round-triangle" },
+  value_proposition: { name: "Value promise", family: "money", shape: "star" },
+  revenue_stream: { name: "Revenue stream", family: "money", shape: "ellipse" },
+  cost_driver: { name: "Cost", family: "money", shape: "triangle" },
+  channel: { name: "Sales channel", family: "money", shape: "vee" },
+  partner: { name: "Partner", family: "market", shape: "round-rectangle" },
+  customer: { name: "Customer", family: "people", shape: "round-rectangle" },
+  metric: { name: "Number", family: "condition", shape: "rectangle" },
+  funding_round: { name: "Funding round", family: "condition", shape: "round-tag" },
+  leader: { name: "Leader", family: "condition", shape: "ellipse" },
+  signal: { name: "Growth signal", family: "condition", shape: "triangle" },
+  geography: { name: "Region", family: "condition", shape: "hexagon" },
+  compliance: { name: "Compliance", family: "risk", shape: "round-rectangle" },
+  finding: { name: "Finding", family: "risk", shape: "star" },
+  risk: { name: "Risk", family: "risk", shape: "triangle" },
+  trend: { name: "Trend", family: "risk", shape: "vee" },
+  force: { name: "Market force", family: "risk", shape: "octagon" },
+  technology: { name: "Technology", family: "build", shape: "barrel" },
+  screen: { name: "Screen", family: "build", shape: "rectangle" },
+  user_role: { name: "User role", family: "build", shape: "ellipse" },
+  business_rule: { name: "Business rule", family: "build", shape: "diamond" },
+  api_endpoint: { name: "API endpoint", family: "build", shape: "round-tag" },
 };
 export const typeName = (type: string) => NODE_TYPES[type]?.name ?? humanize(type);
 
@@ -64,9 +89,12 @@ export const FAMILIES: Record<string, string> = {
   business: "Company and product",
   feature: "Features and data",
   people: "People and journeys",
-  money: "Pricing",
-  market: "Competitors",
+  money: "Pricing and business model",
+  market: "Competitors and partners",
   thinking: "Ideas and questions",
+  condition: "Company condition",
+  risk: "Strategy and risk",
+  build: "Technology and rebuild",
 };
 
 export const LINK: Record<string, string> = {
@@ -82,6 +110,29 @@ export const LINK: Record<string, string> = {
   explains: "explains",
   evidence: "evidence",
   about: "is about",
+  delivers: "delivers",
+  serves: "serves",
+  earns: "earns from",
+  incurs: "incurs",
+  sells_through: "sells through",
+  partners_with: "partners with",
+  buys: "buys",
+  measures: "measures",
+  raised: "raised",
+  leads: "leads",
+  complies_with: "complies with",
+  operates_in: "operates in",
+  competes_in: "competes in",
+  powers: "powers",
+  threatens: "threatens",
+  concerns: "concerns",
+  affects: "affects",
+  shows: "shows",
+  navigates_to: "leads to",
+  can: "can use",
+  governs: "governs",
+  exposes: "exposes",
+  relates_to: "relates to",
 };
 export const linkName = (type: string) => LINK[type] ?? humanize(type);
 
@@ -116,6 +167,8 @@ export const TOOL: Record<string, string> = {
   import_inbox: "Imported your screenshots and notes",
   record_rea_result: "Imported a reverse-engineering result",
   render_report: "Wrote a report",
+  get_framework: "Drew an analysis framework",
+  compare_runs: "Compared two analyses",
   log_role_work: "Wrote a work note",
 };
 export const toolName = (tool: string) => TOOL[tool] ?? humanize(tool);

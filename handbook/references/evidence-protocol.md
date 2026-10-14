@@ -23,16 +23,19 @@ The ledger is append-only: records are never edited or deleted.
 
 ## Labels
 
-| Label      | Use when                                                          | Example                                                  |
-| ---------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| observed   | The user saw it in their own session (screenshot, note).          | "Export to CSV is in the File menu on the Free trial."   |
-| documented | The product or a reliable third party states it publicly.         | "Pricing page lists SSO on Business and above."          |
-| inferred   | Your reasoned guess from other evidence; say what it is based on. | "Likely uses Stripe: checkout page loads js.stripe.com." |
-| unknown    | Not confirmed; worth recording as an open question.               | "Unclear whether the API has rate limits."               |
+| Label      | Use when                                                                    | Example                                                  |
+| ---------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| observed   | The user saw it in their own session (screenshot, note).                    | "Export to CSV is in the File menu on the Free trial."   |
+| provided   | A document the analysed business handed over itself (audit, due diligence). | "The 2025 annual report states revenue of 4.2M USD."     |
+| documented | The product or a reliable third party states it publicly.                   | "Pricing page lists SSO on Business and above."          |
+| inferred   | Your reasoned guess from other evidence; say what it is based on.           | "Likely uses Stripe: checkout page loads js.stripe.com." |
+| unknown    | Not confirmed; worth recording as an open question.                         | "Unclear whether the API has rate limits."               |
 
 Rules:
 
 - Never label stronger than the evidence. A pricing page is documented, not observed.
+- `provided` is only for documents the business itself gave the analyst, imported from
+  `evidence/inbox/provided/`. Say in limitations that it was not checked against public sources.
 - Features above the user's `plan_tier` can only be documented or inferred.
 - A number (price, user count, limit) needs a source with a `published` date, or an observed session.
 - Inferred findings list their basis in `links` and their uncertainty in `limitations`.
@@ -63,3 +66,6 @@ The user saves captures in `evidence/inbox/session-NN/`; `import_inbox` turns th
 - HAR files: reb summarises them and strips cookies, auth headers, tokens, bodies and query secrets before
   storing anything. The raw file stays in the inbox until the user deletes it (`delete_raw_har`).
 - Importing the same session again only adds new items.
+- Documents the analysed business handed over (PDF, Word, Excel, CSV, PowerPoint) go in
+  `evidence/inbox/provided/`, not in a session folder; `import_inbox` with session `provided` records them
+  as `provided`. A notes file there summarises what they say, one fact per bullet, starting with the node.

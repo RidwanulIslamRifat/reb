@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CONFIDENCES } from "../../../domain/evidence.js";
-import { LINK_TYPES, NODE_TYPES } from "../../../domain/links.js";
+import { describeAllowed, LINK_TYPES, NODE_TYPES } from "../../../domain/links.js";
+import { describeTypeFields } from "../../../domain/nodeFields.js";
 import {
   buildGraph,
   getNode,
@@ -15,8 +16,9 @@ export const graphTools = [
   tool({
     name: "upsert_node",
     description:
-      "Create a knowledge-graph node, or update the name, label and body of an existing one (links are kept). " +
-      "The id is <type>-<kebab-name> unless given. Check query_graph first so one fact lives in one node.",
+      "Create a knowledge-graph node, or update the name, label, body and typed fields of an existing one (links are kept). " +
+      "The id is <type>-<kebab-name> unless given. Check query_graph first so one fact lives in one node. " +
+      `Typed fields by type (* = required): ${describeTypeFields()}.`,
     input: {
       run: runArg,
       type: z.enum(NODE_TYPES),
@@ -26,17 +28,21 @@ export const graphTools = [
         .describe("Evidence label, never stronger than the node's evidence."),
       id: z.string().optional().describe("Node id; default <type>-<kebab name>."),
       body: z.string().optional().describe("Markdown body; cite ids like [E-012]."),
+      fields: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe(
+          'Typed front-matter fields, for example {"likelihood":"high","impact":"medium"} for a risk; null removes one.',
+        ),
     },
     call: (ctx, args) => upsertNode(ctx, args),
   }),
   tool({
     name: "link_nodes",
     description:
-      "Link two nodes, or a node to an E-/S- id with type evidence. Allowed pairs: company makes product; " +
-      "product has module; module has feature; persona does journey; journey uses feature (in step order); " +
-      "feature gated_by pricing_tier; feature reads_writes data_object; feature connects_to integration; " +
-      "competitor also_offers feature; persona belongs_to market_segment; hypothesis explains feature or data_object; " +
-      "question about any node; any node evidence E-/S- id.",
+      "Link two nodes, or a node to an E-/S- id with type evidence. Allowed pairs: " +
+      LINK_TYPES.map((t) => `${t} (${describeAllowed(t)})`).join("; ") +
+      ". The order of uses links is the step order.",
     input: {
       run: runArg,
       from: z.string().min(1).describe("Node id the link starts at."),
@@ -68,7 +74,8 @@ export const graphTools = [
     name: "validate_graph",
     description:
       "Check the graph and ledger: broken links, features without evidence, numbers without a dated source, " +
-      "labels stronger than evidence, duplicate names, wrong link pairs. Each problem comes with a fix.",
+      "labels stronger than evidence, duplicate names, wrong link pairs, missing or invalid typed fields, " +
+      "stale metrics. Each problem comes with a fix.",
     input: { run: runArg },
     call: (ctx, args) => validateGraph(ctx, args),
   }),

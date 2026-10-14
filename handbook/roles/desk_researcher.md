@@ -43,6 +43,10 @@ Never log in, never submit forms, never crawl or bulk-download.
 
 ## Source checklist (work in this order)
 
+See also [the source playbook](../references/source-playbook.md): which public pages answer which
+part of the analysis. Record the countries or regions the business serves as `geography` nodes
+(company or product `operates_in` them): that is the business scope.
+
 Start with `get_brief` (product, url, focus questions, the user's pricing plan) and `query_graph`
 (what is already known). Then go down the list. Skip an item when the site has no such page.
 Usually 10 to 25 pages are enough; stop when new pages add nothing.

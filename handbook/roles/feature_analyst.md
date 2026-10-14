@@ -1,6 +1,6 @@
 ---
 role: feature_analyst
-description: Builds the feature map of modules, features, tiers and their evidence.
+description: Builds the feature map of modules, features, tiers and their evidence, and the rebuild detail - screens, user roles, business rules and acceptance criteria.
 tools:
   [
     get_brief,
@@ -11,6 +11,7 @@ tools:
     get_node,
     query_graph,
     validate_graph,
+    get_framework,
     log_role_work,
   ]
 ---
@@ -27,6 +28,17 @@ You turn the research into a clean feature map.
 4. Write `notes/feature_analyst-features.md`: a table of module, feature, tier, label and E-/S- ids.
 5. Record your own conclusions (for example "feature X is only on Enterprise") as `inferred`
    evidence that links the records they come from.
-6. `validate_graph` and fix what belongs to features.
+6. Rebuild detail, from the user's own session (observed) and help articles (documented), so that
+   someone could rebuild the product's behaviour (never its code, design or content):
+   - `screen` nodes (field `path`, for example `/settings/billing`): screen `shows` features and
+     data objects, and `navigates_to` the screens it leads to.
+   - `user_role` nodes (admin, member, guest ...): role `can` the features and screens it may use.
+   - `business_rule` nodes (field `kind`: limit, validation, permission, workflow, billing,
+     retention): rule `governs` the feature, data object, pricing tier or role it applies to.
+     Limits like "3 boards on Free" are rules that govern the pricing tier.
+   - On each important feature, the field `acceptance`: a list of short acceptance criteria
+     ("The customer receives an email with a pay link.").
+     Check `get_framework` `sitemap`, `permission_matrix`, `business_rules` and `user_stories`.
+7. `validate_graph` and fix what belongs to features.
 
 End with `log_role_work`: number of features, how many observed or documented, the main gaps.

@@ -35,7 +35,9 @@ export const handsOnTools = [
     name: "import_inbox",
     description:
       "Turn the screenshots, notes and HAR files the human saved in evidence/inbox/<session>/ into evidence records " +
-      "labelled observed. A note bullet starting with [node-id], or a file named <node-id>--<n>.png, links the item " +
+      'labelled observed. With session "provided", turn the documents the analysed business handed over ' +
+      "(evidence/inbox/provided/: .pdf, .docx, .xlsx, .csv, .pptx, plus notes summarising them) into evidence " +
+      "labelled provided. A note bullet starting with [node-id], or a file named <node-id>--<n>.<ext>, links the item " +
       "to that node. HAR files are summarised with secrets stripped; the raw file is never copied. Use dry_run first " +
       "to show the user what would be imported. Importing again adds only new items.",
     input: {
@@ -79,7 +81,7 @@ export const handsOnTools = [
         .describe("What REA looked at: the public url, or the path of the user's capture file."),
       result: z.unknown().describe("What the REA tool returned, as it came back."),
       confidence: z
-        .enum(["observed", "documented", "inferred", "unknown"])
+        .enum(["observed", "documented", "inferred", "unknown"]) // REA never sees provided documents
         .optional()
         .describe(
           "Default and strongest allowed: observed for a network capture, documented for a page, inferred for a bundle.",

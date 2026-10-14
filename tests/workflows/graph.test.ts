@@ -212,7 +212,7 @@ describe("validate_graph on a run folder", () => {
     const ledger = await readFile(join(copy, "evidence", "ledger.jsonl"), "utf8");
     const result = await validateGraph(ctx, { run: copy });
     expect(result.slug).toBe("kb-sample");
-    expect(result.problems).toHaveLength(6);
+    expect(result.problems).toHaveLength(8);
     expect(await readFile(join(copy, "evidence", "ledger.jsonl"), "utf8")).toBe(ledger);
   });
 

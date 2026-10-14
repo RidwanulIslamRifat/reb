@@ -98,8 +98,11 @@ what it found and what is still open.
 
 - Evidence first: read [the evidence protocol](references/evidence-protocol.md). Record the source
   (`record_source`) before the evidence that cites it (`record_evidence`).
-- Labels: observed (seen in the user's own session), documented (stated publicly),
-  inferred (your reasoned guess), unknown (not confirmed). Never label stronger than the evidence.
+- Labels: observed (seen in the user's own session), provided (from a document the business
+  handed over), documented (stated publicly), inferred (your reasoned guess), unknown (not confirmed).
+  Never label stronger than the evidence.
+- Sources: read [the source playbook](references/source-playbook.md) for where each part of a
+  business analysis is found in public sources.
 - Graph: read [the graph format](references/graph-format.md). One fact lives in one node; other
   nodes link to it. Check with `query_graph` before creating a node so you do not make duplicates.
 - reb assigns all ids (E-NNN, S-NNN). Never invent one; use the id a tool returned.
@@ -110,7 +113,9 @@ what it found and what is still open.
 ## Roles
 
 planner, auditor, desk_researcher, market_researcher, walkthrough_coach, tech_observer,
-feature_analyst, business_analyst, architect, kb_curator, report_writer.
+feature_analyst, business_analyst, architect, kb_curator, report_writer, financial_analyst
+(metrics, funding, leadership, growth signals), strategy_analyst (PESTLE, five forces, SWOT,
+findings and recommendations) and risk_analyst (risk register, compliance).
 Each has a prompt file in `roles/<role>.md` with its allowed reb tools; `next_task` returns it.
 
 ## Where things are

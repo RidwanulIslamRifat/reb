@@ -2,12 +2,21 @@ import { NODE_TYPES } from "./links.js";
 import { looksLikeNodeId } from "./node.js";
 
 /**
- * Rules for the user's inbox (SPEC 5: evidence/inbox/session-NN/): which files reb imports,
+ * Rules for the user's inbox (SPEC 5: evidence/inbox/session-NN/, and v2 evidence/inbox/provided/
+ * for documents the analysed business handed over): which files reb imports,
  * how a notes file is split into findings, and how a file or note names the node it is about.
  * Pure rules; the storage layer reads the files.
  */
 
 export const SESSION_NAME = /^session-\d{2,}$/;
+
+/** The inbox folder for documents the analysed business handed over itself (v2). */
+export const PROVIDED_SESSION = "provided";
+
+/** True for an inbox folder name import_inbox accepts: session-NN or provided. */
+export function isInboxFolder(name: string): boolean {
+  return SESSION_NAME.test(name) || name === PROVIDED_SESSION;
+}
 
 /** "session-01" for 1. */
 export function sessionName(n: number): string {
@@ -19,11 +28,12 @@ export function sessionNumber(name: string): number | null {
   return SESSION_NAME.test(name) ? Number(name.slice("session-".length)) : null;
 }
 
-export type InboxKind = "screenshot" | "note" | "har";
+export type InboxKind = "screenshot" | "note" | "har" | "document";
 
 const SCREENSHOT = /\.(png|jpe?g|gif|webp)$/i;
 const NOTE = /\.(md|txt)$/i;
 const HAR = /\.har$/i;
+const DOCUMENT = /\.(pdf|docx?|xlsx?|csv|pptx?|odt|ods)$/i;
 
 /** What kind of inbox item a file is, or null when reb does not import it. */
 export function inboxKind(fileName: string): InboxKind | null {
@@ -31,10 +41,11 @@ export function inboxKind(fileName: string): InboxKind | null {
   if (SCREENSHOT.test(fileName)) return "screenshot";
   if (NOTE.test(fileName)) return "note";
   if (HAR.test(fileName)) return "har";
+  if (DOCUMENT.test(fileName)) return "document";
   return null;
 }
 
-/** True when `id` looks like a node id and starts with one of the 13 node types. */
+/** True when `id` looks like a node id and starts with one of the node types. */
 export function isTypedNodeId(id: string): boolean {
   return looksLikeNodeId(id) && NODE_TYPES.some((type) => id.startsWith(`${type}-`));
 }
@@ -60,7 +71,7 @@ export interface NoteEntry {
 
 const BULLET = /^\s*(?:[-*+]|\d+[.)])\s+/;
 const TAG = /\[([a-z_]+-[a-z0-9-]+)\]/g;
-const FILE_REF = /[\w.-]+\.(?:png|jpe?g|gif|webp)\b/gi;
+const FILE_REF = /[\w.-]+\.(?:png|jpe?g|gif|webp|pdf|docx?|xlsx?|csv|pptx?|odt|ods)\b/gi;
 
 /**
  * Splits a notes file into findings. Each bullet ("- ", "* ", "1. ") starts one finding and

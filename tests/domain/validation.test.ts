@@ -235,6 +235,8 @@ describe("the kb-sample fixture", () => {
       ["number_without_dated_source", "E-003"],
       ["label_stronger_than_evidence", "feature-search"],
       ["duplicate_name", "feature-full-text-search"],
+      ["bad_field", "risk-vendor-lock-in"],
+      ["stale_metric", "metric-customers"],
     ]);
     // Every rule except bad_node_file (tested above) has its example in the fixture.
     expect(new Set(problems.map((p) => p.rule))).toEqual(

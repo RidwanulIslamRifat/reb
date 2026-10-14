@@ -4,10 +4,11 @@ import { RoleSchema } from "./plan.js";
 
 /**
  * Evidence labels (SPEC 2.2), strongest first.
- * observed: seen in the user's own session; documented: stated publicly;
- * inferred: reasoned guess; unknown: not confirmed.
+ * observed: seen in the user's own session; provided: from a document the analysed business
+ * handed over itself (v2); documented: stated publicly; inferred: reasoned guess;
+ * unknown: not confirmed.
  */
-export const CONFIDENCES = ["observed", "documented", "inferred", "unknown"] as const;
+export const CONFIDENCES = ["observed", "provided", "documented", "inferred", "unknown"] as const;
 export const ConfidenceSchema = z.enum(CONFIDENCES);
 export type Confidence = z.infer<typeof ConfidenceSchema>;
 

@@ -76,7 +76,7 @@ describe("setup", () => {
     expect(codex).toContain("[mcp_servers.reb]");
     const skill = await readFile(join(home, ".claude", "skills", "reb", "SKILL.md"), "utf8");
     expect(skill).toBe(await readFile("handbook/SKILL.md", "utf8"));
-    expect(await readdir(join(home, ".agents", "skills", "reb", "roles"))).toHaveLength(11);
+    expect(await readdir(join(home, ".agents", "skills", "reb", "roles"))).toHaveLength(14);
 
     const after = await snapshot(home);
     const again = await cli(home, "y", "setup");

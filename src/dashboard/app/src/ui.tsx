@@ -56,6 +56,7 @@ export function Problem({ error }: { error: ApiError }) {
 
 const LABEL_CLASS: Record<Label, string> = {
   observed: "good",
+  provided: "good",
   documented: "info",
   inferred: "warn",
   unknown: "",

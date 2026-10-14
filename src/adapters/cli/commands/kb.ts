@@ -8,6 +8,10 @@ import {
   upsertNode,
 } from "../../../workflows/graph.js";
 import { validateGraph } from "../../../workflows/validate.js";
+import { getFramework } from "../../../workflows/frameworks.js";
+import { FRAMEWORKS } from "../../../domain/frameworks.js";
+import { RebError } from "../../../domain/errors.js";
+import { TYPE_FIELDS } from "../../../domain/nodeFields.js";
 import { line, noteRun, type CliIo } from "../output.js";
 
 type RunOption = { run?: string };
@@ -21,12 +25,27 @@ export function registerKb(program: Command, io: CliIo): void {
     .description("Create or update a node (kb/nodes/<id>.md)")
     .argument("<type>", "node type, for example feature")
     .argument("<name...>", "the node's name, for example CSV export")
-    .requiredOption("--label <label>", "observed, documented, inferred or unknown")
+    .requiredOption("--label <label>", "observed, provided, documented, inferred or unknown")
     .option("--id <id>", "node id (default: <type>-<name in kebab case>)")
+    .option(
+      "--field <key=value>",
+      "a typed field, for example --field likelihood=high (repeat for more; a=x,y makes a list)",
+      (value: string, all: string[] = []) => [...all, value],
+    )
     .option("--run <name>", RUN_HELP)
     .action(
-      async (type: string, name: string[], options: RunOption & { label: string; id?: string }) => {
-        const result = await upsertNode(ctx(), { ...options, type, name: name.join(" ") });
+      async (
+        type: string,
+        name: string[],
+        options: RunOption & { label: string; id?: string; field?: string[] },
+      ) => {
+        const { field, ...rest } = options;
+        const result = await upsertNode(ctx(), {
+          ...rest,
+          type,
+          name: name.join(" "),
+          ...(field?.length ? { fields: parseFieldOptions(field) } : {}),
+        });
         noteRun(io, result);
         const id = result.node.meta.id;
         line(
@@ -36,6 +55,20 @@ export function registerKb(program: Command, io: CliIo): void {
         for (const warning of result.warnings) line(io, `Note: ${warning}`);
       },
     );
+
+  kb.command("framework")
+    .description("Show an analysis framework drawn from the graph (SWOT, risk register, ...)")
+    .argument("<name>", FRAMEWORKS.join(", "))
+    .option("--run <name>", RUN_HELP)
+    .action(async (name: string, options: RunOption) => {
+      const result = await getFramework(ctx(), { ...options, framework: name });
+      noteRun(io, result);
+      line(io, `# ${result.title}`);
+      line(io, "");
+      line(io, result.about);
+      line(io, "");
+      line(io, result.markdown);
+    });
 
   kb.command("link")
     .description("Link two nodes, or a node to an E-/S- id with the evidence link")
@@ -160,3 +193,32 @@ export function registerKb(program: Command, io: CliIo): void {
       );
     });
 }
+
+/**
+ * --field key=value options as fields: "likelihood=high" -> { likelihood: "high" };
+ * "investors=Acme Ventures,Beta Capital" -> a list; "key=" removes the field.
+ */
+export function parseFieldOptions(options: string[]): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const option of options) {
+    const at = option.indexOf("=");
+    if (at < 1) {
+      throw new RebError(
+        `"--field ${option}" is not key=value.`,
+        "Write it like --field likelihood=high.",
+      );
+    }
+    const key = option.slice(0, at).trim();
+    const value = option.slice(at + 1).trim();
+    const listy = LIST_FIELDS.has(key);
+    fields[key] = value === "" ? null : listy ? value.split(",").map((v) => v.trim()) : value;
+  }
+  return fields;
+}
+
+/** Typed fields that hold a list of text. */
+const LIST_FIELDS = new Set(
+  Object.values(TYPE_FIELDS).flatMap((list) =>
+    list!.filter((f) => f.kind === "list").map((f) => f.name),
+  ),
+);

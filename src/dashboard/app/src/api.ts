@@ -1,6 +1,6 @@
 /** Shapes of the dashboard's read-only API (src/workflows/dashboard.ts) and a small fetch helper. */
 
-export type Label = "observed" | "documented" | "inferred" | "unknown";
+export type Label = "observed" | "provided" | "documented" | "inferred" | "unknown";
 export type Status = "pending" | "running" | "needs_human" | "done" | "blocked" | "dropped";
 
 export interface RunSummary {

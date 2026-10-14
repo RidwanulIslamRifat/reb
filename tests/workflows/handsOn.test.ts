@@ -259,3 +259,49 @@ describe("import_inbox", () => {
     expect(events[1]!.args).toEqual({ session: "session-01" });
   });
 });
+
+describe("import_inbox: documents the business handed over (v2)", () => {
+  it("imports evidence/inbox/provided/ as provided evidence and skips what belongs elsewhere", async () => {
+    const { ctx, run } = await setup();
+    const dir = join(run, "evidence/inbox/provided");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "product-acme-notes--annual-report.pdf"), "%PDF-1.4 fake test file");
+    await writeFile(join(dir, "board-pack.xlsx"), "fake spreadsheet");
+    await writeFile(
+      join(dir, "notes.md"),
+      "- [feature-export] The roadmap in board-pack.xlsx plans PDF export for next year.\n",
+    );
+    await writeFile(join(dir, "capture.har"), "{}");
+
+    const result = await importInbox(ctx, { run, session: "provided" });
+    expect(result.summary).toBe("Imported 3 items: 1 note, 2 documents.");
+    const skipped = result.items.find((i) => i.file.endsWith("capture.har"))!;
+    expect(skipped.status).toBe("skipped");
+    expect(skipped.reason).toContain("session-NN");
+
+    const { records } = await listEvidence(ctx, { run, kind: "evidence" });
+    expect(records.every((r) => r.kind === "evidence" && r.confidence === "provided")).toBe(true);
+    const pack = records.find(
+      (r) => r.kind === "evidence" && r.finding.includes("board-pack.xlsx"),
+    );
+    expect(pack).toMatchObject({ subject: "feature-export", role: "desk_researcher" });
+    const report = records.find((r) => r.kind === "evidence" && r.subject === "product-acme-notes");
+    expect(report).toMatchObject({
+      finding:
+        "Document product-acme-notes--annual-report.pdf about Acme Notes, provided by the business.",
+      limitations: [
+        "From a document the business handed over; not checked against public sources.",
+      ],
+    });
+  });
+
+  it("skips a document dropped in a session folder", async () => {
+    const { ctx, run } = await setup();
+    await writeFile(join(run, "evidence/inbox/session-01/contract.pdf"), "fake");
+    const result = await importInbox(ctx, { run, session: "session-01", dry_run: true });
+    const item = result.items.find((i) => i.file.endsWith("contract.pdf"))!;
+    expect(item.status).toBe("skipped");
+    expect(item.reason).toContain("evidence/inbox/provided/");
+  });
+});

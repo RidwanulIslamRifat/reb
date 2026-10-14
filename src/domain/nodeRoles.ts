@@ -20,4 +20,30 @@ export const ROLE_FOR_TYPE: Record<NodeType, Role> = {
   data_object: "architect",
   hypothesis: "architect",
   question: "kb_curator",
+  // v2: business model
+  value_proposition: "business_analyst",
+  revenue_stream: "business_analyst",
+  cost_driver: "business_analyst",
+  channel: "business_analyst",
+  partner: "business_analyst",
+  customer: "business_analyst",
+  // v2: company condition
+  metric: "financial_analyst",
+  funding_round: "financial_analyst",
+  leader: "financial_analyst",
+  signal: "financial_analyst",
+  geography: "desk_researcher",
+  compliance: "risk_analyst",
+  // v2: strategy and risk
+  finding: "strategy_analyst",
+  trend: "strategy_analyst",
+  force: "strategy_analyst",
+  risk: "risk_analyst",
+  // v2: technology and rebuild
+  technology: "tech_observer",
+  api_endpoint: "architect",
+  // Screens, roles and rules come from the user's hands-on session and the help docs.
+  screen: "feature_analyst",
+  user_role: "feature_analyst",
+  business_rule: "feature_analyst",
 };

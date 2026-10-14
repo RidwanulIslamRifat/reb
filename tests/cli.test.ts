@@ -188,7 +188,7 @@ describe("evidence and knowledge graph from the CLI", () => {
     const output = await cli("unused", "kb", "validate", "--run", copy);
     expect(output).toMatch(/^1\. \[broken_link\] /);
     expect(output).toContain("feature-export has no evidence.");
-    expect(output.trim().split("\n").at(-1)).toBe("6 problems found.");
+    expect(output.trim().split("\n").at(-1)).toBe("8 problems found.");
   });
 });
 

@@ -20,6 +20,7 @@ import {
   renderNode,
   type GraphNode,
 } from "../domain/node.js";
+import { fieldProblems } from "../domain/nodeFields.js";
 import { ConfidenceSchema } from "../domain/evidence.js";
 import { describeIssues } from "../domain/plan.js";
 import type { GraphInput } from "../domain/validation.js";
@@ -91,13 +92,27 @@ function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, what: string, fix
   return result.data;
 }
 
+/** Front-matter keys that upsert_node's `fields` may not set: reb manages them itself. */
+const RESERVED_FIELDS = new Set(["id", "type", "name", "label", "links"]);
+
 /**
  * upsert_node: creates a node, or updates the name, label and (when given) body of an existing one.
  * Links are kept; add them with link_nodes. The id is `<type>-<kebab name>` unless given.
+ * `fields` sets typed front-matter fields (v2, for example a risk's likelihood); a field set to
+ * null or "" is removed. Problems with typed fields come back as warnings, not errors, so a node
+ * can be saved first and completed later; validate_graph lists them too.
  */
 export async function upsertNode(
   ctx: Context,
-  input: { run?: string; type: string; name: string; label: string; id?: string; body?: string },
+  input: {
+    run?: string;
+    type: string;
+    name: string;
+    label: string;
+    id?: string;
+    body?: string;
+    fields?: Record<string, unknown>;
+  },
 ) {
   const run = await resolveRun(ctx, input.run);
   const { body, ...args } = argsOf(input);
@@ -132,6 +147,13 @@ export async function upsertNode(
       );
     }
     const nodeId = id;
+    const reserved = Object.keys(input.fields ?? {}).filter((k) => RESERVED_FIELDS.has(k));
+    if (reserved.length) {
+      throw new RebError(
+        `fields cannot set ${reserved.join(", ")}.`,
+        "Give the type, name and label as their own values, and add links with link_nodes.",
+      );
+    }
     return withGraphLock(run.paths, async () => {
       const existing = await readNode(run.paths, nodeId);
       if (existing && existing.meta.type !== type) {
@@ -140,9 +162,14 @@ export async function upsertNode(
           "Use another id, or keep the type it has.",
         );
       }
+      const merged: Record<string, unknown> = { ...(existing?.meta ?? { links: {} }) };
+      for (const [key, value] of Object.entries(input.fields ?? {})) {
+        if (value === null || value === "") delete merged[key];
+        else merged[key] = value;
+      }
       const meta = parseOrThrow(
         NodeMetaSchema,
-        { ...(existing?.meta ?? { links: {} }), id: nodeId, type, name: input.name, label },
+        { ...merged, id: nodeId, type, name: input.name, label },
         "The node is not valid",
         "Give a type, a name and a label.",
       );
@@ -159,6 +186,7 @@ export async function upsertNode(
             n.meta.name.trim().toLowerCase() === meta.name.trim().toLowerCase(),
         )
         .map((n) => `${n.meta.id} has the same name; one fact should live in one node.`);
+      for (const issue of fieldProblems(type, meta)) warnings.push(`${nodeId} ${issue}.`);
       return { ...run, node, created: !existing, warnings };
     });
   });

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { RebError } from "./errors.js";
 import { ReportTypeSchema } from "./brief.js";
 
-/** Roles from SPEC 7. */
+/** Roles from SPEC 7 (the last three are v2). */
 export const ROLES = [
   "planner",
   "auditor",
@@ -15,6 +15,9 @@ export const ROLES = [
   "architect",
   "kb_curator",
   "report_writer",
+  "financial_analyst",
+  "strategy_analyst",
+  "risk_analyst",
 ] as const;
 export const RoleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof RoleSchema>;

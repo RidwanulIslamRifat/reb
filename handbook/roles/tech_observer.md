@@ -16,6 +16,7 @@ tools:
     link_nodes,
     get_node,
     query_graph,
+    get_framework,
     log_role_work,
   ]
 optional_tools: [inspect_web_network_capture, inspect_web_page, analyze_web_bundle]
@@ -31,8 +32,11 @@ Never call the product's private API, never replay requests, never probe or scan
    It records the page as a source and lists each tool with its clues and a suggested label.
    Use `read_public_page` for engineering blogs, job posts and docs; `record_source` only for
    files the user gave you.
-2. Record each technology as evidence on the related node (for example an `integration` node for
-   Stripe, linked from the checkout feature with `connects_to`). A script tag or header is
+2. Record each technology as a `technology` node (field `category`: frontend, backend, database,
+   hosting, cdn, analytics, payments, auth, email, monitoring, ai, other) with its evidence, linked
+   `powers` the product, module, feature or integration it serves; an outside service the product
+   connects to is also an `integration` node (for example Stripe, linked from the checkout feature
+   with `connects_to`). `get_framework` `tech_stack` shows the result. A script tag or header is
    `documented` only if the vendor is named; otherwise `inferred` with the clue in limitations.
 3. If the user saved a HAR file from their own session in the inbox, `import_inbox` records it as
    observed evidence. To only look at a HAR elsewhere, use `summarize_har`. Both strip cookies, auth

@@ -237,9 +237,9 @@ export function registerEvidence(program: Command, io: CliIo): void {
   evidence
     .command("import")
     .description(
-      "Turn the screenshots, notes and HAR files of an inbox session into observed evidence",
+      "Turn the screenshots, notes and HAR files of an inbox session into observed evidence (or, for the provided folder, documents from the business into provided evidence)",
     )
-    .argument("<session>", "inbox session folder, for example session-01")
+    .argument("<session>", 'inbox session folder, for example session-01, or "provided"')
     .option("--subject <node>", "node for items that name none (default: the product node)")
     .option("--dry-run", "only show what would be imported")
     .option("--delete-har", "delete the raw .har files after import (they hold secrets)")

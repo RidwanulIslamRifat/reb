@@ -4,8 +4,10 @@ import { RebError } from "../domain/errors.js";
 import { sha256, type EvidenceRecord, type SourceRecord } from "../domain/evidence.js";
 import {
   inboxKind,
+  isInboxFolder,
   nodeFromFileName,
   parseNotes,
+  PROVIDED_SESSION,
   SESSION_NAME,
   sessionName,
   sessionNumber,
@@ -56,6 +58,16 @@ function checkSession(session: string): void {
     throw new RebError(
       `"${session}" is not a session name.`,
       'Session folders are named like "session-01" inside evidence/inbox/.',
+    );
+  }
+}
+
+/** import_inbox also takes "provided", the folder for documents the business handed over (v2). */
+function checkInboxFolder(session: string): void {
+  if (!isInboxFolder(session)) {
+    throw new RebError(
+      `"${session}" is not an inbox folder name.`,
+      'Use a session folder like "session-01", or "provided" for documents the business handed over.',
     );
   }
 }
@@ -147,7 +159,7 @@ export interface InboxItem {
   subject: string | null;
   finding: string;
   links: string[];
-  confidence: "observed";
+  confidence: "observed" | "provided";
   status: "new" | "already imported" | "skipped";
   reason?: string;
   /** Set after a real import. */
@@ -197,10 +209,15 @@ async function prepareInbox(
   if (files === null) {
     throw new RebError(
       `There is no inbox folder evidence/inbox/${session} in this run.`,
-      'Make a test plan first ("reb evidence test-plan"), which creates it, and save the captures there.',
+      session === PROVIDED_SESSION
+        ? "Create the folder evidence/inbox/provided/ in the run folder and save the documents the business gave you there."
+        : 'Make a test plan first ("reb evidence test-plan"), which creates it, and save the captures there.',
     );
   }
   const rel = (name: string) => `evidence/inbox/${session}/${name}`;
+  // Documents the business handed over are "provided"; the user's own session is "observed".
+  const provided = session === PROVIDED_SESSION;
+  const confidence = provided ? "provided" : "observed";
   const products = nodes.filter((n) => n.meta.type === "product");
   const defaultSubject = fallback ?? (products.length === 1 ? products[0]!.meta.id : undefined);
   const items: PreparedItem[] = [];
@@ -223,7 +240,7 @@ async function prepareInbox(
         subject,
         finding: redactText(entry.text),
         links: entry.nodes.slice(1),
-        confidence: "observed",
+        confidence,
         status: "new",
         bytes,
         sha,
@@ -242,29 +259,65 @@ async function prepareInbox(
           subject: null,
           finding: "",
           links: [],
-          confidence: "observed",
+          confidence,
           status: "skipped",
           reason:
-            "reb imports screenshots (.png, .jpg, .gif, .webp), notes (.md, .txt) and .har files only",
+            "reb imports screenshots (.png, .jpg, .gif, .webp), notes (.md, .txt), .har files and, in " +
+            "the provided folder, documents (.pdf, .docx, .xlsx, .csv, .pptx) only",
           bytes: new Uint8Array(),
           sha: "",
         });
       }
       continue;
     }
+    const misplaced =
+      kind === "document" && !provided
+        ? "documents from the business go in evidence/inbox/provided/, not in a session folder"
+        : kind === "har" && provided
+          ? "network captures come from your own session: put them in a session-NN folder"
+          : null;
+    if (misplaced) {
+      items.push({
+        kind,
+        file: rel(name),
+        subject: null,
+        finding: "",
+        links: [],
+        confidence,
+        status: "skipped",
+        reason: misplaced,
+        bytes: new Uint8Array(),
+        sha: "",
+      });
+      continue;
+    }
     const { bytes, sha } = await read(name);
     const caption = captions.get(name);
     const subject = nodeFromFileName(name) ?? caption?.nodes[0] ?? defaultSubject ?? null;
-    if (kind === "screenshot") {
+    if (kind === "document") {
       items.push({
         kind,
         file: rel(name),
         subject,
         finding: caption
-          ? `Screenshot ${name} from the user's own session: ${redactText(caption.text)}`
-          : `Screenshot ${name} of ${subject ? nodeName(nodes, subject) : "the product"} from the user's own session.`,
+          ? `Document ${name} provided by the business: ${redactText(caption.text)}`
+          : `Document ${name} about ${subject ? nodeName(nodes, subject) : "the business"}, provided by the business.`,
         links: [],
-        confidence: "observed",
+        confidence,
+        status: "new",
+        bytes,
+        sha,
+      });
+    } else if (kind === "screenshot") {
+      items.push({
+        kind,
+        file: rel(name),
+        subject,
+        finding: caption
+          ? `Screenshot ${name} ${provided ? "provided by the business" : "from the user's own session"}: ${redactText(caption.text)}`
+          : `Screenshot ${name} of ${subject ? nodeName(nodes, subject) : "the product"} ${provided ? "provided by the business" : "from the user's own session"}.`,
+        links: [],
+        confidence,
         status: "new",
         bytes,
         sha,
@@ -282,7 +335,7 @@ async function prepareInbox(
           subject,
           finding: "",
           links: [],
-          confidence: "observed",
+          confidence,
           status: "skipped",
           reason: error.problem,
           bytes,
@@ -297,7 +350,7 @@ async function prepareInbox(
         subject,
         finding: harFinding(name, summary),
         links: [],
-        confidence: "observed",
+        confidence,
         status: "new",
         bytes,
         sha,
@@ -337,10 +390,11 @@ function publicItem(item: PreparedItem): InboxItem {
   return { kind, file, subject, finding, links, confidence, status, reason, record };
 }
 
-const ROLE_OF: Record<InboxKind, "walkthrough_coach" | "tech_observer"> = {
+const ROLE_OF: Record<InboxKind, "walkthrough_coach" | "tech_observer" | "desk_researcher"> = {
   screenshot: "walkthrough_coach",
   note: "walkthrough_coach",
   har: "tech_observer",
+  document: "desk_researcher",
 };
 
 function countLine(items: InboxItem[]): string {
@@ -349,6 +403,7 @@ function countLine(items: InboxItem[]): string {
     [count("screenshot"), "screenshot"],
     [count("note"), "note"],
     [count("har"), "HAR"],
+    [count("document"), "document"],
   ]
     .filter(([n]) => n)
     .map(([n, word]) => `${n} ${word}${n === 1 || word === "HAR" ? "" : "s"}`);
@@ -374,7 +429,7 @@ export async function importInbox(
 ) {
   const run = await resolveRun(ctx, input.run);
   return logged(ctx, "import_inbox", run, argsOf(input), async () => {
-    checkSession(input.session);
+    checkInboxFolder(input.session);
     const graph = await loadGraph(run.paths);
     const prepared = await prepareInbox(run, input.session, input.subject, graph.nodes);
     const records = await readLedger(run.paths);
@@ -387,6 +442,7 @@ export async function importInbox(
     }
     const warnings: string[] = [];
     const fresh = prepared.filter((i) => i.status === "new");
+    const provided = input.session === PROVIDED_SESSION;
 
     if (!input.dry_run) {
       const sourceFor = new Map<string, string>();
@@ -403,16 +459,28 @@ export async function importInbox(
           sources.find((s) => s.url === item.file && s.content_sha256 === item.sha)?.id;
         if (!sourceId) {
           const name = item.file.split("/").pop()!;
+          const what = {
+            har: "Network capture",
+            note: "Notes",
+            screenshot: "Screenshot",
+            document: "Document",
+          };
           const source = await appendSource(ctx, run, {
             url: item.file,
-            title: `${item.kind === "har" ? "Network capture" : item.kind === "note" ? "Notes" : "Screenshot"} ${name} (${input.session})`,
-            publisher: "the user's own session",
+            title: `${what[item.kind as InboxKind]} ${name} (${input.session})`,
+            publisher: provided
+              ? "the analysed business (provided document)"
+              : "the user's own session",
             content: item.bytes,
           });
           sourceId = source.id;
         }
         sourceFor.set(key, sourceId);
-        const limitations = ["Seen in the user's own session; one session on one plan tier."];
+        const limitations = [
+          provided
+            ? "From a document the business handed over; not checked against public sources."
+            : "Seen in the user's own session; one session on one plan tier.",
+        ];
         if (item.har) {
           limitations.push(
             `Cookies, auth headers, tokens, bodies and query values were stripped; the redacted summary is ` +
@@ -420,12 +488,12 @@ export async function importInbox(
           );
         }
         const { record, warnings: more } = await appendEvidence(ctx, run, {
-          role: ROLE_OF[item.kind as InboxKind],
+          role: provided ? "desk_researcher" : ROLE_OF[item.kind as InboxKind],
           subject: item.subject,
           operation: "import_inbox",
           source: sourceId,
           finding: item.finding,
-          confidence: "observed",
+          confidence: item.confidence,
           limitations,
           links: item.links,
         });
