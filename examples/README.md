@@ -1,6 +1,6 @@
 # Examples
 
-## tidyhive-example-2026-10-13: a complete, made-up analysis
+## tidyhive-example-2026-10-14: a complete, made-up analysis
 
 **Tidyhive** (`tidyhive.example`) does not exist. It is a fictional shared task board for small
 teams, invented to show what a finished reb analysis looks like. Every company, page and number in
@@ -30,7 +30,7 @@ The analysis asked for one report, the feature report. It went like this:
 From a copy of the reb repository (after `npm ci` and `npm run build`):
 
 ```sh
-node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-13
+node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-14
 ```
 
 A page opens in your browser with the plan, the knowledge map, the evidence and the report. Press

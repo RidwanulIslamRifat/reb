@@ -1,9 +1,9 @@
 ---
 name: reb
-description: "Evidence-backed analysis of a SaaS product with reb. Use when the user asks to analyse, research or assess a SaaS product or website (for example 'Analyse notion.so; reports: business, feature'), or asks to continue, audit or report on a reb run. Builds a linked knowledge graph and cited reports from public sources and the user's own hands-on session."
+description: "Evidence-backed analysis of any business, product or tool with reb, the way a business analyst, product manager or audit firm would. Use when the user asks to analyse, research, assess or do due diligence on a company, product or website (for example 'Analyse notion.so; reports: business, risk, rebuild'), or asks to continue, audit or report on a reb run. Builds a linked knowledge graph and cited, audit-style reports (business, feature, market, build, due_diligence, risk, strategy, technical, rebuild) from public sources, documents the business provided and the user's own hands-on session."
 ---
 
-# reb: evidence-backed SaaS analysis
+# reb: evidence-backed business and product analysis
 
 You drive an analysis with the reb MCP tools. reb stores everything in plain files in a run folder;
 you do the thinking, reading and writing. Every finding becomes an evidence record, every fact

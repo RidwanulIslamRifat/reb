@@ -1,5 +1,8 @@
-import type { ReportType } from "./brief.js";
-import { correctionsOf, type EvidenceRecord, type LedgerRecord } from "./evidence.js";
+import type { Brief, ReportType } from "./brief.js";
+import type { EvidenceRecord, LedgerRecord } from "./evidence.js";
+import { FRAMEWORK_INFO, frameworkView } from "./frameworks.js";
+import { GraphIndex, summaryOf } from "./graphIndex.js";
+import { TYPE_FIELDS } from "./nodeFields.js";
 import { LINK_TYPES, NODE_TYPES, type LinkType, type NodeType } from "./links.js";
 import { isNodeIdFor, type GraphNode } from "./node.js";
 import type { ReportTemplate } from "./reportSpec.js";
@@ -7,9 +10,20 @@ import type { ReportTemplate } from "./reportSpec.js";
 /** The report_writer's draft for a report: prose per section, rendered into the report. */
 export const reportDraftPath = (report: ReportType) => `notes/report-${report}.md`;
 
-/** Section headings reb writes itself at the end of every report (SPEC 11). */
+/** Section headings reb writes itself in every report (SPEC 11). */
+export const DETAILS_HEADING = "Report details";
+export const SUMMARY_HEADING = "Executive summary";
+export const SCOPE_HEADING = "Scope and methodology";
+export const LIMITATIONS_HEADING = "Limitations and disclaimer";
 export const SOURCES_HEADING = "Sources";
 export const OPEN_QUESTIONS_HEADING = "Open questions";
+const REB_HEADINGS = [
+  DETAILS_HEADING,
+  SCOPE_HEADING,
+  LIMITATIONS_HEADING,
+  SOURCES_HEADING,
+  OPEN_QUESTIONS_HEADING,
+];
 
 // ---------------------------------------------------------------------------------------------
 // Citations
@@ -151,12 +165,12 @@ export function parseReportDraft(text: string, template: ReportTemplate): Report
       const name = normal(heading[1]!);
       const section = template.sections.find((s) => normal(s.title) === name || s.id === name);
       if (section) at = section.id;
-      else if (name === "summary") at = "";
+      else if (name === "summary" || name === normal(SUMMARY_HEADING)) at = "";
       else {
         problems.push(
           `line ${i + 1}: "## ${heading[1]}" is not a section of the ${template.report} report ` +
             `(use one of: ${template.sections.map((s) => s.title).join(", ")}; ` +
-            `reb writes "${SOURCES_HEADING}" and "${OPEN_QUESTIONS_HEADING}" itself)`,
+            `reb writes ${REB_HEADINGS.map((h) => `"${h}"`).join(", ")} itself)`,
         );
         at = `?${i}`;
       }
@@ -246,11 +260,6 @@ const LINK_WORDS: Record<Exclude<LinkType, "evidence">, { out: string; in: strin
   relates_to: { out: "Relates to", in: "Related from" },
 };
 
-const LABEL_LEGEND =
-  "Labels: **observed** (seen in a hands-on session), **documented** (stated publicly), " +
-  "**inferred** (a reasoned guess), **unknown** (not confirmed). Ids in [brackets] cite nodes " +
-  "(kb/nodes/<id>.md) and evidence (E-) or source (S-) records (evidence/ledger.jsonl).";
-
 export interface RenderReportInput {
   template: ReportTemplate;
   product: string;
@@ -260,6 +269,16 @@ export interface RenderReportInput {
   nodes: GraphNode[];
   records: LedgerRecord[];
   draft: ReportDraft | null;
+  /** What the brief says, for the report details and the scope (v2). */
+  brief?: Pick<Brief, "url" | "category" | "focus_questions" | "plan_tier">;
+}
+
+export interface Confidence {
+  /** 0 to 100. */
+  score: number;
+  rating: "High" | "Medium" | "Low";
+  /** How the score was worked out, in one sentence. */
+  basis: string;
 }
 
 export interface RenderedReport {
@@ -272,17 +291,8 @@ export interface RenderedReport {
   openQuestions: string[];
   /** Section needs the graph does not meet yet (also listed as open questions). */
   unmet: string[];
-}
-
-/** First paragraph of a node body, on one line. */
-function summaryOf(body: string): string {
-  const paragraph =
-    body
-      .trim()
-      .split(/\n\s*\n/)
-      .find((p) => p.trim() && !p.trim().startsWith("#")) ?? "";
-  const line = paragraph.replace(/\s+/g, " ").trim();
-  return line.length > 300 ? `${line.slice(0, 297)}...` : line;
+  /** Overall confidence in the report (v2). */
+  confidence: Confidence;
 }
 
 /** Ends a phrase with a full stop unless it already ends with punctuation. */
@@ -290,52 +300,61 @@ const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`);
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+/** How much each evidence label counts towards the confidence score. */
+const LABEL_WEIGHT: Record<EvidenceRecord["confidence"], number> = {
+  observed: 1,
+  provided: 1,
+  documented: 0.85,
+  inferred: 0.5,
+  unknown: 0.1,
+};
+
 /**
- * Renders reports/<type>.md (SPEC 11): the template's sections in order, each with the writer's
- * draft text and the graph nodes of the types the section needs (with labels, links and
- * evidence findings), then Sources and Open questions. Every generated line cites its node and
- * evidence ids.
+ * Overall confidence (v2): the average weight of the evidence behind the nodes a report shows
+ * (observed and provided 1, documented 0.85, inferred 0.5, unknown 0.1; a source counts as
+ * documented), times the share of shown nodes that have any evidence, minus 5 points for every
+ * section need the graph does not meet (at most 30).
+ */
+export function reportConfidence(
+  labels: Array<EvidenceRecord["confidence"]>,
+  shown: number,
+  backed: number,
+  unmet: number,
+): Confidence {
+  const avg = labels.length ? labels.reduce((a, l) => a + LABEL_WEIGHT[l], 0) / labels.length : 0;
+  const coverage = shown ? backed / shown : 0;
+  const score = Math.max(0, Math.round(avg * coverage * 100) - Math.min(30, unmet * 5));
+  const rating = score >= 75 ? "High" : score >= 50 ? "Medium" : "Low";
+  return {
+    score,
+    rating,
+    basis:
+      `${plural(labels.length, "evidence record")} behind ${plural(shown, "item")} shown ` +
+      `(${backed} with evidence), weighted by label, minus ${Math.min(30, unmet * 5)} points for ` +
+      `${plural(unmet, "unmet section need")}`,
+  };
+}
+
+const LABELS_TEXT =
+  "**observed** (seen in the analyst's own use of the product), **provided** (from a document the " +
+  "business handed over), **documented** (stated publicly), **inferred** (a reasoned judgement) and " +
+  "**unknown** (not confirmed)";
+
+/**
+ * Renders reports/<type>.md (SPEC 11): report details with an overall confidence rating, the
+ * executive summary, scope and methodology, the template's sections in order (each with the
+ * writer's draft text, its framework views and the graph nodes of the types it needs, with
+ * labels, links and evidence findings), limitations and disclaimer, then Sources and Open
+ * questions. Every generated line cites its node and evidence ids.
  */
 export function renderReport(input: RenderReportInput): RenderedReport {
   const { template, nodes, records, draft } = input;
-  const byId = new Map(nodes.map((n) => [n.meta.id, n]));
-  const ledger = new Map(records.map((r) => [r.id, r]));
-  const corrected = correctionsOf(records);
-  const latest = (id: string) => {
-    const seen = new Set<string>();
-    while (corrected.has(id) && !seen.has(id)) {
-      seen.add(id);
-      id = corrected.get(id)!;
-    }
-    return id;
-  };
-  const evidenceOf = (node: GraphNode): string[] => {
-    const ids = [
-      ...(node.meta.links.evidence ?? []).map(latest),
-      ...records
-        .filter((r) => r.kind === "evidence" && r.subject === node.meta.id && !corrected.has(r.id))
-        .map((r) => r.id),
-    ];
-    return [...new Set(ids)].filter((id) => ledger.has(id));
-  };
-  const incoming = new Map<string, Array<{ type: LinkType; from: string }>>();
-  for (const n of nodes) {
-    for (const type of LINK_TYPES) {
-      if (type === "evidence") continue;
-      for (const to of n.meta.links[type] ?? []) {
-        incoming.set(to, [...(incoming.get(to) ?? []), { type, from: n.meta.id }]);
-      }
-    }
-  }
-  const nameOf = (id: string) => byId.get(id)?.meta.name;
-  const ofType = (type: NodeType) =>
-    nodes
-      .filter((n) => n.meta.type === type)
-      .sort((a, b) => a.meta.name.localeCompare(b.meta.name) || a.meta.id.localeCompare(b.meta.id));
+  const g = new GraphIndex(nodes, records);
+  const nameOf = (id: string) => g.nameOf(id);
 
   const nodeLines = (node: GraphNode): string[] => {
     const { id, name, label } = node.meta;
-    const evidence = evidenceOf(node);
+    const evidence = g.evidenceOf(node);
     const summary = summaryOf(node.body);
     const facts: string[] = summary ? [summary] : [];
     for (const type of LINK_TYPES) {
@@ -345,19 +364,21 @@ export function renderReport(input: RenderReportInput): RenderedReport {
     }
     for (const type of LINK_TYPES) {
       if (type === "evidence") continue;
-      const from = (incoming.get(id) ?? []).filter((l) => l.type === type);
+      const from = g.incomingOf(id).filter((l) => l.type === type);
       const names = [...new Set(from.map((l) => nameOf(l.from)!))];
       if (names.length) facts.push(sentence(`${LINK_WORDS[type].in}: ${names.join(", ")}`));
     }
+    const typed = typedFacts(node);
+    if (typed) facts.push(typed);
     if (!evidence.length) facts.push("No evidence yet.");
     const lines = [
       `- **${name}** (${label}): ${facts.join(" ")} [${[id, ...evidence].join(", ")}]`,
     ];
     for (const eid of evidence) {
-      const record = ledger.get(eid)!;
+      const record = g.ledger.get(eid)!;
       if (record.kind !== "evidence") continue;
       const cite =
-        record.source.startsWith("S-") && ledger.has(record.source) ? [record.source] : [];
+        record.source.startsWith("S-") && g.ledger.has(record.source) ? [record.source] : [];
       const limits = record.limitations.length
         ? ` Limits: ${sentence(record.limitations.join("; "))}`
         : "";
@@ -368,34 +389,38 @@ export function renderReport(input: RenderReportInput): RenderedReport {
     return lines;
   };
 
-  const out: string[] = [`# ${template.title}: ${input.product}`, ""];
-  if (template.intro) out.push(template.intro.replaceAll("{product}", input.product), "");
-  out.push(`Run ${input.slug}, rendered ${input.date}. ${LABEL_LEGEND}`, "");
-  if (draft?.summary) out.push("## Summary", "", draft.summary, "");
-
+  // The sections first, so the details at the top can report on what the body shows.
+  const body: string[] = [];
   const shown = new Set<string>();
   const unmet: string[] = [];
   for (const section of template.sections) {
-    out.push(`## ${section.title}`, "");
-    if (section.about) out.push(`_${section.about}_`, "");
+    body.push(`## ${section.title}`, "");
+    if (section.about) body.push(`_${section.about}_`, "");
     const text = draft?.sections.get(section.id);
-    if (text) out.push(text, "");
+    if (text) body.push(text, "");
+    for (const framework of section.views) {
+      const view = frameworkView(framework, nodes, records);
+      body.push(`### ${view.title}`, "", view.markdown, "");
+    }
+    // Types a view of this section already shows are not listed again one by one.
+    const covered = new Set(section.views.flatMap((v) => FRAMEWORK_INFO[v].uses));
     const types = [...new Set(section.needs.map((n) => n.type))];
     for (const type of types) {
-      const list = ofType(type);
-      out.push(`### ${TYPE_HEADING[type]} (${list.length})`, "");
-      if (!list.length) out.push(`_No ${type} nodes in the graph yet._`, "");
-      else out.push(...list.flatMap(nodeLines), "");
+      const list = g.ofType(type);
       for (const n of list) shown.add(n.meta.id);
+      if (!section.list || covered.has(type)) continue;
+      body.push(`### ${TYPE_HEADING[type]} (${list.length})`, "");
+      if (!list.length) body.push(`_No ${type} nodes in the graph yet._`, "");
+      else body.push(...list.flatMap(nodeLines), "");
     }
     for (const need of section.needs) {
-      const list = ofType(need.type);
+      const list = g.ofType(need.type);
       if (list.length < need.min) {
         unmet.push(
           `"${section.title}" needs at least ${plural(need.min, `${need.type} node`)}; the graph has ${list.length}.`,
         );
       }
-      const without = need.evidence ? list.filter((n) => !evidenceOf(n).length) : [];
+      const without = need.evidence ? list.filter((n) => !g.evidenceOf(n).length) : [];
       if (without.length) {
         unmet.push(
           `"${section.title}" needs evidence for every ${need.type} node; none yet for ` +
@@ -405,31 +430,115 @@ export function renderReport(input: RenderReportInput): RenderedReport {
     }
   }
 
+  // Evidence behind what the report shows: labels for the confidence score and the evidence base.
+  const shownNodes = [...shown].map((id) => g.byId.get(id)!);
+  const behind = [...new Set(shownNodes.flatMap((n) => g.evidenceOf(n)))]
+    .map((id) => g.ledger.get(id)!)
+    .filter(Boolean);
+  const labels = behind.map((r) => (r.kind === "source" ? "documented" : r.confidence));
+  const backed = shownNodes.filter((n) => g.evidenceOf(n).length > 0).length;
+  const confidence = reportConfidence(labels, shownNodes.length, backed, unmet.length);
+  const evidenceRecords = records.filter((r): r is EvidenceRecord => r.kind === "evidence");
+  const count = (label: string) => evidenceRecords.filter((r) => r.confidence === label).length;
+  const dates = records.map((r) => (r.kind === "source" ? r.read_at : r.at).slice(0, 10)).sort();
+  const sessions = new Set(
+    evidenceRecords
+      .filter((r) => r.confidence === "observed" && r.source.startsWith("evidence/inbox/"))
+      .map((r) => r.source.split("/")[2]),
+  );
+
+  const out: string[] = [`# ${template.title}: ${input.product}`, ""];
+  if (template.intro) out.push(template.intro.replaceAll("{product}", input.product), "");
+
+  out.push(
+    `## ${DETAILS_HEADING}`,
+    "",
+    "| | |",
+    "| --- | --- |",
+    `| Subject | ${input.product}${input.brief?.url ? ` (${input.brief.url})` : ""} |`,
+    `| Report | ${template.title} |`,
+    `| Analysis run | ${input.slug} |`,
+    `| Date | ${input.date} |`,
+    `| Evidence base | ${plural(records.filter((r) => r.kind === "source").length, "source")}, ${plural(evidenceRecords.length, "evidence record")} (${count("observed")} observed, ${count("provided")} provided, ${count("documented")} documented, ${count("inferred")} inferred, ${count("unknown")} unknown) |`,
+    `| Overall confidence | **${confidence.rating}** (${confidence.score} of 100): ${confidence.basis} |`,
+    "",
+  );
+  if (draft?.summary) out.push(`## ${SUMMARY_HEADING}`, "", draft.summary, "");
+
+  const scope = [
+    `- **Subject**: ${input.product}${input.brief?.category ? `, analysed as a ${input.brief.category} business` : ""}.`,
+    input.brief?.focus_questions.length
+      ? `- **Focus questions**: ${input.brief.focus_questions.map((q) => `"${q}"`).join("; ")}.`
+      : "",
+    `- **Sources**: public pages read one at a time (obeying robots.txt), each recorded with its address, date read and a fingerprint of its content` +
+      (sessions.size
+        ? `; the analyst's own use of the product in ${plural(sessions.size, "hands-on session")}${input.brief?.plan_tier ? ` on the ${input.brief.plan_tier} plan` : ""}`
+        : "") +
+      (count("provided") ? "; documents the business handed over" : "") +
+      ".",
+    dates.length ? `- **Period**: evidence collected from ${dates[0]} to ${dates.at(-1)}.` : "",
+    `- **Evidence labels**: every finding is labelled ${LABELS_TEXT}. Ids in [brackets] cite knowledge-graph items (kb/nodes/<id>.md) and evidence (E-) or source (S-) records (evidence/ledger.jsonl).`,
+    "- **Boundaries**: normal use only. reb never logs in to the product for the analyst, never calls its private interfaces, never replays or alters requests, never scrapes and never automates clicks.",
+  ].filter(Boolean);
+  out.push(`## ${SCOPE_HEADING}`, "", ...scope, "");
+
+  out.push(...body);
+
+  // Limitations and disclaimer: the most common limits of the evidence shown, then standard text.
+  const limitCounts = new Map<string, number>();
+  for (const r of behind) {
+    if (r.kind !== "evidence") continue;
+    for (const l of r.limitations) limitCounts.set(l, (limitCounts.get(l) ?? 0) + 1);
+  }
+  const topLimits = [...limitCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 6);
+  const inferredShare = labels.length
+    ? Math.round(
+        (labels.filter((l) => l === "inferred" || l === "unknown").length / labels.length) * 100,
+      )
+    : 0;
+  out.push(`## ${LIMITATIONS_HEADING}`, "");
+  if (topLimits.length) {
+    out.push("The main limits of the evidence behind this report:", "");
+    for (const [limit, n] of topLimits) out.push(`- ${sentence(limit)} (${plural(n, "record")})`);
+    out.push("");
+  }
+  out.push(
+    `${inferredShare}% of the evidence behind this report is inferred or unconfirmed; those points are judgements, not facts. ` +
+      "This report is based on public information" +
+      (count("provided") ? ", documents the business provided" : "") +
+      (sessions.size ? " and the analyst's own use of the product" : "") +
+      ". It is not an audit opinion, legal advice or investment advice. Facts may have changed since the dates given. " +
+      "Check the cited sources before relying on any single point.",
+    "",
+  );
+
   // Sources: S- records cited directly, or behind cited evidence; then other evidence sources.
   const cited = [...new Set(citationsIn(out.join("\n")))];
   const sourceIds = new Set<string>();
   const otherEvidence: EvidenceRecord[] = [];
   for (const id of cited) {
-    const record = ledger.get(id);
+    const record = g.ledger.get(id);
     if (!record) continue;
     if (record.kind === "source") sourceIds.add(id);
-    else if (ledger.get(record.source)?.kind === "source") sourceIds.add(record.source);
+    else if (g.ledger.get(record.source)?.kind === "source") sourceIds.add(record.source);
     else otherEvidence.push(record);
   }
   const sources = [...sourceIds].sort();
   out.push(`## ${SOURCES_HEADING}`, "");
   if (!sources.length && !otherEvidence.length) out.push("No sources are cited yet.");
   for (const id of sources) {
-    const s = ledger.get(id)!;
+    const s = g.ledger.get(id)!;
     if (s.kind !== "source") continue;
-    const dates = [s.published ? `published ${s.published}` : "", `read ${s.read_at.slice(0, 10)}`]
+    const when = [s.published ? `published ${s.published}` : "", `read ${s.read_at.slice(0, 10)}`]
       .filter(Boolean)
       .join("; ");
-    out.push(`- **${id}** ${s.title}${s.publisher ? `, ${s.publisher}` : ""}. ${s.url} (${dates})`);
+    out.push(`- **${id}** ${s.title}${s.publisher ? `, ${s.publisher}` : ""}. ${s.url} (${when})`);
   }
   if (otherEvidence.length) {
     if (sources.length) out.push("");
-    out.push("Hands-on and other evidence:", "");
+    out.push("Hands-on, provided and other evidence:", "");
     for (const e of otherEvidence.sort((a, b) => a.id.localeCompare(b.id))) {
       out.push(`- **${e.id}** ${e.source} (${e.confidence}, ${e.at.slice(0, 10)})`);
     }
@@ -438,14 +547,14 @@ export function renderReport(input: RenderReportInput): RenderedReport {
 
   // Open questions: question nodes, unknowns shown in the report, and needs not met yet.
   const openQuestions: string[] = [];
-  for (const q of ofType("question")) {
+  for (const q of g.ofType("question")) {
     const about = (q.meta.links.about ?? []).map(nameOf).filter((n) => n !== undefined);
     openQuestions.push(
       `- ${q.meta.name}${about.length ? ` (about: ${about.join(", ")})` : ""} [${q.meta.id}]`,
     );
   }
   for (const id of shown) {
-    const n = byId.get(id)!;
+    const n = g.byId.get(id)!;
     if (n.meta.label === "unknown" && n.meta.type !== "question") {
       openQuestions.push(`- ${n.meta.name} is not confirmed (label unknown). [${id}]`);
     }
@@ -461,5 +570,28 @@ export function renderReport(input: RenderReportInput): RenderedReport {
     sources,
     openQuestions,
     unmet,
+    confidence,
   };
+}
+
+/** Typed fields of a node in words (v2), for example "Likelihood: high. Impact: medium." */
+function typedFacts(node: GraphNode): string {
+  const parts: string[] = [];
+  for (const f of TYPE_FIELDS[node.meta.type] ?? []) {
+    const value = node.meta[f.name];
+    if (value === undefined || value === null || value === "") continue;
+    const label = f.name.charAt(0).toUpperCase() + f.name.slice(1).replace(/_/g, " ");
+    let text: string;
+    if (Array.isArray(value)) {
+      text = value
+        .map((v) =>
+          typeof v === "object" && v !== null
+            ? `${String((v as Record<string, unknown>)["name"] ?? "")}${(v as Record<string, unknown>)["type"] ? ` (${String((v as Record<string, unknown>)["type"])})` : ""}`
+            : String(v),
+        )
+        .join("; ");
+    } else text = String(value).replace(/_/g, f.kind === "enum" ? " " : "_");
+    if (text) parts.push(sentence(`${label}: ${text}`));
+  }
+  return parts.join(" ");
 }

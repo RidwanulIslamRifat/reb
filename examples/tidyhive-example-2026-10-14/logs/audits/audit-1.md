@@ -1,6 +1,6 @@
 # Audit 1 for tidyhive.example
 
-- When: 2026-10-13T18:35:49.828Z
+- When: 2026-10-14T18:47:32.250Z
 - Plan version audited: v8
 - Re-plan rounds before this audit: 0 of 3
 - Gaps: 3 (1 blocking, 2 major, 0 minor)

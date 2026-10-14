@@ -533,7 +533,7 @@ Deliverables
 Added in M10
 - [x] README rewritten for a non-technical reader: what reb is, one-line install, first analysis in 5 steps,
       what each report contains, safety boundaries, FAQ.
-- [x] `examples/tidyhive-example-2026-10-13/`: a complete made-up run (fictional Tidyhive), with a README.
+- [x] `examples/tidyhive-example-2026-10-14/`: a complete made-up run (fictional Tidyhive), with a README.
 - [x] `docs/RELEASING.md`: npm account, token, the `NPM_TOKEN` GitHub secret, and each release step.
 - [x] `.gitattributes` keeps LF line endings, so tests and formatting behave the same on Windows.
 
@@ -567,7 +567,7 @@ Tests
 
 How the owner checks it
 1. Before publishing: `npm ci`, `npm run build`, then
-   `node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-13` shows the sample analysis.
+   `node dist/cli.js dashboard --run examples/tidyhive-example-2026-10-14` shows the sample analysis.
 2. After the first release (docs/RELEASING.md), on any computer with Node.js 22:
    `npx @ridwanul/reb --version` then `npx @ridwanul/reb doctor`
 3. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"

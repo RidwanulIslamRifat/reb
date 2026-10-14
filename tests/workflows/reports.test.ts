@@ -3,6 +3,13 @@ import { join } from "node:path";
 import { inflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { REPORT_TYPES } from "../../src/domain/brief.js";
+
+/** The v1 report types; the fixture run is complete for these. */
+const V1_REPORTS = ["business", "feature", "market", "build"] as const;
+/** What reb writes around the template's sections in every report (v2). */
+const FRAME_TOP = ["## Report details"];
+const FRAME_SCOPE = ["## Scope and methodology"];
+const FRAME_END = ["## Limitations and disclaimer", "## Sources", "## Open questions"];
 import { RebError } from "../../src/domain/errors.js";
 import { citationsIn, claimsIn } from "../../src/domain/report.js";
 import { parseReportTemplate } from "../../src/domain/reportSpec.js";
@@ -49,17 +56,18 @@ describe("render_report", () => {
   it("renders every report type from the fixture run, with every template section", async () => {
     const ctx = await testContext();
     const dir = await reportSampleRun();
-    for (const report of REPORT_TYPES) {
+    for (const report of V1_REPORTS) {
       const result = await renderReport(ctx, { run: dir, report });
       const text = await readFile(join(dir, "reports", `${report}.md`), "utf8");
       const { title, sections } = await template(report);
       expect(text.startsWith(`# ${title}: acme-notes.example\n`)).toBe(true);
       const headings = text.split("\n").filter((l) => l.startsWith("## "));
       expect(headings, report).toEqual([
-        ...(report === "feature" ? ["## Summary"] : []),
+        ...FRAME_TOP,
+        ...(report === "feature" ? ["## Executive summary"] : []),
+        ...FRAME_SCOPE,
         ...sections.map((s) => `## ${s.title}`),
-        "## Sources",
-        "## Open questions",
+        ...FRAME_END,
       ]);
       expect(result.sections).toEqual(sections.map((s) => s.title));
       // The fixture is complete: every section need is met.
@@ -68,12 +76,55 @@ describe("render_report", () => {
     }
   });
 
+  it("renders the v2 report types with the same frame, listing what the graph still lacks", async () => {
+    const ctx = await testContext();
+    const dir = await reportSampleRun();
+    for (const report of REPORT_TYPES.filter(
+      (r) => !(V1_REPORTS as readonly string[]).includes(r),
+    )) {
+      const result = await renderReport(ctx, { run: dir, report });
+      const text = await readFile(result.file, "utf8");
+      const { sections } = await template(report);
+      const headings = text.split("\n").filter((l) => l.startsWith("## "));
+      expect(headings, report).toEqual([
+        ...FRAME_TOP,
+        ...FRAME_SCOPE,
+        ...sections.map((s) => `## ${s.title}`),
+        ...FRAME_END,
+      ]);
+      // The v1 fixture has no v2 nodes, so the report says what is missing.
+      expect(result.unmet_needs.length, report).toBeGreaterThan(0);
+      expect(text).toContain("Nothing in the graph for this yet");
+    }
+  });
+
+  it("states an overall confidence rating and the evidence base in the report details", async () => {
+    const ctx = await testContext();
+    const dir = await reportSampleRun();
+    const result = await renderReport(ctx, { run: dir, report: "feature" });
+    const text = await readFile(result.file, "utf8");
+    expect(text).toMatch(/\| Overall confidence \| \*\*(High|Medium|Low)\*\* \(\d+ of 100\)/);
+    expect(text).toMatch(
+      /\| Evidence base \| \d+ sources, \d+ evidence records \(\d+ observed, 0 provided/,
+    );
+    expect(result.confidence.score).toBeGreaterThan(0);
+    const limits = text.slice(
+      text.indexOf("## Limitations and disclaimer"),
+      text.indexOf("## Sources"),
+    );
+    expect(limits).toContain("It is not an audit opinion, legal advice or investment advice.");
+  });
+
   it("cites a node or E-/S- id in every claim, and every cited id exists", async () => {
     const ctx = await testContext();
     const dir = await reportSampleRun();
     await renderReport(ctx, { run: dir, report: "build" });
     const text = await readFile(join(dir, "reports", "build.md"), "utf8");
-    const body = text.slice(text.indexOf("## "), text.indexOf("## Sources"));
+    const { sections } = await template("build");
+    const body = text.slice(
+      text.indexOf(`## ${sections[0]!.title}`),
+      text.indexOf("## Limitations and disclaimer"),
+    );
     const claims = claimsIn(body).filter(
       (c) => !/^_.*_$/.test(c.text) && !c.text.startsWith("Run "),
     );
@@ -141,7 +192,7 @@ describe("render_report", () => {
     expect(result.draft).toBe("notes/report-feature.md");
     const text = await readFile(result.file, "utf8");
     expect(text).toContain(
-      "## Summary\n\nAcme Notes is a shared note app for small teams [product-acme-notes, E-001].",
+      "## Executive summary\n\nAcme Notes is a shared note app for small teams [product-acme-notes, E-001].",
     );
     const features = text.slice(text.indexOf("## Features"), text.indexOf("### Features"));
     expect(features).toContain(
@@ -196,15 +247,38 @@ describe("render_report", () => {
       "word/_rels/document.xml.rels",
       "word/document.xml",
       "word/styles.xml",
+      "word/footer1.xml",
+      "word/settings.xml",
     ]);
     const xml = files.get("word/document.xml")!;
     const docHeadings = [
       ...xml.matchAll(/<w:pStyle w:val="Heading\d"\/><\/w:pPr>((?:<w:r>.*?<\/w:r>)+)<\/w:p>/g),
     ].map((m) => [...m[1]!.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((t) => t[1]).join(""));
     const markdown = await readFile(result.file, "utf8");
-    expect(docHeadings).toEqual(headingsOf(markdown));
+    // The report's "# Title" line moves to the title page; every other heading stays.
+    expect(docHeadings).toEqual(headingsOf(markdown).slice(1));
+    expect(xml).toContain('<w:pStyle w:val="Title"/>');
+    expect(xml).toContain("TOC \\o");
+    expect(xml).toContain("Overall confidence:");
     expect(xml).toContain("[feature-sso, E-010]");
     expect(files.get("[Content_Types].xml")).toContain("wordprocessingml.document.main+xml");
+    expect(files.get("word/footer1.xml")).toContain("PAGE");
+  });
+
+  it("writes a self-contained, print-ready HTML copy with a cover and contents", async () => {
+    const ctx = await testContext();
+    const dir = await reportSampleRun();
+    const result = await renderReport(ctx, { run: dir, report: "feature", html: true });
+    expect(result.html_file).toBe(join(dir, "reports", "feature.html"));
+    expect(result.docx_file).toBeNull();
+    const html = await readFile(result.html_file!, "utf8");
+    expect(html).toMatch(/^<!doctype html>/);
+    expect(html).not.toMatch(/<script|<link /);
+    expect(html).toContain('<section class="cover">');
+    expect(html).toContain('<nav class="toc">');
+    expect(html).toContain('<h2 id="executive-summary">Executive summary</h2>');
+    expect(html).toContain("[feature-sso, E-010]");
+    expect(html).toContain("@media print");
   });
 
   it("refuses an unknown report type", async () => {

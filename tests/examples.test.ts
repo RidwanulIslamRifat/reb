@@ -5,7 +5,7 @@ import { validateGraph } from "../src/workflows/validate.js";
 import { renderReport } from "../src/workflows/renderReport.js";
 import { tempDir, testContext } from "./helpers.js";
 
-const EXAMPLE = join("examples", "tidyhive-example-2026-10-13");
+const EXAMPLE = join("examples", "tidyhive-example-2026-10-14");
 
 /** The sample run in examples/ (made by tests/e2e/fullRun.test.ts) stays valid as reb changes. */
 describe("examples/ sample run", () => {

@@ -2,12 +2,29 @@
 
 What tidyhive.example does: its modules, features, main journeys and what each plan includes.
 
-Run tidyhive-example-2026-10-13, rendered 2026-10-13. Labels: **observed** (seen in a hands-on session), **documented** (stated publicly), **inferred** (a reasoned guess), **unknown** (not confirmed). Ids in [brackets] cite nodes (kb/nodes/<id>.md) and evidence (E-) or source (S-) records (evidence/ledger.jsonl).
+## Report details
 
-## Summary
+| | |
+| --- | --- |
+| Subject | tidyhive.example (https://tidyhive.example) |
+| Report | Feature report |
+| Analysis run | tidyhive-example-2026-10-14 |
+| Date | 2026-10-14 |
+| Evidence base | 4 sources, 15 evidence records (0 observed, 0 provided, 15 documented, 0 inferred, 0 unknown) |
+| Overall confidence | **High** (85 of 100): 14 evidence records behind 14 items shown (14 with evidence), weighted by label, minus 0 points for 0 unmet section needs |
+
+## Executive summary
 
 Tidyhive is a shared task board for small teams [product-tidyhive, E-002], made by Tidyhive Labs
 [company-tidyhive-labs, E-001].
+
+## Scope and methodology
+
+- **Subject**: tidyhive.example, analysed as a b2b-saas business.
+- **Sources**: public pages read one at a time (obeying robots.txt), each recorded with its address, date read and a fingerprint of its content.
+- **Period**: evidence collected from 2026-10-14 to 2026-10-14.
+- **Evidence labels**: every finding is labelled **observed** (seen in the analyst's own use of the product), **provided** (from a document the business handed over), **documented** (stated publicly), **inferred** (a reasoned judgement) and **unknown** (not confirmed). Ids in [brackets] cite knowledge-graph items (kb/nodes/<id>.md) and evidence (E-) or source (S-) records (evidence/ledger.jsonl).
+- **Boundaries**: normal use only. reb never logs in to the product for the analyst, never calls its private interfaces, never replays or alters requests, never scrapes and never automates clicks.
 
 ## Product and modules
 
@@ -93,12 +110,16 @@ Slack is the only integration found so far [integration-slack, E-012].
 - **Slack** (documented): Used by: Kanban board. [integration-slack, E-012]
   - documented: Board changes can be posted to a Slack channel. [E-012, S-003]
 
+## Limitations and disclaimer
+
+0% of the evidence behind this report is inferred or unconfirmed; those points are judgements, not facts. This report is based on public information. It is not an audit opinion, legal advice or investment advice. Facts may have changed since the dates given. Check the cited sources before relying on any single point.
+
 ## Sources
 
-- **S-001** Tidyhive home page, Tidyhive Labs. https://tidyhive.example (published 2026-09-01; read 2026-10-13)
-- **S-002** Tidyhive pricing, Tidyhive Labs. https://tidyhive.example/pricing (published 2026-09-01; read 2026-10-13)
-- **S-003** Tidyhive integrations, Tidyhive Labs. https://tidyhive.example/integrations (published 2026-09-01; read 2026-10-13)
-- **S-004** Tidyhive help center, Tidyhive Labs. https://help.tidyhive.example (published 2026-09-01; read 2026-10-13)
+- **S-001** Tidyhive home page, Tidyhive Labs. https://tidyhive.example (published 2026-09-01; read 2026-10-14)
+- **S-002** Tidyhive pricing, Tidyhive Labs. https://tidyhive.example/pricing (published 2026-09-01; read 2026-10-14)
+- **S-003** Tidyhive integrations, Tidyhive Labs. https://tidyhive.example/integrations (published 2026-09-01; read 2026-10-14)
+- **S-004** Tidyhive help center, Tidyhive Labs. https://help.tidyhive.example (published 2026-09-01; read 2026-10-14)
 
 ## Open questions
 

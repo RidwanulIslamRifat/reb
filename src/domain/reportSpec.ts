@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ReportTypeSchema } from "./brief.js";
 import { RebError } from "./errors.js";
+import { FrameworkSchema } from "./frameworks.js";
 import { splitFrontMatter } from "./handbook.js";
 import { NodeTypeSchema } from "./links.js";
 import { describeIssues } from "./plan.js";
@@ -36,6 +37,10 @@ export const ReportSpecSchema = z.object({
         title: z.string().min(1),
         about: z.string().default(""),
         needs: z.array(SectionNeedSchema).default([]),
+        /** Framework views shown in the section (v2), for example [risk_register]. */
+        views: z.array(FrameworkSchema).default([]),
+        /** List the needed node types one by one; false when the views already show them. */
+        list: z.boolean().default(true),
       }),
     )
     .min(1),

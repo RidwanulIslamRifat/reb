@@ -7,16 +7,26 @@ export const reportTools = [
   tool({
     name: "render_report",
     description:
-      "Write reports/<report>.md (and with docx: true a Word copy) from the knowledge graph, the evidence " +
-      "ledger and your draft in notes/report-<report>.md. Sections follow reports/templates/<report>.md; each " +
-      "lists the graph's nodes with labels, links and evidence, after your draft text for that section. " +
-      "Every claim in the draft must cite node ids or E-/S- ids in [brackets]; if one does not, or cites an " +
-      "id that does not exist, nothing is written and the problems are listed with line numbers. " +
-      "The report ends with Sources and Open questions.",
+      "Write reports/<report>.md (with docx: true also a Word copy, with html: true also a print-ready web " +
+      "page, both with a title page) from the knowledge graph, the evidence ledger and your draft in " +
+      "notes/report-<report>.md. reb writes Report details (with an overall confidence rating) and Scope " +
+      "and methodology first; then your Executive summary; then the sections of reports/templates/<report>.md, " +
+      "each with your draft text, framework views (SWOT, risk register ...) and the graph's nodes with labels " +
+      "and evidence; then Limitations and disclaimer, Sources and Open questions. Every claim in the draft " +
+      "must cite node ids or E-/S- ids in [brackets]; if one does not, or cites an id that does not exist, " +
+      "nothing is written and the problems are listed with line numbers.",
     input: {
       run: runArg,
-      report: z.enum(REPORT_TYPES).describe("Which report: business, feature, market or build."),
+      report: z
+        .enum(REPORT_TYPES)
+        .describe(
+          "Which report: business, feature, market, build, due_diligence, risk, strategy, technical or rebuild.",
+        ),
       docx: z.boolean().optional().describe("Also write reports/<report>.docx. Default false."),
+      html: z
+        .boolean()
+        .optional()
+        .describe("Also write reports/<report>.html, ready to print to PDF. Default false."),
     },
     call: (ctx, args) => renderReport(ctx, args),
   }),

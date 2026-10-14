@@ -17,8 +17,8 @@ const template: ReportTemplate = {
   title: "Feature report",
   intro: "",
   sections: [
-    { id: "features", title: "Features", about: "", needs: [] },
-    { id: "plans", title: "What each plan includes", about: "", needs: [] },
+    { id: "features", title: "Features", about: "", needs: [], views: [], list: true },
+    { id: "plans", title: "What each plan includes", about: "", needs: [], views: [], list: true },
   ],
 };
 
@@ -109,6 +109,6 @@ describe("report draft", () => {
     expect(draft.problems[0]).toMatch(
       /^line 1: "## Pricing" is not a section of the feature report/,
     );
-    expect(draft.problems[1]).toMatch(/^line 5: "## Sources".*reb writes "Sources"/);
+    expect(draft.problems[1]).toMatch(/^line 5: "## Sources".*reb writes .*"Sources"/);
   });
 });
