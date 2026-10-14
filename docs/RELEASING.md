@@ -43,7 +43,7 @@ The token lets GitHub publish on your behalf.
 2. Click **Settings** (top bar of the repository), then on the left **Secrets and variables**,
    then **Actions**.
 3. Click **New repository secret**.
-4. **Name**: `NPM_TOKEN` (exactly this, in capitals). **Secret**: paste the token.
+4. Publishing uses npm trusted publishing; no token needed.
 5. Click **Add secret**. GitHub hides the value from now on; nobody, you included, can read it back.
    To change it later, click the pencil next to `NPM_TOKEN` and paste a new token.
 
