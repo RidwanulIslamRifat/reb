@@ -46,3 +46,39 @@ REB_E2E_KEEP=$PWD/examples/new-copy npx vitest run tests/e2e/fullRun.test.ts
 ```
 
 `tests/examples.test.ts` checks that this example keeps working as reb changes.
+
+## ledgerly-example-2026-10-14: a business-depth analysis with audit-grade reports (v2)
+
+**Ledgerly** (`ledgerly.example`) does not exist either. It is a fictional invoicing and payments
+company for freelancers, made up to show what reb v2 adds: analysing a business the way an analyst,
+investor or audit team would, not only its features.
+
+The analysis asked for four reports: due diligence, risk, strategy and rebuild.
+
+1. reb made a plan from the **fintech** pipeline, with tasks for the business model, the company's
+   condition (metrics, funding, leaders, growth signals), regulation, technology, screens and rules,
+   PESTLE and five forces, the risk register and rated findings (`plan/plan.json`).
+2. The research recorded typed facts: risks with likelihood, impact and mitigation; findings with a
+   rating, SWOT place and recommendation; dated metrics; laws that apply; screens with their paths
+   (`kb/nodes/`).
+3. A document "handed over by the business" (`evidence/inbox/provided/pitch-deck.pdf`, a fake file)
+   was imported and labelled **provided**.
+4. The audit found no gaps (`logs/audits/audit-1.md`).
+5. reb wrote the four reports (`reports/`), each with report details and an overall confidence
+   rating, scope and methodology, framework views (SWOT, risk register, business model canvas ...),
+   limitations and a disclaimer, sources and open questions. The due diligence report also has a Word
+   copy and a web copy you can print to PDF (`reports/due_diligence.docx`, `reports/due_diligence.html`).
+6. The run was compared with a run of a made-up competitor, Billbird
+   (`reports/compare-billbird-example-2026-10-14.md`).
+
+### Things to open first
+
+- `reports/due_diligence.html`: open it in your browser; File > Print > Save as PDF gives a clean PDF.
+- `reports/risk.md`: the risk register with its heat map.
+- `reports/rebuild.md`: screens, roles, data model and user stories for rebuilding the product.
+
+To make it again:
+
+```sh
+REB_E2E_KEEP_V2=$PWD/examples/new-copy npx vitest run tests/e2e/v2Run.test.ts
+```

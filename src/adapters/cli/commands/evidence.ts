@@ -25,7 +25,7 @@ export function registerEvidence(program: Command, io: CliIo): void {
     .requiredOption("--subject <node>", "node the finding is about, for example feature-sso")
     .requiredOption("--role <role>", "role that found it, for example desk_researcher")
     .requiredOption("--source <where>", "url, file path or source id (S-NNN)")
-    .requiredOption("--confidence <label>", "observed, documented, inferred or unknown")
+    .requiredOption("--confidence <label>", "observed, provided, documented, inferred or unknown")
     .requiredOption("--operation <what>", "how it was found, for example read_public_page")
     .option("--limitation <text>", "a limit of this finding (repeat for more)", collect, [])
     .option("--link <id>", "a related node or E-/S- id (repeat for more)", collect, [])

@@ -139,6 +139,16 @@ describe("dashboard server", () => {
       reports: [{ name: "feature.md", format: "markdown" }],
     });
     expect((await json(url, `${r}/reports/feature.md`)).text).toMatch(/Feature report/);
+    const frameworks = (await json(url, `${r}/frameworks`)).frameworks as Array<{
+      framework: string;
+      count: number;
+      markdown: string;
+    }>;
+    expect(frameworks.map((f) => f.framework)).toContain("risk_register");
+    expect(frameworks.find((f) => f.framework === "user_stories")!.count).toBeGreaterThan(0);
+    expect(frameworks.find((f) => f.framework === "funding")!.markdown).toMatch(
+      /Nothing in the graph/,
+    );
   });
 
   it("explains unknown runs, nodes and reports instead of failing", async () => {

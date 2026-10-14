@@ -1,0 +1,12 @@
+{
+  "number": 1,
+  "at": "2026-10-14T19:00:54.309Z",
+  "plan_version": 1,
+  "rounds_before": 0,
+  "gaps": [],
+  "stop": true,
+  "stop_reason": "no blocking gaps",
+  "replanned_in": null,
+  "replan_changed": null,
+  "questions": []
+}

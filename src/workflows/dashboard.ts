@@ -1,5 +1,6 @@
 import { correctionsOf, type LedgerRecord } from "../domain/evidence.js";
 import { RebError } from "../domain/errors.js";
+import { FRAMEWORKS, frameworkView } from "../domain/frameworks.js";
 import { parseDecisions, parseRoleLog } from "../domain/event.js";
 import { EventSchema } from "../domain/event.js";
 import { shortestPath } from "../domain/graphPath.js";
@@ -317,7 +318,20 @@ export async function viewReports(scope: ViewScope, slug: string) {
   return {
     slug: run.slug,
     folder: `${run.paths.dir}/reports`,
-    reports: files.map((name) => ({ name, format: name.endsWith(".md") ? "markdown" : "word" })),
+    reports: files.map((name) => ({
+      name,
+      format: name.endsWith(".md") ? "markdown" : name.endsWith(".html") ? "web" : "word",
+    })),
+  };
+}
+
+/** Every framework view (SWOT, risk register ...) drawn from the run's graph (v2). */
+export async function viewFrameworks(scope: ViewScope, slug: string) {
+  const run = await findRun(scope, slug);
+  const graph = await loadGraph(run.paths);
+  return {
+    slug: run.slug,
+    frameworks: FRAMEWORKS.map((f) => frameworkView(f, graph.nodes, graph.records)),
   };
 }
 

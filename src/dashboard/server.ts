@@ -7,6 +7,7 @@ import { RebError } from "../domain/errors.js";
 import type { DashboardHandle } from "../workflows/context.js";
 import {
   viewEvidence,
+  viewFrameworks,
   viewGraph,
   viewLogs,
   viewNode,
@@ -104,6 +105,7 @@ async function api(scope: ViewScope, path: string, query: URLSearchParams): Prom
     return viewPath(scope, slug, query.get("from") ?? "", query.get("to") ?? "");
   }
   if (page === "evidence") return viewEvidence(scope, slug);
+  if (page === "frameworks") return viewFrameworks(scope, slug);
   if (page === "logs") return viewLogs(scope, slug);
   if (page === "reports" && rest.length === 0) return viewReports(scope, slug);
   if (page === "reports" && rest[0]) return viewReport(scope, slug, rest[0]);

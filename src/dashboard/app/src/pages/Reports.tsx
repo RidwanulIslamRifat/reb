@@ -8,9 +8,14 @@ const REPORT_NAMES: Record<string, string> = {
   feature: "Feature report",
   market: "Market analysis",
   build: "Build-it assessment",
+  due_diligence: "Business condition and due diligence",
+  risk: "Risk assessment",
+  strategy: "Strategy and growth outlook",
+  technical: "Technical capability assessment",
+  rebuild: "Product rebuild specification",
 };
 const reportTitle = (file: string) => {
-  const base = file.replace(/\.(md|docx)$/, "");
+  const base = file.replace(/\.(md|docx|html)$/, "");
   return REPORT_NAMES[base] ?? humanize(base);
 };
 
@@ -21,7 +26,7 @@ export function ReportsPage({ slug }: { slug: string }) {
     <Loaded state={state}>
       {({ reports, folder }) => {
         const markdown = reports.filter((r) => r.format === "markdown");
-        const word = reports.filter((r) => r.format === "word");
+        const word = reports.filter((r) => r.format !== "markdown");
         if (markdown.length === 0) {
           return (
             <Empty title="No reports yet">
@@ -50,7 +55,7 @@ export function ReportsPage({ slug }: { slug: string }) {
               ))}
               {word.length > 0 && (
                 <p className="muted small">
-                  Word copies ({word.map((w) => w.name).join(", ")}) are in {folder}
+                  Word and web copies ({word.map((w) => w.name).join(", ")}) are in {folder}
                 </p>
               )}
             </nav>

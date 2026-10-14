@@ -4,7 +4,9 @@ import type { GraphNode } from "./node.js";
 
 /**
  * make_test_plan (SPEC 9 Hands-on): a numbered checklist for the human's own session in the product,
- * built from the graph's journeys and open questions. reb never uses the product itself (SPEC 2.3);
+ * built from the graph's journeys and open questions, plus (v2, for a rebuild report or a graph with
+ * screens, roles or rules) steps for screens, roles and permissions, and rules and limits.
+ * reb never uses the product itself (SPEC 2.3);
  * the checklist only says what the human does and what to capture into the inbox.
  */
 
@@ -16,7 +18,7 @@ export interface Capture {
 
 export interface TestStep {
   n: number;
-  kind: "setup" | "journey" | "question" | "feature";
+  kind: "setup" | "journey" | "question" | "feature" | "screens" | "roles" | "rules";
   title: string;
   do: string[];
   capture: Capture[];
@@ -147,6 +149,73 @@ export function buildTestPlan(input: {
         { kind: "note" as const, as: `- [${f.meta.id}] what you saw` },
       ]),
       covers: loose.map((f) => f.meta.id),
+    });
+  }
+
+  // Rebuild-level detail (v2): screens, roles and rules, asked for by a rebuild report or already
+  // started in the graph.
+  const ofType = (type: string) => nodes.filter((n) => n.meta.type === type).sort(byName);
+  const screens = ofType("screen");
+  const roles = ofType("user_role");
+  const rules = ofType("business_rule");
+  const rebuild =
+    brief.reports.includes("rebuild") || screens.length + roles.length + rules.length > 0;
+  if (rebuild) {
+    const unseen = screens.filter((n) => !observed.has(n.meta.id));
+    add({
+      kind: "screens",
+      title: "Screens and navigation",
+      do: [
+        "Visit every screen you reach in normal use, in the order the menus offer them.",
+        ...unseen.map(
+          (n) =>
+            `Find "${n.meta.name}"${n.meta.path ? ` (${String(n.meta.path)})` : ""}: what it shows and where its links go.`,
+        ),
+        "For a screen reb does not know yet, add a note line with its name, the path from the address bar and what it shows.",
+      ],
+      capture: [
+        ...unseen.flatMap((n) => [
+          { kind: "screenshot" as const, as: `${n.meta.id}.png` },
+          { kind: "note" as const, as: `- [${n.meta.id}] path, main parts, links to` },
+        ]),
+        { kind: "note", as: "- new screen: <name>, <path>, what it shows" },
+      ],
+      covers: unseen.map((n) => n.meta.id),
+    });
+    add({
+      kind: "roles",
+      title: "Roles and permissions",
+      do: [
+        "Open the team, members or permissions settings and note which roles exist and what each may do.",
+        "Do not invite real people; if a step asks for an email, use one from the sample data.",
+        ...roles.map((n) => `Check what "${n.meta.name}" can and cannot use.`),
+      ],
+      capture: [
+        { kind: "screenshot", as: "roles-settings.png" },
+        ...roles.map((n) => ({
+          kind: "note" as const,
+          as: `- [${n.meta.id}] what this role can and cannot do`,
+        })),
+      ],
+      covers: roles.map((n) => n.meta.id),
+    });
+    add({
+      kind: "rules",
+      title: "Rules, limits and validation",
+      do: [
+        "Note every limit, required field, error or automatic behaviour you meet (for example a plan limit, " +
+          "a duplicate-number error or an automatic reminder), with the exact message.",
+        "Try edge cases with the sample data only (an empty required field, a long name), never real data.",
+        ...rules.map((n) => `Check "${n.meta.name}": does the product really apply it?`),
+      ],
+      capture: [
+        { kind: "screenshot", as: "<rule-or-limit-message>.png" },
+        ...rules.map((n) => ({
+          kind: "note" as const,
+          as: `- [${n.meta.id}] confirmed or not, with the message`,
+        })),
+      ],
+      covers: rules.map((n) => n.meta.id),
     });
   }
 

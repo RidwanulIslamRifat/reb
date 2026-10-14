@@ -165,7 +165,19 @@ export type TimelineEntry =
 
 export interface ReportsView {
   folder: string;
-  reports: Array<{ name: string; format: "markdown" | "word" }>;
+  reports: Array<{ name: string; format: "markdown" | "word" | "web" }>;
+}
+
+export interface FrameworkView {
+  framework: string;
+  title: string;
+  about: string;
+  markdown: string;
+  count: number;
+}
+
+export interface FrameworksView {
+  frameworks: FrameworkView[];
 }
 
 /** A problem the server explained, with what to do about it. */

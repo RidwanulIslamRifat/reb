@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { runPath, type RunDetail } from "./api";
 import { EvidencePage } from "./pages/Evidence";
+import { FrameworksPage } from "./pages/Frameworks";
 import { GraphPage } from "./pages/Graph";
 import { LogsPage } from "./pages/Logs";
 import { PlanPage } from "./pages/Plan";
@@ -14,6 +15,7 @@ const PAGES = [
   { id: "graph", name: "Knowledge graph" },
   { id: "evidence", name: "Evidence" },
   { id: "logs", name: "Activity log" },
+  { id: "frameworks", name: "Frameworks" },
   { id: "reports", name: "Reports" },
 ] as const;
 type PageId = (typeof PAGES)[number]["id"];
@@ -143,6 +145,7 @@ function RunView({ slug, page }: { slug: string; page: PageId }) {
       {page === "graph" && <GraphPage slug={slug} />}
       {page === "evidence" && <EvidencePage slug={slug} />}
       {page === "logs" && <LogsPage slug={slug} />}
+      {page === "frameworks" && <FrameworksPage slug={slug} />}
       {page === "reports" && <ReportsPage slug={slug} />}
     </>
   );

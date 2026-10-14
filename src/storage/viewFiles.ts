@@ -54,7 +54,7 @@ const reportsDir = (paths: RunPaths) => join(paths.dir, "reports");
 
 /** File names in reports/ (Markdown and Word). */
 export async function listReportFiles(paths: RunPaths): Promise<string[]> {
-  return (await namesIn(reportsDir(paths))).filter((n) => /\.(md|docx)$/.test(n));
+  return (await namesIn(reportsDir(paths))).filter((n) => /\.(md|docx|html)$/.test(n));
 }
 
 /** Text of reports/<name>; `name` must be a plain file name checked by the caller. */

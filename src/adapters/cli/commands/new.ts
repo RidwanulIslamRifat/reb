@@ -12,7 +12,10 @@ export function registerNew(program: Command, io: CliIo): void {
       "--category <category>",
       "b2b-saas, developer-tool, marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business or general-business",
     )
-    .option("--reports <list>", "comma-separated: business, feature, market, build")
+    .option(
+      "--reports <list>",
+      "comma-separated: business, feature, market, build, due_diligence, risk, strategy, technical, rebuild",
+    )
     .action(async (domain: string, options: { category?: string; reports?: string }) => {
       const reports = options.reports
         ?.split(",")
