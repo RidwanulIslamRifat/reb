@@ -220,3 +220,63 @@ describe("adaptPipeline", () => {
     expect(focusHint("Why do people like it?").role).toBe("business_analyst");
   });
 });
+
+describe("v2 pipelines (any business, audit-grade reports)", () => {
+  const ids = (tasks: ReturnType<typeof adaptPipeline>) => tasks.map((t) => t.id);
+
+  it("adds the business-condition, risk and strategy tasks only for the reports that need them", async () => {
+    const p = await pipeline("b2b-saas");
+    const v1 = ids(adaptPipeline(p, brief({ reports: ["business", "feature"] })));
+    for (const id of ["condition", "risks", "findings", "product-spec", "stack"]) {
+      expect(v1).not.toContain(id);
+    }
+    const dd = adaptPipeline(p, brief({ reports: ["due_diligence"] }));
+    asPlan(dd);
+    expect(ids(dd)).toEqual(
+      expect.arrayContaining([
+        "business-canvas",
+        "condition",
+        "scope-compliance",
+        "stack",
+        "environment",
+        "risks",
+        "findings",
+        "market",
+      ]),
+    );
+    expect(ids(dd)).not.toContain("product-spec");
+    const role = (id: string) => dd.find((t) => t.id === id)!.role;
+    expect(role("condition")).toBe("financial_analyst");
+    expect(role("risks")).toBe("risk_analyst");
+    expect(role("findings")).toBe("strategy_analyst");
+    // The risk register waits for the facts it is built from.
+    expect(dd.find((t) => t.id === "risks")!.depends_on).toEqual(
+      expect.arrayContaining(["condition", "scope-compliance", "market", "stack", "environment"]),
+    );
+  });
+
+  it("plans screens, roles and rules for a rebuild report", async () => {
+    const tasks = adaptPipeline(await pipeline("consumer-app"), brief({ reports: ["rebuild"] }));
+    asPlan(tasks);
+    expect(ids(tasks)).toEqual(
+      expect.arrayContaining(["product-spec", "architecture", "personas", "stack"]),
+    );
+    expect(tasks.find((t) => t.id === "product-spec")!.done_when).toContain(
+      "at least 5 screen nodes",
+    );
+  });
+
+  it("always checks regulation and risks for a fintech business", async () => {
+    const tasks = adaptPipeline(await pipeline("fintech"), brief({ reports: ["feature"] }));
+    asPlan(tasks);
+    expect(ids(tasks)).toEqual(expect.arrayContaining(["scope-compliance", "risks"]));
+  });
+
+  it("points focus questions about risk, money, growth and rules at the right role", () => {
+    expect(focusHint("What are the biggest risks?").role).toBe("risk_analyst");
+    expect(focusHint("Is it compliant with GDPR?").types).toContain("compliance");
+    expect(focusHint("How does it make money?").types).toContain("revenue_stream");
+    expect(focusHint("Is the company growing?").role).toBe("financial_analyst");
+    expect(focusHint("What would it take to rebuild it?").types).toContain("screen");
+  });
+});

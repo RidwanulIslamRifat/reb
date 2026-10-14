@@ -64,7 +64,7 @@
         "at least 1 market_segment node",
         "every competitor node has evidence"
       ],
-      "reports": ["market", "business"]
+      "reports": ["market", "business", "due_diligence", "strategy", "risk"]
     },
     {
       "id": "tech",
@@ -74,7 +74,7 @@
       "inputs": ["brief.md"],
       "outputs": ["evidence/ledger.jsonl", "notes/tech_observer-stack.md"],
       "done_when": ["at least 1 evidence record", "file notes/tech_observer-stack.md exists"],
-      "reports": ["build"]
+      "reports": ["build", "technical", "rebuild"]
     },
     {
       "id": "walkthrough",
@@ -100,7 +100,7 @@
         "every journey node has a uses link",
         "every persona node has a does link"
       ],
-      "reports": ["business", "feature"]
+      "reports": ["business", "feature", "due_diligence", "rebuild"]
     },
     {
       "id": "business-model",
@@ -113,7 +113,7 @@
         "file notes/business_analyst-model.md exists",
         "the draft cites node ids or E-/S- ids for every claim"
       ],
-      "reports": ["business"]
+      "reports": ["business", "due_diligence", "strategy"]
     },
     {
       "id": "architecture",
@@ -127,7 +127,112 @@
         "every data_object node has evidence",
         "file notes/architect-build.md exists"
       ],
-      "reports": ["build"]
+      "reports": ["build", "technical", "rebuild"]
+    },
+    {
+      "id": "business-canvas",
+      "title": "Map the business model canvas: value propositions, revenue streams, channels, cost drivers, key partners and named customers",
+      "role": "business_analyst",
+      "depends_on": ["pricing", "journeys"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 value_proposition nodes",
+        "at least 1 revenue_stream node",
+        "at least 1 channel node",
+        "at least 1 cost_driver node",
+        "every revenue_stream node has evidence"
+      ],
+      "reports": ["due_diligence", "strategy"]
+    },
+    {
+      "id": "condition",
+      "title": "Find the company's condition: dated metrics (customers, revenue, employees, market size), funding rounds, leaders and growth signals",
+      "role": "financial_analyst",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 metric nodes",
+        "at least 1 leader node",
+        "at least 2 signal nodes",
+        "every metric node has evidence"
+      ],
+      "reports": ["due_diligence", "strategy"]
+    },
+    {
+      "id": "scope-compliance",
+      "title": "Find where the business operates and which laws, certifications and standards apply",
+      "role": "risk_analyst",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 1 geography node",
+        "at least 1 compliance node",
+        "every compliance node has evidence"
+      ],
+      "reports": ["due_diligence", "risk", "technical"]
+    },
+    {
+      "id": "stack",
+      "title": "Record the technology stack as technology nodes, from public pages, job posts and docs",
+      "role": "tech_observer",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 3 technology nodes", "every technology node has evidence"],
+      "reports": ["due_diligence", "risk", "technical", "rebuild"]
+    },
+    {
+      "id": "product-spec",
+      "title": "Map screens, navigation, user roles, permissions and business rules for a rebuild-level spec",
+      "role": "feature_analyst",
+      "depends_on": ["features", "walkthrough"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 5 screen nodes",
+        "at least 2 user_role nodes",
+        "at least 3 business_rule nodes",
+        "every screen node has evidence",
+        "every feature has acceptance criteria"
+      ],
+      "reports": ["rebuild"]
+    },
+    {
+      "id": "environment",
+      "title": "Assess the environment: PESTLE trends and Porter's five forces",
+      "role": "strategy_analyst",
+      "depends_on": ["market", "condition"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 trend nodes",
+        "at least 3 force nodes",
+        "every trend node has evidence"
+      ],
+      "reports": ["due_diligence", "risk", "strategy"]
+    },
+    {
+      "id": "risks",
+      "title": "Build the risk register: risks with likelihood, impact and mitigation",
+      "role": "risk_analyst",
+      "depends_on": ["condition", "scope-compliance", "market", "stack", "environment"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 5 risk nodes", "every risk node has evidence"],
+      "reports": ["due_diligence", "risk", "strategy", "technical"]
+    },
+    {
+      "id": "findings",
+      "title": "Write rated findings with a SWOT place and a recommendation each",
+      "role": "strategy_analyst",
+      "depends_on": ["business-canvas", "environment", "risks"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 6 finding nodes", "every finding node has evidence"],
+      "reports": ["due_diligence", "risk", "strategy", "technical"]
     },
     {
       "id": "curate",
@@ -143,7 +248,15 @@
         "walkthrough",
         "journeys",
         "business-model",
-        "architecture"
+        "architecture",
+        "business-canvas",
+        "condition",
+        "scope-compliance",
+        "stack",
+        "product-spec",
+        "environment",
+        "risks",
+        "findings"
       ],
       "inputs": ["kb/nodes/", "evidence/ledger.jsonl"],
       "outputs": ["kb/nodes/", "kb/graph.json", "kb/stats.json"],

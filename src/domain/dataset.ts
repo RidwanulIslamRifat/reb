@@ -10,6 +10,10 @@ export const CATEGORIES = [
   "marketplace",
   "consumer-app",
   "ai-tool",
+  "ecommerce",
+  "fintech",
+  "service-business",
+  "general-business",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -175,6 +179,77 @@ const TABLES: Record<Category, Array<{ name: string; description: string; make: 
         title: `Sample Document ${pad(i)}`,
         text: `Sample text ${pad(i)}: the fictional Test Bakery opens at 8 and sells test bread.`,
       }),
+    },
+  ],
+  ecommerce: [
+    {
+      name: "shoppers",
+      description: "Shopper accounts to create.",
+      make: (i) => ({ ...person(i), address: `${i} Example Street, Testville`, phone: phone(i) }),
+    },
+    {
+      name: "cart_items",
+      description: "Items to search for and add to the cart (stop before any real payment).",
+      make: (i) => ({
+        search: pick(["Test Mug", "Test T-shirt", "Test Notebook"], i),
+        quantity: String(((i - 1) % 3) + 1),
+        size_or_option: pick(["small", "medium", "large"], i),
+      }),
+    },
+  ],
+  fintech: [
+    {
+      name: "contacts",
+      description: "Payees, customers or contacts to add (never real bank details).",
+      make: (i) => ({
+        name: `Example Company ${pad(i)}`,
+        email: `test.billing${pad(i)}@example.com`,
+        account_note: "Test account, no real bank details",
+      }),
+    },
+    {
+      name: "invoices",
+      description:
+        "Invoices, payment requests or transactions to draft (stop before moving real money).",
+      make: (i) => ({
+        reference: `TEST-INV-${pad(i)}`,
+        amount: price(i),
+        currency: "USD",
+        due_date: day(i),
+      }),
+    },
+  ],
+  "service-business": [
+    {
+      name: "clients",
+      description: "Client companies to mention in a request.",
+      make: (i) => ({
+        name: `Example Company ${pad(i)}`,
+        website: `https://company${pad(i)}.example.com`,
+        size: pick(["1-10", "11-50", "51-200"], i),
+      }),
+    },
+    {
+      name: "enquiries",
+      description: "Quote or booking requests to fill in (stop before submitting).",
+      make: (i) => ({
+        ...person(i),
+        service: pick(["Test consultation", "Test audit", "Test workshop"], i),
+        preferred_date: day(i),
+        message: `Sample request ${pad(i)} from a fictional client.`,
+      }),
+    },
+  ],
+  "general-business": [
+    {
+      name: "contacts",
+      description: "Contact or sign-up details to type (stop before submitting real data).",
+      make: (i) => ({ ...person(i), company: `Example Company ${pad(i)}`, phone: phone(i) }),
+    },
+    {
+      name: "orders",
+      description: "Products or services to choose (stop before any real payment).",
+      make: (i) => ({ item: `Test Item ${pad(i)}`, quantity: String(((i - 1) % 3) + 1) }),
     },
   ],
 };

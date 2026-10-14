@@ -44,7 +44,7 @@ const SPEC_TOOLS = [
   "get_framework",
   "compare_runs",
 ];
-const LATER: string[] = ["compare_runs"];
+const LATER: string[] = [];
 /** Not in SPEC 9: lets the planner save a whole hand-written plan (create_plan covers the usual case). */
 // save_plan (M4) and the optional REA bridge (M7) are not in SPEC 9.
 const EXTRA = ["save_plan", "record_rea_result"];

@@ -5,6 +5,7 @@ import { getSkillBody } from "../../workflows/handbook.js";
 import { registerTools, type ToolDef } from "./tools/common.js";
 import { dashboardTools } from "./tools/dashboard.js";
 import { evidenceTools } from "./tools/evidence.js";
+import { compareTools } from "./tools/compare.js";
 import { frameworkTools } from "./tools/frameworks.js";
 import { graphTools } from "./tools/graph.js";
 import { handsOnTools } from "./tools/handsOn.js";
@@ -21,6 +22,7 @@ export const TOOLS: readonly ToolDef[] = [
   ...evidenceTools,
   ...graphTools,
   ...frameworkTools,
+  ...compareTools,
   ...researchTools,
   ...handsOnTools,
   ...reportTools,

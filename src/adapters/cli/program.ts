@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { Command } from "commander";
 import { RebError } from "../../domain/errors.js";
 import { registerAudit } from "./commands/audit.js";
+import { registerCompare } from "./commands/compare.js";
 import { registerDashboard } from "./commands/dashboard.js";
 import { registerEvidence } from "./commands/evidence.js";
 import { registerKb } from "./commands/kb.js";
@@ -34,6 +35,7 @@ export function buildProgram(io: CliIo = defaultIo): Command {
   registerKb(program, io);
   registerAudit(program, io);
   registerReport(program, io);
+  registerCompare(program, io);
   registerDashboard(program, io);
   registerSetup(program, io);
 

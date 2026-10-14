@@ -10,7 +10,7 @@ export function registerNew(program: Command, io: CliIo): void {
     .argument("<domain>", "the product's domain, for example example.com")
     .option(
       "--category <category>",
-      "b2b-saas, developer-tool, marketplace, consumer-app or ai-tool",
+      "b2b-saas, developer-tool, marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business or general-business",
     )
     .option("--reports <list>", "comma-separated: business, feature, market, build")
     .action(async (domain: string, options: { category?: string; reports?: string }) => {

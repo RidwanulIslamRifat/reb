@@ -36,3 +36,15 @@ export async function writeReportFiles(
   }
   return { markdown: md, docx: word, html: page };
 }
+
+/** Writes one more Markdown file into reports/ (for example compare-<other>.md). Returns its path. */
+export async function writeReportText(
+  paths: RunPaths,
+  name: string,
+  text: string,
+): Promise<string> {
+  await mkdir(paths.reports, { recursive: true });
+  const file = paths.report(name);
+  await writeFileAtomic(file, text);
+  return file;
+}

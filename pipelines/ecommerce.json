@@ -1,0 +1,290 @@
+{
+  "id": "ecommerce",
+  "title": "E-commerce",
+  "description": "An online store or brand selling physical or digital goods: catalog and product lines, prices, shipping and returns, payment options, marketing channels and repeat customers.",
+  "focus": {
+    "after": ["features"],
+    "before": ["curate"]
+  },
+  "tasks": [
+    {
+      "id": "company",
+      "title": "Map the company, store and product lines from the home page, about page and help centre",
+      "role": "desk_researcher",
+      "depends_on": [],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 1 company node",
+        "at least 1 product node",
+        "at least 2 module nodes",
+        "every product node has evidence"
+      ]
+    },
+    {
+      "id": "pricing",
+      "title": "Find prices, memberships, shipping fees, discounts and the returns policy",
+      "role": "desk_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 1 pricing_tier node", "every pricing_tier node has evidence"]
+    },
+    {
+      "id": "features",
+      "title": "List the store's features (search, filters, cart, checkout options, accounts, subscriptions) with evidence",
+      "role": "feature_analyst",
+      "depends_on": ["company", "pricing"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 5 feature nodes",
+        "every feature node has evidence",
+        "every feature node has a gated_by link"
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Find payment, shipping and marketplace integrations from the checkout and help pages",
+      "role": "desk_researcher",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 1 integration node", "every integration node has evidence"]
+    },
+    {
+      "id": "market",
+      "title": "Find competing stores and marketplaces and the segments they sell to",
+      "role": "market_researcher",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 competitor nodes",
+        "at least 1 market_segment node",
+        "every competitor node has evidence"
+      ],
+      "reports": ["market", "business", "due_diligence", "strategy", "risk"]
+    },
+    {
+      "id": "tech",
+      "title": "Detect the tech stack from public pages",
+      "role": "tech_observer",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/ledger.jsonl", "notes/tech_observer-stack.md"],
+      "done_when": ["at least 1 evidence record", "file notes/tech_observer-stack.md exists"],
+      "reports": ["build", "technical", "rebuild"]
+    },
+    {
+      "id": "walkthrough",
+      "title": "Prepare a checklist for the user's own session (browse, search, add to cart, stop before paying, read returns)",
+      "role": "walkthrough_coach",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["evidence/inbox/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "the user finished their own session in the product",
+        "what they saw is recorded as observed evidence"
+      ]
+    },
+    {
+      "id": "personas",
+      "title": "Describe the shopper personas and their journeys (discover, buy, return)",
+      "role": "business_analyst",
+      "depends_on": ["features"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 persona nodes",
+        "at least 2 journey nodes",
+        "every journey node has a uses link",
+        "every persona node has a does link"
+      ],
+      "reports": ["business", "feature", "due_diligence", "rebuild"]
+    },
+    {
+      "id": "business-model",
+      "title": "Describe the business model: margins, average order, repeat purchase, marketing channels",
+      "role": "business_analyst",
+      "depends_on": ["pricing", "personas"],
+      "inputs": ["brief.md"],
+      "outputs": ["notes/business_analyst-model.md"],
+      "done_when": [
+        "file notes/business_analyst-model.md exists",
+        "the draft cites node ids or E-/S- ids for every claim"
+      ],
+      "reports": ["business", "due_diligence", "strategy"]
+    },
+    {
+      "id": "architecture",
+      "title": "Describe data objects, integrations and how it is likely built",
+      "role": "architect",
+      "depends_on": ["features", "integrations", "tech"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "notes/architect-build.md"],
+      "done_when": [
+        "at least 3 data_object nodes",
+        "every data_object node has evidence",
+        "file notes/architect-build.md exists"
+      ],
+      "reports": ["build", "technical", "rebuild"]
+    },
+    {
+      "id": "business-canvas",
+      "title": "Map the business model canvas: value propositions, revenue streams, channels, cost drivers, key partners and named customers",
+      "role": "business_analyst",
+      "depends_on": ["pricing", "personas"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 value_proposition nodes",
+        "at least 1 revenue_stream node",
+        "at least 1 channel node",
+        "at least 1 cost_driver node",
+        "every revenue_stream node has evidence"
+      ],
+      "reports": ["due_diligence", "strategy"]
+    },
+    {
+      "id": "condition",
+      "title": "Find the company's condition: dated metrics (customers, revenue, employees, market size), funding rounds, leaders and growth signals",
+      "role": "financial_analyst",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 2 metric nodes",
+        "at least 1 leader node",
+        "at least 2 signal nodes",
+        "every metric node has evidence"
+      ],
+      "reports": ["due_diligence", "strategy"]
+    },
+    {
+      "id": "scope-compliance",
+      "title": "Find where the business operates and which laws, certifications and standards apply",
+      "role": "risk_analyst",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 1 geography node",
+        "at least 1 compliance node",
+        "every compliance node has evidence"
+      ],
+      "reports": ["due_diligence", "risk", "technical"]
+    },
+    {
+      "id": "stack",
+      "title": "Record the technology stack as technology nodes, from public pages, job posts and docs",
+      "role": "tech_observer",
+      "depends_on": ["company"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 3 technology nodes", "every technology node has evidence"],
+      "reports": ["due_diligence", "risk", "technical", "rebuild"]
+    },
+    {
+      "id": "product-spec",
+      "title": "Map screens, navigation, user roles, permissions and business rules for a rebuild-level spec",
+      "role": "feature_analyst",
+      "depends_on": ["features", "walkthrough"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 5 screen nodes",
+        "at least 2 user_role nodes",
+        "at least 3 business_rule nodes",
+        "every screen node has evidence",
+        "every feature has acceptance criteria"
+      ],
+      "reports": ["rebuild"]
+    },
+    {
+      "id": "environment",
+      "title": "Assess the environment: PESTLE trends and Porter's five forces",
+      "role": "strategy_analyst",
+      "depends_on": ["market", "condition"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": [
+        "at least 3 trend nodes",
+        "at least 3 force nodes",
+        "every trend node has evidence"
+      ],
+      "reports": ["due_diligence", "risk", "strategy"]
+    },
+    {
+      "id": "risks",
+      "title": "Build the risk register: risks with likelihood, impact and mitigation",
+      "role": "risk_analyst",
+      "depends_on": ["condition", "scope-compliance", "market", "stack", "environment"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 5 risk nodes", "every risk node has evidence"],
+      "reports": ["due_diligence", "risk", "strategy", "technical"]
+    },
+    {
+      "id": "findings",
+      "title": "Write rated findings with a SWOT place and a recommendation each",
+      "role": "strategy_analyst",
+      "depends_on": ["business-canvas", "environment", "risks"],
+      "inputs": ["brief.md"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "done_when": ["at least 6 finding nodes", "every finding node has evidence"],
+      "reports": ["due_diligence", "risk", "strategy", "technical"]
+    },
+    {
+      "id": "curate",
+      "title": "Clean the knowledge graph until validate_graph is clean",
+      "role": "kb_curator",
+      "depends_on": [
+        "company",
+        "pricing",
+        "features",
+        "integrations",
+        "market",
+        "tech",
+        "walkthrough",
+        "personas",
+        "business-model",
+        "architecture",
+        "business-canvas",
+        "condition",
+        "scope-compliance",
+        "stack",
+        "product-spec",
+        "environment",
+        "risks",
+        "findings"
+      ],
+      "inputs": ["kb/nodes/", "evidence/ledger.jsonl"],
+      "outputs": ["kb/nodes/", "kb/graph.json", "kb/stats.json"],
+      "done_when": ["validate_graph is clean", "no two nodes hold the same fact"]
+    },
+    {
+      "id": "audit",
+      "title": "Audit the graph against the brief and the requested reports (run_audit)",
+      "role": "auditor",
+      "depends_on": ["curate"],
+      "inputs": ["brief.md", "kb/nodes/", "notes/"],
+      "outputs": ["logs/audits/"],
+      "done_when": ["the latest audit is acted on"]
+    },
+    {
+      "id": "report",
+      "title": "Write the {report} report",
+      "role": "report_writer",
+      "depends_on": ["audit"],
+      "inputs": ["kb/nodes/", "notes/", "logs/audits/"],
+      "outputs": ["reports/{report}.md"],
+      "done_when": [
+        "file reports/{report}.md exists",
+        "every claim cites node ids or E-/S- ids",
+        "the report ends with sources and open questions"
+      ],
+      "per_report": true
+    }
+  ]
+}

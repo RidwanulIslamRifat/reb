@@ -6,13 +6,17 @@ import type { NodeType } from "./links.js";
 import { ROLE_FOR_TYPE } from "./nodeRoles.js";
 import { describeIssues, RoleSchema, type Role, type Task } from "./plan.js";
 
-/** Product categories with a pipeline in pipelines/<category>.json (SPEC 8). */
+/** Business categories with a pipeline in pipelines/<category>.json (SPEC 8; the last four are v2). */
 export const CATEGORIES = [
   "b2b-saas",
   "developer-tool",
   "marketplace",
   "consumer-app",
   "ai-tool",
+  "ecommerce",
+  "fintech",
+  "service-business",
+  "general-business",
 ] as const;
 export const CategorySchema = z.enum(CATEGORIES);
 export type Category = z.infer<typeof CategorySchema>;
@@ -154,6 +158,47 @@ const FOCUS_HINTS: Array<{ words: RegExp; types: NodeType[] }> = [
   {
     words: /\b(feature|features|workflow|workflows|journey|journeys|onboarding)\b/i,
     types: ["feature"],
+  },
+  {
+    words: /\b(risk|risks|risky|threat|threats|danger|dependency|dependencies|exposure)\b/i,
+    types: ["risk"],
+  },
+  {
+    words:
+      /\b(regulation|regulations|regulatory|law|laws|legal|compliance|compliant|gdpr|licence|license|certified|certification)\b/i,
+    types: ["compliance"],
+  },
+  {
+    words:
+      /\b(revenue|revenues|money|monetise|monetize|profit|profitable|margin|margins|business model)\b/i,
+    types: ["revenue_stream"],
+  },
+  {
+    words:
+      /\b(growth|growing|grow|traction|funding|funded|raised|investors|valuation|employees|headcount|financial|financials)\b/i,
+    types: ["metric", "signal"],
+  },
+  {
+    words: /\b(founder|founders|ceo|leadership|leaders|management|team behind)\b/i,
+    types: ["leader"],
+  },
+  {
+    words:
+      /\b(strategy|strategic|swot|strength|strengths|weakness|weaknesses|opportunity|opportunities|future|outlook)\b/i,
+    types: ["finding"],
+  },
+  {
+    words: /\b(trend|trends|economy|economic|political|environmental|social)\b/i,
+    types: ["trend"],
+  },
+  {
+    words:
+      /\b(rebuild|clone|copy|screen|screens|permission|permissions|role|roles|rule|rules|limit|limits)\b/i,
+    types: ["screen", "business_rule"],
+  },
+  {
+    words: /\b(country|countries|region|regions|where|international|global|expand|expansion)\b/i,
+    types: ["geography"],
   },
 ];
 

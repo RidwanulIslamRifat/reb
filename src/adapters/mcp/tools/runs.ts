@@ -19,7 +19,9 @@ export const runTools = [
       category: z
         .string()
         .optional()
-        .describe("b2b-saas, developer-tool, marketplace, consumer-app or ai-tool."),
+        .describe(
+          "b2b-saas, developer-tool, marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business or general-business.",
+        ),
       reports: reports.optional(),
       focus_questions: z
         .array(z.string().min(1))

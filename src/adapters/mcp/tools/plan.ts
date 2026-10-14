@@ -30,7 +30,7 @@ export const planTools = [
     name: "create_plan",
     description:
       "Write a run's first plan from its brief: picks the pipeline for brief.category (b2b-saas, developer-tool, " +
-      "marketplace, consumer-app, ai-tool), keeps the tasks the requested reports need and adds one task per focus " +
+      "marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business, general-business), keeps the tasks the requested reports need and adds one task per focus " +
       "question. Fails when the run already has a plan (use apply_replan after an audit).",
     input: { run: runArg },
     call: (ctx, args) => createPlan(ctx, args),

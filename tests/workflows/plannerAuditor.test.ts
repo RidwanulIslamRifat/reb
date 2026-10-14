@@ -86,9 +86,9 @@ describe("create_plan", () => {
   it("refuses without a known category, without reports, or when a plan exists", async () => {
     const none = await setup({ category: "" });
     await expect(createPlan(none.ctx, { run: none.slug })).rejects.toThrow(/has no category/);
-    const odd = await setup({ category: "fintech" });
+    const odd = await setup({ category: "space-mining" });
     await expect(createPlan(odd.ctx, { run: odd.slug })).rejects.toThrow(
-      /no pipeline for .*fintech/,
+      /no pipeline for .*space-mining/,
     );
     const empty = await setup({ reports: [] });
     await expect(createPlan(empty.ctx, { run: empty.slug })).rejects.toThrow(/no reports/);
