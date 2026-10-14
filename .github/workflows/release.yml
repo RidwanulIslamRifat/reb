@@ -1,14 +1,14 @@
 name: Release
 
 # Publishes reb to npm when the owner publishes a GitHub release (see docs/RELEASING.md).
-# The npm token lives only in the repository secret NPM_TOKEN, never in the code.
+# Uses npm trusted publishing (OIDC): no npm token is stored anywhere.
 on:
   release:
     types: [published]
 
 permissions:
   contents: read
-  id-token: write # lets npm show where the package was built (provenance)
+  id-token: write # lets GitHub prove to npm who is publishing, and adds provenance
 
 jobs:
   publish:
@@ -35,6 +35,6 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      - name: Update npm (trusted publishing needs npm 11.5.1 or newer)
+        run: npm install -g npm@latest
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
