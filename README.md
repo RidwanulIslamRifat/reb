@@ -1,8 +1,12 @@
 # reb
 
-**Evidence-backed analysis of SaaS products, done with your AI agent.**
+**Evidence-backed analysis of any business or product, done with your AI agent.**
 
-You tell your AI agent "Analyse example.com; reports: feature". reb gives the agent a plan to
+reb helps your agent look at a company the way a business analyst, product manager or audit firm
+would: its features, customers, business model, market, condition, growth, risks, technology, and
+enough product detail to rebuild it.
+
+You tell your AI agent "Analyse example.com; reports: business, risk". reb gives the agent a plan to
 follow, a place to write down every finding together with where it came from, a map of how the
 product fits together, and a checker that keeps asking "what is still missing?". At the end you get
 reports in which every sentence points to its evidence.
@@ -25,18 +29,26 @@ reb is a helper for AI agents such as **Claude Code, Cursor, Codex and Gemini CL
 think on its own; your agent does the reading and writing. reb makes sure that work is careful and
 checkable:
 
-- **A plan.** reb picks a plan that fits the kind of product (for example a business tool or a
-  developer tool) and the reports you asked for, then hands the agent one task at a time.
+- **A plan.** reb picks a plan that fits the kind of business (software, e-commerce, fintech,
+  services or any other business) and the reports you asked for, then hands the agent one task at a
+  time.
 - **Evidence.** Every finding is written down with its source and a label that says how sure it is:
-  _observed_ (you saw it yourself), _documented_ (the company says so publicly), _inferred_ (a
-  reasoned guess) or _unknown_.
-- **A knowledge map.** Companies, products, modules, features, prices, customers and competitors are
+  _observed_ (you saw it yourself), _provided_ (from a document the business gave you), _documented_
+  (the company says so publicly), _inferred_ (a reasoned guess) or _unknown_.
+- **A knowledge map.** Companies, products, features, prices, customers, competitors, revenue
+  streams, metrics, funding, leaders, laws, risks, trends, technologies, screens and rules are
   linked together, one fact in one place.
+- **Standard frameworks.** SWOT, PESTLE, Porter's five forces, business model canvas, risk register
+  with a heat map, market size, user stories, data model and more, drawn from the map.
 - **An auditor.** After the research, reb checks what the reports still need, adds tasks for the
   gaps and writes down why. It stops when nothing important is missing, or after 3 rounds.
-- **Reports.** Business, feature, market and build reports, in Markdown and Word, with every claim
-  cited.
-- **A dashboard.** A page in your browser that shows the plan, the map, the evidence and the reports.
+- **Reports.** Nine reports, from a feature report to due diligence, risk, strategy and a product
+  rebuild spec, in Markdown, Word and a print-ready web page, with every claim cited and an overall
+  confidence rating.
+- **Comparisons.** Compare two analyses: what changed since last time, or what a competitor has that
+  this product lacks.
+- **A dashboard.** A page in your browser that shows the plan, the map, the evidence, the frameworks
+  and the reports.
 
 Everything is plain files in a folder per product, so you can open, read and keep all of it.
 
@@ -73,24 +85,35 @@ To check that all is well at any time: `npx @ridwanul/reb doctor` (every line sh
    look at everything in your browser, ask the agent to "open the dashboard", or run
    `npx @ridwanul/reb dashboard`.
 
-Want to see a finished analysis first? The [examples/](examples/) folder has a complete, made-up
-one, including its report.
+Want to see a finished analysis first? The [examples/](examples/) folder has two complete, made-up
+ones, with their reports.
+
+**Have documents from the business?** If the business gave you a pitch deck, annual report or
+spreadsheet, save it in the run's `evidence/inbox/provided/` folder and ask the agent to import it.
+reb labels it _provided_ and says in the reports that it was not checked against public sources.
 
 ## What each report contains
 
-Every report starts with a short summary, cites a source for every claim (for example `[E-012]`),
-and ends with **Sources** (every page used, with dates) and **Open questions** (what could not be
-confirmed).
+Every report has the same frame, like a professional analysis: **Report details** (with an overall
+confidence rating out of 100), an **Executive summary**, **Scope and methodology**, the report's own
+sections, **Limitations and disclaimer**, **Sources** (every page and document used, with dates) and
+**Open questions** (what could not be confirmed). Every claim cites its evidence, for example
+`[E-012]`.
 
-| Report              | Ask for    | What it covers                                                                                                  |
-| ------------------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
-| Business analysis   | `business` | Company and product; customers and segments; pricing and packaging; competition; risks and assumptions.         |
-| Feature report      | `feature`  | Product and modules; features and how sure we are of each; key journeys; what each plan includes; integrations. |
-| Market analysis     | `market`   | Market segments; competitors; feature comparison; pricing comparison.                                           |
-| Build-it assessment | `build`    | Modules and features a copy would need; data model; integrations; how it is likely built.                       |
+| Report                            | Ask for         | What it covers                                                                                                  |
+| --------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------- |
+| Business analysis                 | `business`      | Company and product; customers and segments; pricing and packaging; competition; risks and assumptions.         |
+| Feature report                    | `feature`       | Product and modules; features and how sure we are of each; key journeys; what each plan includes; integrations. |
+| Market analysis                   | `market`        | Market segments; competitors; feature comparison; pricing comparison.                                           |
+| Build-it assessment               | `build`         | Modules and features a copy would need; data model; integrations; how it is likely built.                       |
+| Business condition, due diligence | `due_diligence` | Rated findings and recommendations; leadership; business model canvas; traction, funding; market; risks; tech.  |
+| Risk assessment                   | `risk`          | Risk register with likelihood, impact and mitigation, and a heat map; compliance; PESTLE and five forces.       |
+| Strategy and growth outlook       | `strategy`      | SWOT; PESTLE; five forces; market size and position; growth signals; strategic recommendations.                 |
+| Technical capability assessment   | `technical`     | Technology stack; architecture and data; integrations and public API; security and compliance.                  |
+| Product rebuild specification     | `rebuild`       | Features with acceptance criteria; user stories; screens and navigation; roles; data model; business rules.     |
 
-Reports are saved as `reports/<type>.md` in the product's folder, and as a Word file when you ask
-for one.
+Reports are saved as `reports/<type>.md` in the product's folder, and, when you ask, as a Word file
+(with a title page and contents) and a web page you can print to PDF.
 
 ## Safety boundaries
 
@@ -126,6 +149,16 @@ reb is free. Your AI agent may have its own subscription or usage costs.
 **Where are my analyses?**
 In `~/reb/runs/`, one folder per product, named like `example-com-2026-10-13`. `~` means your home
 folder (for example `C:\Users\you` on Windows or `/Users/you` on a Mac).
+
+**Can reb analyse a business that is not software?**
+Yes. Choose the category that fits (`ecommerce`, `fintech`, `service-business` or
+`general-business`) and ask for the reports you need, for example `due_diligence` or `risk`. Parts
+that only apply to software, such as screens, are left out when nobody asks for them.
+
+**Is a due diligence or risk report an audit?**
+No. It is a structured, sourced analysis of public information and what you provide, and each report
+says so in its disclaimer. It is a good starting point for an analyst, investor or auditor, not a
+replacement for their opinion.
 
 **Can I analyse a product I have no account for?**
 Yes. reb works from public pages. Anything only visible inside the product is marked _documented_ or

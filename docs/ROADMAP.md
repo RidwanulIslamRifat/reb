@@ -1,4 +1,4 @@
-# reb roadmap (v1)
+# reb roadmap (v1 and v2)
 
 This file sets the order of work. docs/SPEC.md defines what the product is; this file only splits
 it into milestones. One milestone per branch and pull request. Tick items as they are merged and add
@@ -572,6 +572,80 @@ How the owner checks it
    `npx @ridwanul/reb --version` then `npx @ridwanul/reb doctor`
 3. You should see version 1.0.0 and a checklist. Then ask your AI agent: "Analyse example.com; reports: feature"
    and confirm it starts by creating a run and a plan.
+
+---
+
+## v2: any business, audit-grade reports (M11 to M16)
+
+Goal (from the owner's gap analysis, 2026-10-14): analyse any business or tool the way a business
+analyst, product manager or audit firm would: features, customers, business model, market,
+condition, growth, threats and risks, scope, technology, and enough product detail to rebuild it,
+in official-style reports. docs/SPEC.md was rewritten as v2 first.
+
+The owner asked for all of v2 on one branch, `new-integration`, to test together, instead of one
+branch per milestone (AGENTS.md rule 1). Each milestone is its own commit on that branch. Not merged
+to main yet.
+
+### M11 Business-depth graph
+- [x] SPEC v2: any business, new node and link types, the _provided_ label, new roles, reports and pipelines.
+- [x] 21 node types and 23 link types (graph-format.md lists them all; a test checks it stays complete).
+- [x] Typed front-matter fields per type (`src/domain/nodeFields.ts`), set with `upsert_node` `fields`
+      or `reb kb add --field key=value`; `validate_graph` reports missing or invalid ones (`bad_field`).
+- [x] `stale_metric`: a metric more than 18 months older than the newest evidence.
+- [x] Label _provided_ (observed > provided > documented > inferred > unknown).
+- [x] Roles financial_analyst, strategy_analyst, risk_analyst, with handbook prompts.
+
+### M12 Frameworks
+- [x] `get_framework` / `reb kb framework`: 21 views drawn from the graph, each citing node and E-/S- ids.
+- [x] Risk score = likelihood x impact (1 to 9), rated high (6+), medium (3+), low; heat map.
+- [x] Report sections can show views (`views:` in the template front matter).
+- [x] Dashboard Frameworks page.
+
+### M13 Audit-grade reports
+- [x] One frame for every report: Report details with an overall confidence score, Executive summary,
+      Scope and methodology, sections, Limitations and disclaimer, Sources, Open questions.
+- [x] Templates: due_diligence, risk, strategy, technical, rebuild.
+- [x] Word copy with title page, table of contents and page numbers; print-ready HTML copy (`--html`).
+- [x] report_writer prompt and the skill description cover any business.
+
+### M14 Rebuild-level product spec
+- [x] Screen, user_role, business_rule, api_endpoint nodes; acceptance criteria on features; fields and
+      states on data objects.
+- [x] Rebuild report with sitemap, permission matrix, data model (with a Mermaid diagram), user stories,
+      business rules and public API views.
+- [x] The hands-on checklist asks for screens, roles and rules when a rebuild report is wanted.
+
+### M15 Sources and provided documents
+- [x] `handbook/references/source-playbook.md`: which public pages answer which question.
+- [x] `import_inbox` takes the `provided` folder (documents, screenshots, notes) as _provided_ evidence.
+
+### M16 Beyond SaaS and over time
+- [x] Categories ecommerce, fintech, service-business, general-business: pipelines and sample data.
+- [x] v2 tasks in every pipeline, kept only for the reports that need them (v1 plans unchanged);
+      fintech always checks regulation and risks.
+- [x] Focus questions about risk, regulation, money, growth, leaders, strategy, rebuild and geography
+      go to the matching role.
+- [x] `compare_runs` / `reb compare`: same product over time, or two competitors; writes
+      `reports/compare-<other>.md`.
+- [x] End-to-end test `tests/e2e/v2Run.test.ts` and sample run `examples/ledgerly-example-2026-10-14`.
+
+Follow-ups found in v2
+- [ ] A content-quality reviewer role: the audit counts nodes but does not judge how good they are.
+- [ ] Jobs-to-be-done view, and charts (risk heat map, metrics over time) in the Word and HTML copies.
+- [ ] Numbered headings in the Word copy.
+- [ ] Reading text out of provided PDFs and spreadsheets (today reb records the file and its caption only).
+- [ ] Release v2 as 2.0.0 after the owner has tested the branch (the report layout changed, so it is a
+      MAJOR version under the CHANGELOG rules).
+
+How the owner checks it
+1. `git fetch && git checkout new-integration`, then `npm ci`, `npm run build`.
+2. `npm test`: every test passes (one more is skipped only when the build is missing).
+3. `node dist/cli.js dashboard --run examples/ledgerly-example-2026-10-14`: open the Frameworks and
+   Reports tabs; you should see a SWOT, a risk register and the due diligence report.
+4. Open `examples/ledgerly-example-2026-10-14/reports/due_diligence.html` in a browser and print it
+   to PDF.
+5. Ask your agent: "Analyse example.com as general-business; reports: due_diligence, risk" and check
+   the plan has condition, risks and findings tasks.
 
 ---
 

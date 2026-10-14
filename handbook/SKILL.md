@@ -33,8 +33,11 @@ If a step would need any of this, stop and give the human a checklist to do it t
 
 ## Start: "Analyse <domain>; reports: <list>"
 
-1. Read the request: the domain, the reports (business, feature, market, build), and if given the
-   category, focus questions, the pricing plan the user has (`plan_tier`) and a deadline.
+1. Read the request: the domain, the reports (business, feature, market, build, due_diligence,
+   risk, strategy, technical, rebuild), and if given the category (b2b-saas, developer-tool,
+   marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business, general-business),
+   focus questions, the pricing plan the user has (`plan_tier`) and a deadline. If the user asks
+   for "a full analysis" or "due diligence" without naming reports, suggest due_diligence and risk.
    If the domain is missing, ask for it. Do not ask about anything else you can fill in later.
 2. Call `list_runs`. If a run for this product exists and the user wants to continue, use it.
    Otherwise call `create_run` with the domain and what you know. Remember the returned `run` and
@@ -123,10 +126,20 @@ Each has a prompt file in `roles/<role>.md` with its allowed reb tools; `next_ta
 The run folder (default `~/reb/runs/<product>-<date>/`) holds `brief.md`, `plan/`, `kb/nodes/`,
 `evidence/ledger.jsonl`, `notes/`, `reports/` and `logs/`. Drafts go in `notes/<role>-<topic>.md`;
 the report_writer's report drafts in `notes/report-<type>.md`, which `render_report` turns into
-`reports/<type>.md` (and `.docx` when asked). Every reb tool call is logged in `logs/events.jsonl` automatically.
+`reports/<type>.md` (and `.docx` or `.html` when asked). Documents the business handed over go in
+`evidence/inbox/provided/`; `import_inbox` with session `provided` records them as _provided_
+evidence. Every reb tool call is logged in `logs/events.jsonl` automatically.
+
+## Frameworks and comparisons
+
+- `get_framework` draws a standard view (SWOT, PESTLE, five forces, business model canvas, risk
+  register, user stories ...) from the graph. Use it when the user asks for one, and before writing
+  a report that shows it.
+- `compare_runs` compares two runs: the same product analysed again later ("what changed?"), or a
+  competitor's run ("what do they have that we lack?"). It writes `reports/compare-<other>.md`.
 
 ## Showing the user their analysis
 
 When the user wants to see progress ("show me", "open the dashboard"), call `open_dashboard`.
 It opens a read-only page on their computer with the plan, the knowledge graph, the evidence,
-the activity log and the reports. If the browser did not open, give them the address it returns.
+the activity log, the frameworks and the reports. If the browser did not open, give them the address it returns.
