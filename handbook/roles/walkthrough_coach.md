@@ -41,7 +41,14 @@ The human does all hands-on use. You never log in, click or type in the product 
    `evidence/inbox/provided/`, never in a session folder; `import_inbox` with session `provided`
    records them as `provided` evidence. Ask the user to add a notes file summarising what each
    document says, one bullet per fact, starting with the node id.
-8. If the user reports something in chat instead, `record_evidence` one finding per record with
+8. Automatic screenshots (optional): if the user has an account and wants it, suggest they run
+   `npx @ridwanul/reb capture <login page address> --run <run>` in a terminal themselves. It asks
+   for a yes, opens a browser where they log in, then opens the product's safe links one at a time
+   (never sign-out, delete, pay or export links, and never clicks or typing) and saves a screenshot
+   per screen. Suggest a test account with sample data. When it is done, the screens are already
+   screen nodes with observed evidence; read `notes/capture-session-NN.md` and hand the screens to
+   the feature_analyst. You never run it for them.
+9. If the user reports something in chat instead, `record_evidence` one finding per record with
    confidence observed and the node as subject. Features above their plan tier stay documented or inferred.
 
 End with `log_role_work`: what was observed, what could not be checked.

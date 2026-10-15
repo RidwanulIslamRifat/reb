@@ -629,6 +629,13 @@ to main yet.
       `reports/compare-<other>.md`.
 - [x] End-to-end test `tests/e2e/v2Run.test.ts` and sample run `examples/ledgerly-example-2026-10-14`.
 
+### Capture (owner request, 2026-10-15)
+- [x] `reb capture [url]`: after a yes and the person's own login, opens the product's safe links in a
+      visible browser, screenshots each screen, adds screen nodes with navigation and observed evidence,
+      and writes a sitemap with suggested nodes per screen (decision 23).
+- [x] Tests: link rules, a fake-browser workflow test, and a real headless browser against a local
+      product that proves no sign-out, delete, form submit or API request is made.
+
 Follow-ups found in v2
 - [ ] A content-quality reviewer role: the audit counts nodes but does not judge how good they are.
 - [ ] Jobs-to-be-done view, and charts (risk heat map, metrics over time) in the Word and HTML copies.
@@ -728,3 +735,14 @@ They are binding for the milestones they name unless the owner changes them.
 
 22. **Extra libraries not named in SPEC 13.** Likely needs: a YAML front-matter reader, an HTML-to-readable-text library,
     a robots.txt parser. *Decided:* add each only in the milestone that needs it, with the reason stated in that pull request (AGENTS.md rule 6).
+
+23. **Automatic screenshots of the product (v2).** The owner asked for a browser that browses the
+    product and takes screenshots after the person logs in, which SPEC 2.3 forbade. *Decided by the
+    owner on 2026-10-15 ("Auto-browse"):* allow it as an opt-in exception, `reb capture`, with these
+    limits: a yes in a terminal first; a visible browser with a fresh profile; the person logs in;
+    reb only opens same-site links (no query strings, record ids collapsed to one screen, 1.5 s
+    apart, 25 screens and 3 links deep by default); never sign-out, delete, pay, export, confirm or
+    similar links, private APIs, files or other sites; never clicks, types, submits or downloads;
+    dialogs dismissed; the login is forgotten when the window closes. Emails and long numbers are
+    masked in the saved labels. `playwright-core` moves to the runtime dependencies for this and is
+    loaded only when capture runs. `tests/safety.test.ts` checks the browser file never clicks or types.

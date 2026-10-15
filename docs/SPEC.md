@@ -24,7 +24,13 @@ one install, an MCP server for AI agents, a CLI, a handbook skill, evidence reco
    inferred (reasoned guess), unknown (not confirmed).
 3. Normal use only: reb never logs in, never calls a product's private API, never replays
    or modifies requests, never scrapes or bulk-exports, never automates clicks in the product.
-   The human does all hands-on use. "Rebuild" knowledge (v2) describes behaviour seen in normal
+   The human does all hands-on use. One opt-in exception (owner decision 2026-10-15, ROADMAP
+   decision 23): `reb capture`, started by the person in a terminal after a yes, opens a visible
+   browser with a fresh profile; the person logs in themselves; reb then only opens the product's
+   own links one at a time (same site, no query strings, slow, page and depth limits), never
+   links that could change something (sign out, delete, pay, export, confirm ...), private APIs,
+   files or other sites, and never clicks, types, submits forms or downloads. It saves a
+   screenshot and the visible labels of each screen as observed evidence, then forgets the login. "Rebuild" knowledge (v2) describes behaviour seen in normal
    use and public docs; reb never copies code, assets or content.
 4. Everything inspectable: plain files on disk, append-only logs, versioned plans.
 5. Local-first: data stays on the user's computer. No telemetry.
@@ -152,6 +158,10 @@ Analysis (v2): get_framework (swot, pestle, five_forces, business_model_canvas, 
   permission_matrix, data_model, user_stories, business_rules, api), compare_runs (what changed
   between two runs of the same or competing products).
 Hands-on (v2): import_inbox also imports evidence/inbox/provided/ as provided evidence.
+Capture (v2, CLI only because the person must agree and log in at the keyboard): `reb capture
+[url]` writes screenshots and capture-notes.md into a new inbox session, screen nodes with
+navigates_to links, observed evidence, evidence/imports/<session>/capture.json and
+notes/capture-<session>.md (sitemap, labels per screen, suggested node types).
 Logging: log_role_work. Every tool call is also written to logs/events.jsonl automatically.
 Web search is done with the host agent's own search tool; results are recorded via record_source.
 

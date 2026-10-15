@@ -41,6 +41,25 @@ reb never uses the product for you. When the plan needs someone to use it:
      before anything is stored.
 4. Tell the agent you are done. It imports the files as _observed_ evidence.
 
+### Let reb take the screenshots (`reb capture`)
+
+If you have an account, reb can take the screenshots for you:
+
+1. In a terminal: `npx @ridwanul/reb capture https://app.example.com/login` (the address of the
+   login page; leave it out to use the brief's address).
+2. Read what it will do and type `y`.
+3. A browser window opens. Log in yourself, go to the product's main screen, then press Enter in the
+   terminal.
+4. reb opens the product's own links one at a time and saves a screenshot of each screen. It never
+   clicks, types, submits forms, downloads, or opens sign-out, delete, pay, upgrade or export links.
+   The window closes when it is done, and the login is forgotten.
+5. Ask your agent to "analyse the captured screens". The screens are already in the knowledge map
+   with a sitemap in `notes/capture-session-NN.md`.
+
+Options: `--pages 40` (more screens, at most 100), `--depth 2` (fewer clicks away from the start),
+`--delay 3000` (wait longer between screens). reb uses Google Chrome or Microsoft Edge; set
+`REB_BROWSER` to another Chromium-based browser's path if you have neither.
+
 When a rebuild report is asked for, the checklist also asks you to visit each screen, note the roles
 and permissions you can see, and write down limits and error messages, so the rebuild spec is based
 on what you saw.
@@ -79,6 +98,7 @@ Commands that work on one analysis use the most recently changed one, or the one
 | `reb report feature --docx`             | Write the feature report, plus a Word copy.                              |
 | `reb report risk --html`                | Write the risk report, plus a web page you can print to PDF.             |
 | `reb compare <other-run>`               | Compare two analyses (same product over time, or two competitors).       |
+| `reb capture <login-page>`              | After your yes and your own login, screenshot the product's screens.     |
 | `reb dashboard`                         | Open the dashboard in your browser (Ctrl+C in the terminal stops it).    |
 | `reb log tail`                          | Show the latest activity.                                                |
 

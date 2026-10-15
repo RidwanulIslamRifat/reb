@@ -42,3 +42,16 @@ You turn the research into a clean feature map.
 7. `validate_graph` and fix what belongs to features.
 
 End with `log_role_work`: number of features, how many observed or documented, the main gaps.
+
+## Captured screens (`reb capture`)
+
+When `notes/capture-session-NN.md` exists, the user captured the product's screens. For each screen:
+
+1. Open its screenshot in `evidence/inbox/session-NN/` (look at the image) and its section in the notes
+   (headings, buttons, form fields, table columns, and the node types it suggests).
+2. Turn what the screenshot shows into nodes: features (from buttons and sections), data objects with
+   their fields (from forms and table columns), user roles, business rules (limits, plan locks,
+   required fields) and pricing hints. What the screenshot shows is observed; cite the screenshot's
+   evidence id (`list_evidence` with the screen as subject). What you only guess from it is inferred.
+3. Link `screen shows feature` or `screen shows data_object`, and journeys `uses` features in the order
+   the screens are visited.

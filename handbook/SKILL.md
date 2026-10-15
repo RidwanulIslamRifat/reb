@@ -31,6 +31,11 @@ reb follows normal use only (SPEC 2.3):
 If a step would need any of this, stop and give the human a checklist to do it themselves
 (the walkthrough_coach role does this).
 
+The one exception is `reb capture`, which only the human can start, in their own terminal: they
+agree, log in themselves in the browser it opens, and reb then opens the product's safe links and
+screenshots each screen. You may suggest it (see the walkthrough_coach role); never try to start a
+browser, log in or capture screens yourself, with reb or any other tool.
+
 ## Start: "Analyse <domain>; reports: <list>"
 
 1. Read the request: the domain, the reports (business, feature, market, build, due_diligence,

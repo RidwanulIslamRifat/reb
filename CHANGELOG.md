@@ -45,6 +45,12 @@ reports keep working; the v1 reports gain the new report frame (see Changed).
   product, or what one competitor has that another lacks.
 - The hands-on checklist asks for screens, roles and rules when a rebuild report is wanted.
 - A second sample analysis, `examples/ledgerly-example-2026-10-14`.
+- **`reb capture`** (opt-in, owner decision 2026-10-15): after you type `y` and log in yourself in
+  the browser window it opens, reb opens the product's own safe links one at a time, saves a
+  screenshot and the visible labels of each screen, adds them to the map as screen nodes with
+  navigation links and observed evidence, and writes a sitemap with suggested nodes per screen. It
+  never clicks, types, submits forms, downloads or opens sign-out, delete, pay or export links.
+  `playwright-core` is now a runtime dependency, loaded only when capture runs.
 
 ### Changed
 

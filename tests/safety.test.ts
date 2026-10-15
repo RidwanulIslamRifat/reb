@@ -5,7 +5,8 @@ import { filesUnder } from "./helpers.js";
 /**
  * M10 safety review (SPEC 2), kept as a test so later changes cannot quietly break it:
  * reb reaches the internet in one place only, with plain GET requests and no cookies; it starts no
- * programs except the person's browser; it ships no browser automation and no telemetry.
+ * programs except the person's browser; it ships no telemetry, and no browser automation except the
+ * opt-in, link-opening-only `reb capture` (ROADMAP decision 23).
  */
 async function sources(): Promise<Array<{ path: string; text: string }>> {
   const paths = (await filesUnder("src")).filter((p) => /\.tsx?$/.test(p));
@@ -45,10 +46,46 @@ describe("safety boundaries (SPEC 2)", () => {
     const imports = all.flatMap((f) =>
       [...f.text.matchAll(/from\s+["']([^"']+)["']/g)].map((m) => `${f.path}: ${m[1]}`),
     );
+    // The one exception (ROADMAP decision 23): the opt-in `reb capture` browser, in one file.
     expect(imports.filter((i) => banned.test(i.split(": ")[1]!))).toEqual([]);
+    const dynamic = all
+      .filter((f) => /import\(\s*["'](playwright|puppeteer|selenium)/.test(f.text))
+      .map((f) => f.path);
+    expect(dynamic).toEqual(["sources/browser.ts"]);
     const pkg = JSON.parse(await readFile("package.json", "utf8")) as {
       dependencies: Record<string, string>;
     };
-    expect(Object.keys(pkg.dependencies).filter((d) => banned.test(d))).toEqual([]);
+    expect(Object.keys(pkg.dependencies).filter((d) => banned.test(d))).toEqual([
+      "playwright-core",
+    ]);
+  });
+
+  it("lets reb capture only open addresses: no clicks, typing, forms, downloads or cookies kept", async () => {
+    const all = await sources();
+    const browser = all.find((f) => f.path === "sources/browser.ts")!.text;
+    const code = browser.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+    expect(code).not.toMatch(
+      /\.(click|dblclick|fill|type|press|check|uncheck|selectOption|setInputFiles|tap|dispatchEvent|route|setExtraHTTPHeaders|storageState|cookies|addCookies)\(/,
+    );
+    expect(code).not.toMatch(/launchPersistentContext|userDataDir/);
+    expect(code).toContain("acceptDownloads: false");
+    expect(code).toContain("dialog.dismiss()");
+    // The page script reads labels, never what is typed into fields.
+    expect(code).not.toMatch(/\.value\b(?!\s*\|\|)/);
+    // Every address goes through the link rules, which never open sign-out, delete, pay or API links.
+    const capture = all.find((f) => f.path === "workflows/capture.ts")!.text;
+    expect(capture).toContain("skipReason(link.href, origin)");
+    const { skipReason } = await import("../src/domain/capture.js");
+    for (const href of [
+      "/logout",
+      "/sign-out",
+      "/x/delete",
+      "/pay",
+      "/checkout",
+      "/api/me",
+      "/export",
+    ]) {
+      expect(skipReason(href, "https://app.example"), href).not.toBeNull();
+    }
   });
 });

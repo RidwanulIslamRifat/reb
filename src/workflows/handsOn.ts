@@ -42,7 +42,7 @@ import { redact, redactText } from "./redact.js";
 import { readBrief, resolveRun } from "./runs.js";
 
 /** The session a new test plan is for: the latest empty inbox folder, or the next new one. */
-async function pickSession(paths: RunPaths): Promise<string> {
+export async function pickSession(paths: RunPaths): Promise<string> {
   const numbers = (await listInboxFolders(paths))
     .map(sessionNumber)
     .filter((n): n is number => n !== null)

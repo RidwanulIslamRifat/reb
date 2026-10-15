@@ -52,8 +52,8 @@ export function runRelative(paths: RunPaths, absolute: string): string {
   return relative(paths.dir, absolute).split(sep).join("/");
 }
 
-/** Writes a file reb generated inside the run folder (notes, imports, REA results), replacing it. */
-export async function writeRunFile(absolute: string, text: string): Promise<void> {
+/** Writes a file reb generated inside the run folder (notes, imports, REA results, captured screenshots), replacing it. */
+export async function writeRunFile(absolute: string, text: string | Uint8Array): Promise<void> {
   await mkdir(dirname(absolute), { recursive: true });
   await writeFileAtomic(absolute, text);
 }

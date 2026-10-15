@@ -81,6 +81,9 @@ To check that all is well at any time: `npx @ridwanul/reb doctor` (every line sh
    needs someone to use the product, the agent gives you a short checklist (and fake sample data to
    type in). Use the product normally, save screenshots or notes in the folder it names, and tell
    the agent you are done. It turns them into _observed_ evidence.
+   **Or let reb take the screenshots:** run `npx @ridwanul/reb capture` in a terminal, type `y`,
+   log in yourself in the browser window that opens, and press Enter. reb then opens the product's
+   pages one by one and saves a screenshot of each, with a map of how the screens link together.
 5. **Read the reports.** When the plan is finished, the agent tells you where the reports are. To
    look at everything in your browser, ask the agent to "open the dashboard", or run
    `npx @ridwanul/reb dashboard`.
@@ -119,11 +122,19 @@ Reports are saved as `reports/<type>.md` in the product's folder, and, when you 
 
 reb only ever does what a normal visitor does. It **never**:
 
-- logs in to a product, or uses your account or cookies;
+- logs in to a product for you, or uses your own browser's account or cookies;
 - calls a product's private, behind-the-scenes interfaces (APIs);
 - replays, changes or fakes network requests;
 - scrapes, crawls or bulk-downloads a site;
 - clicks or types in a product for you (you do all hands-on use yourself).
+
+**The one exception you choose yourself: `reb capture`.** Only when you start it and type `y`, it
+opens a separate browser window with an empty profile. You log in yourself; reb never sees or keeps
+your password, and forgets the login when the window closes. It then only **opens the product's own
+links**, slowly and up to a limit (25 screens by default). It never clicks buttons, types, submits
+forms or downloads, and never opens links that could change something (sign out, delete, pay,
+upgrade, export, confirm ...), other sites or private APIs. Emails and long numbers are masked in
+what it saves. Use a test account if you can, and only capture products whose terms allow it.
 
 It reads public pages **one at a time**, obeys each site's robots.txt, and says who it is. When you
 give it a recording of your own browser session (a HAR file), it removes passwords, cookies, tokens
