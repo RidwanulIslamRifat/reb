@@ -1,7 +1,7 @@
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
-/** Report types reb can produce (SPEC 1, 11); the last five are v2. */
+/** Report types reb can produce (SPEC 1, 11); the last six are v2. */
 export const REPORT_TYPES = [
   "business",
   "feature",
@@ -12,6 +12,7 @@ export const REPORT_TYPES = [
   "strategy",
   "technical",
   "rebuild",
+  "requirements",
 ] as const;
 export const ReportTypeSchema = z.enum(REPORT_TYPES);
 export type ReportType = z.infer<typeof ReportTypeSchema>;
@@ -57,7 +58,7 @@ Edit the values between the \`---\` lines, keeping the quotes and square bracket
 - **category**: b2b-saas, developer-tool, marketplace, consumer-app, ai-tool, ecommerce, fintech,
   service-business or general-business.
 - **reports**: any of "business", "feature", "market", "build", "due_diligence", "risk",
-  "strategy", "technical", "rebuild".
+  "strategy", "technical", "rebuild", "requirements".
 - **focus_questions**: what you most want answered, for example ["Who is the main buyer?"].
 - **plan_tier**: the product's pricing plan you can use yourself, for example "Free trial".
   Features above it can only be documented or inferred, never observed.

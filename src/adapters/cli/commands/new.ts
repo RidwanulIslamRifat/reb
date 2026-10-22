@@ -14,7 +14,7 @@ export function registerNew(program: Command, io: CliIo): void {
     )
     .option(
       "--reports <list>",
-      "comma-separated: business, feature, market, build, due_diligence, risk, strategy, technical, rebuild",
+      "comma-separated: business, feature, market, build, due_diligence, risk, strategy, technical, rebuild, requirements",
     )
     .action(async (domain: string, options: { category?: string; reports?: string }) => {
       const reports = options.reports

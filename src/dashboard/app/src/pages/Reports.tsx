@@ -13,6 +13,7 @@ const REPORT_NAMES: Record<string, string> = {
   strategy: "Strategy and growth outlook",
   technical: "Technical capability assessment",
   rebuild: "Product rebuild specification",
+  requirements: "Functional and non-functional requirements",
 };
 const reportTitle = (file: string) => {
   const base = file.replace(/\.(md|docx|html)$/, "");

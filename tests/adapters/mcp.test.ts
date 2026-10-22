@@ -43,6 +43,7 @@ const SPEC_TOOLS = [
   // v2
   "get_framework",
   "compare_runs",
+  "analyse_capture",
 ];
 const LATER: string[] = [];
 /** Not in SPEC 9: lets the planner save a whole hand-written plan (create_plan covers the usual case). */

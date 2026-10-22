@@ -65,7 +65,7 @@
       "inputs": ["brief.md"],
       "outputs": ["evidence/ledger.jsonl", "notes/tech_observer-stack.md"],
       "done_when": ["at least 1 evidence record", "file notes/tech_observer-stack.md exists"],
-      "reports": ["build", "technical", "rebuild"]
+      "reports": ["build", "technical", "rebuild", "requirements"]
     },
     {
       "id": "walkthrough",
@@ -91,7 +91,7 @@
         "at least 2 journey nodes",
         "every journey node has a uses link"
       ],
-      "reports": ["business", "feature", "due_diligence", "rebuild"]
+      "reports": ["business", "feature", "due_diligence", "rebuild", "requirements"]
     },
     {
       "id": "business-model",
@@ -118,7 +118,7 @@
         "every data_object node has evidence",
         "file notes/architect-build.md exists"
       ],
-      "reports": ["build", "technical", "rebuild"]
+      "reports": ["build", "technical", "rebuild", "requirements"]
     },
     {
       "id": "business-canvas",
@@ -173,7 +173,7 @@
       "inputs": ["brief.md"],
       "outputs": ["kb/nodes/", "evidence/ledger.jsonl"],
       "done_when": ["at least 3 technology nodes", "every technology node has evidence"],
-      "reports": ["due_diligence", "risk", "technical", "rebuild"]
+      "reports": ["due_diligence", "risk", "technical", "rebuild", "requirements"]
     },
     {
       "id": "product-spec",
@@ -189,7 +189,22 @@
         "every screen node has evidence",
         "every feature has acceptance criteria"
       ],
-      "reports": ["rebuild"]
+      "reports": ["rebuild", "requirements"]
+    },
+    {
+      "id": "feature-model",
+      "title": "Analyse every feature deeply enough to rebuild it: entities and fields, states, logic and data reuse per feature, functional and non-functional requirements",
+      "role": "feature_analyst",
+      "depends_on": ["product-spec"],
+      "inputs": ["brief.md", "notes/"],
+      "outputs": ["kb/nodes/", "evidence/ledger.jsonl", "notes/feature_analyst-requirements.md"],
+      "done_when": [
+        "at least 5 requirement nodes",
+        "every requirement node has evidence",
+        "file notes/feature_analyst-requirements.md exists",
+        "every feature has logic and data_use filled in"
+      ],
+      "reports": ["rebuild", "requirements"]
     },
     {
       "id": "environment",
@@ -244,6 +259,7 @@
         "scope-compliance",
         "stack",
         "product-spec",
+        "feature-model",
         "environment",
         "risks",
         "findings"

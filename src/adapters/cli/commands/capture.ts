@@ -84,7 +84,16 @@ export function registerCapture(program: Command, io: CliIo): void {
         if (result.skipped)
           line(io, `${result.skipped} links were not opened (risky, files or private APIs).`);
         line(io, `Sitemap and what each screen suggests: ${result.notes}`);
-        line(io, "Next: ask your agent to analyse the captured screens.");
+        const m = result.feature_model;
+        line(
+          io,
+          `Feature model: ${m.modules} modules, ${m.features} features, ${m.entities} entities, ${m.rules} ` +
+            `rules and ${m.requirements} non-functional requirements, in ${m.notes} (added as inferred nodes).`,
+        );
+        line(
+          io,
+          'Next: ask your agent to check the feature model against the screenshots, then "reb report requirements".',
+        );
       },
     );
 }

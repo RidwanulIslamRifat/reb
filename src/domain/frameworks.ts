@@ -3,7 +3,8 @@ import type { LedgerRecord } from "./evidence.js";
 import { GraphIndex, summaryOf } from "./graphIndex.js";
 import type { NodeType } from "./links.js";
 import type { GraphNode } from "./node.js";
-import { FORCES, LEVELS, levelScore, PESTLE, TECH_CATEGORIES } from "./nodeFields.js";
+import { FORCES, LEVELS, levelScore, PESTLE, PRIORITIES, TECH_CATEGORIES } from "./nodeFields.js";
+import { NFR_CATEGORIES } from "./productModel.js";
 
 /**
  * Framework views (SPEC 9, v2): standard business-analysis frameworks drawn from the graph.
@@ -32,6 +33,9 @@ export const FRAMEWORKS = [
   "user_stories",
   "business_rules",
   "api",
+  "feature_logic",
+  "requirements",
+  "nfr",
 ] as const;
 export const FrameworkSchema = z.enum(FRAMEWORKS);
 export type Framework = z.infer<typeof FrameworkSchema>;
@@ -162,6 +166,24 @@ export const FRAMEWORK_INFO: Record<Framework, { title: string; about: string; u
       title: "Public API",
       about: "Endpoints from the public API documentation, and the data they read or write.",
       uses: ["api_endpoint"],
+    },
+    feature_logic: {
+      title: "Feature logic and data reuse",
+      about:
+        "Per feature: what it does, the data it reads and writes, how it probably works behind the screen, how its data is reused, and the rules and roles that apply.",
+      uses: ["feature"],
+    },
+    requirements: {
+      title: "Functional requirements",
+      about:
+        "Numbered functional requirements (FR-001 ...) by module, drawn from the features, their data, rules, roles, plans and acceptance criteria, plus requirement nodes of kind functional.",
+      uses: ["feature", "data_object", "business_rule", "requirement"],
+    },
+    nfr: {
+      title: "Non-functional requirements",
+      about:
+        "Numbered non-functional requirements (NFR-001 ...) by quality: performance, scalability, security, privacy, audit, usability and more, with priority and why.",
+      uses: ["requirement"],
     },
   };
 
@@ -673,6 +695,10 @@ const BUILDERS: Record<Framework, (g: GraphIndex) => Built> = {
     return { lines, count: rules.length };
   },
 
+  feature_logic: featureLogic,
+  requirements: functionalRequirements,
+  nfr: nonFunctionalRequirements,
+
   api(g) {
     const endpoints = g
       .ofType("api_endpoint")
@@ -688,6 +714,185 @@ const BUILDERS: Record<Framework, (g: GraphIndex) => Built> = {
     return { lines, count: endpoints.length };
   },
 };
+
+const listField = (n: GraphNode, key: string) =>
+  Array.isArray(n.meta[key]) ? (n.meta[key] as unknown[]).map(str).filter(Boolean) : [];
+
+const byPriority = (a: GraphNode, b: GraphNode) => {
+  const at = (n: GraphNode) => {
+    const i = PRIORITIES.indexOf(field(n, "priority") as (typeof PRIORITIES)[number]);
+    return i === -1 ? PRIORITIES.length : i;
+  };
+  return at(a) - at(b) || a.meta.name.localeCompare(b.meta.name);
+};
+
+/** Features grouped by the module that has them; features in no module come last. */
+function featuresByModule(
+  g: GraphIndex,
+): Array<{ module: GraphNode | null; features: GraphNode[] }> {
+  const groups: Array<{ module: GraphNode | null; features: GraphNode[] }> = [];
+  const placed = new Set<string>();
+  for (const m of g.ofType("module")) {
+    const features = g
+      .out(m, "has")
+      .filter((f) => f.meta.type === "feature" && !placed.has(f.meta.id));
+    for (const f of features) placed.add(f.meta.id);
+    if (features.length) groups.push({ module: m, features });
+  }
+  const rest = g.ofType("feature").filter((f) => !placed.has(f.meta.id));
+  if (rest.length) groups.push({ module: null, features: rest });
+  return groups;
+}
+
+function featureLogic(g: GraphIndex): Built {
+  const lines: string[] = [];
+  let count = 0;
+  for (const { module, features } of featuresByModule(g)) {
+    lines.push(
+      `**${module ? module.meta.name : "Other features"}**${module ? ` ${g.cite(module)}` : ""}`,
+      "",
+    );
+    for (const f of features) {
+      count++;
+      const what = summaryOf(f.body, 240);
+      lines.push(
+        `- **${f.meta.name}** (${f.meta.label}${field(f, "priority") ? `, ${field(f, "priority")}` : ""})${what ? `: ${what}` : ""} ${g.cite(f)}`,
+      );
+      const data = g.out(f, "reads_writes");
+      if (data.length)
+        lines.push(`  - Data: ${names(data)} [${data.map((d) => d.meta.id).join(", ")}]`);
+      for (const l of listField(f, "logic")) lines.push(`  - Logic: ${l} [${f.meta.id}]`);
+      for (const l of listField(f, "data_use")) lines.push(`  - Data reuse: ${l} [${f.meta.id}]`);
+      const rules = g.into(f, "governs");
+      if (rules.length)
+        lines.push(`  - Rules: ${names(rules)} [${rules.map((r) => r.meta.id).join(", ")}]`);
+      const roles = g.into(f, "can");
+      if (roles.length)
+        lines.push(
+          `  - Who can use it: ${names(roles)} [${roles.map((r) => r.meta.id).join(", ")}]`,
+        );
+      const tiers = g.out(f, "gated_by");
+      if (tiers.length)
+        lines.push(`  - Plan: ${names(tiers)} [${tiers.map((t) => t.meta.id).join(", ")}]`);
+      const tools = g.out(f, "connects_to");
+      if (tools.length)
+        lines.push(`  - Connects to: ${names(tools)} [${tools.map((t) => t.meta.id).join(", ")}]`);
+    }
+    lines.push("");
+  }
+  return { lines, count };
+}
+
+function functionalRequirements(g: GraphIndex): Built {
+  const lines: string[] = [];
+  let n = 0;
+  const id = () => `FR-${String(++n).padStart(3, "0")}`;
+  const fieldsOf = (o: GraphNode) =>
+    Array.isArray(o.meta["fields"]) ? (o.meta["fields"] as Array<Record<string, unknown>>) : [];
+  for (const { module, features } of featuresByModule(g)) {
+    lines.push(`**${module ? module.meta.name : "Other features"}**`, "");
+    for (const f of [...features].sort(byPriority)) {
+      const priority = field(f, "priority") || (f.meta.label === "observed" ? "must" : "should");
+      const what = summaryOf(f.body, 200);
+      lines.push(
+        `- **${id()} ${f.meta.name}** (${priority}; ${f.meta.label}): The system shall provide ${f.meta.name.charAt(0).toLowerCase()}${f.meta.name.slice(1)}${what ? `. ${what}` : "."} ${g.cite(f)}`,
+      );
+      for (const o of g.out(f, "reads_writes")) {
+        const req = fieldsOf(o)
+          .filter((x) => x["required"])
+          .map((x) => str(x["name"]));
+        lines.push(
+          `  - Stores and reads ${o.meta.name}${req.length ? ` (required: ${req.join(", ")})` : ""}. [${o.meta.id}]`,
+        );
+      }
+      for (const r of g.into(f, "governs"))
+        lines.push(
+          `  - Applies the rule ${r.meta.name}${summaryOf(r.body, 140) ? `: ${summaryOf(r.body, 140)}` : ""} [${r.meta.id}]`,
+        );
+      const roles = g.into(f, "can");
+      if (roles.length)
+        lines.push(
+          `  - Available to: ${names(roles)}. [${roles.map((r) => r.meta.id).join(", ")}]`,
+        );
+      const tiers = g.out(f, "gated_by");
+      if (tiers.length)
+        lines.push(
+          `  - Available from the ${names(tiers)} plan. [${tiers.map((t) => t.meta.id).join(", ")}]`,
+        );
+      for (const a of listField(f, "acceptance")) lines.push(`  - Accept: ${a} [${f.meta.id}]`);
+    }
+    lines.push("");
+  }
+  const objects = g.ofType("data_object");
+  if (objects.length) lines.push("**Data**", "");
+  for (const o of objects) {
+    const fields = fieldsOf(o);
+    const states = listField(o, "states");
+    lines.push(
+      `- **${id()} Store ${o.meta.name} records** (must; ${o.meta.label}): The system shall store ${o.meta.name} records${fields.length ? ` with ${fields.map((x) => `${str(x["name"])}${x["type"] ? ` (${str(x["type"])}${x["required"] ? ", required" : ""})` : ""}`).join(", ")}` : ""}. ${g.cite(o)}`,
+    );
+    if (states.length)
+      lines.push(
+        `  - ${o.meta.name} moves through the states ${states.join(" → ")}, and every move is recorded with its time. [${o.meta.id}]`,
+      );
+    const related = g.out(o, "relates_to");
+    if (related.length)
+      lines.push(
+        `  - Each ${o.meta.name} is linked to ${names(related)}. [${[o, ...related].map((x) => x.meta.id).join(", ")}]`,
+      );
+  }
+  if (objects.length) lines.push("");
+  const rules = g
+    .ofType("business_rule")
+    .filter((r) => !g.out(r, "governs").some((t) => t.meta.type === "feature"));
+  if (rules.length) lines.push("**Rules**", "");
+  for (const r of rules) {
+    lines.push(
+      `- **${id()} ${r.meta.name}** (must; ${r.meta.label}): ${summaryOf(r.body, 200) || r.meta.name} ${g.cite(r)}`,
+    );
+  }
+  if (rules.length) lines.push("");
+  const extra = g
+    .ofType("requirement")
+    .filter((r) => field(r, "kind") === "functional")
+    .sort(byPriority);
+  if (extra.length) lines.push("**Other functional requirements**", "");
+  for (const r of extra) {
+    lines.push(
+      `- **${id()} ${r.meta.name}** (${field(r, "priority") || "should"}; ${r.meta.label}): ${field(r, "statement") || summaryOf(r.body, 200)} ${g.cite(r)}`,
+    );
+  }
+  return { lines, count: n };
+}
+
+function nonFunctionalRequirements(g: GraphIndex): Built {
+  const all = g.ofType("requirement").filter((r) => field(r, "kind") === "non_functional");
+  const lines = [
+    "| # | Quality | Requirement | Priority | Label | Specifies | Cites |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
+  ];
+  let n = 0;
+  const order = [...NFR_CATEGORIES] as string[];
+  const sorted = [...all].sort(
+    (a, b) =>
+      (order.indexOf(field(a, "category")) + 1 || 99) -
+        (order.indexOf(field(b, "category")) + 1 || 99) || byPriority(a, b),
+  );
+  for (const r of sorted) {
+    n++;
+    lines.push(
+      `| NFR-${String(n).padStart(3, "0")} | ${cap(field(r, "category")) || "Other"} | ${cell(`**${r.meta.name}**: ${field(r, "statement") || summaryOf(r.body, 200)}`)} | ${field(r, "priority") || "should"} | ${r.meta.label} | ${cell(names(g.out(r, "specifies")))} | ${g.cite(r)} |`,
+    );
+  }
+  const missing = NFR_CATEGORIES.filter((c) => !all.some((r) => field(r, "category") === c));
+  if (all.length && missing.length) {
+    lines.push(
+      "",
+      `Not assessed yet: ${missing.map(cap).join(", ")} [${all.map((r) => r.meta.id).join(", ")}].`,
+    );
+  }
+  return { lines, count: all.length };
+}
 
 function metricRow(g: GraphIndex, m: GraphNode): string {
   return `| ${cell(m.meta.name)} | ${field(m, "kind").replace(/_/g, " ")} | ${cell(`${field(m, "value")} ${field(m, "unit")}`)} | ${field(m, "as_of")} | ${cell(names(g.out(m, "measures")))} | ${g.cite(m)} |`;

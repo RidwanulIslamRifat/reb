@@ -20,7 +20,7 @@ export const reportTools = [
       report: z
         .enum(REPORT_TYPES)
         .describe(
-          "Which report: business, feature, market, build, due_diligence, risk, strategy, technical or rebuild.",
+          "Which report: business, feature, market, build, due_diligence, risk, strategy, technical, rebuild or requirements.",
         ),
       docx: z.boolean().optional().describe("Also write reports/<report>.docx. Default false."),
       html: z

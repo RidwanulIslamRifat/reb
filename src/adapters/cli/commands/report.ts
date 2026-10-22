@@ -13,7 +13,7 @@ export function registerReport(program: Command, io: CliIo): void {
     )
     .argument(
       "<type>",
-      "report type: business, feature, market, build, due_diligence, risk, strategy, technical or rebuild",
+      "report type: business, feature, market, build, due_diligence, risk, strategy, technical, rebuild or requirements",
     )
     .option("--docx", "also write a Word (.docx) copy with a title page")
     .option("--html", "also write a web page (.html) you can print to PDF")

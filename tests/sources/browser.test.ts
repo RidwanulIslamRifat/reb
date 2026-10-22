@@ -1,4 +1,6 @@
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -25,7 +27,14 @@ const PAGES: Record<string, string> = {
   ),
   "/app/invoices": page(
     "Invoices",
-    `<h1>Invoices</h1><table><tr><th>Number</th><th>Total</th></tr></table>
+    `<nav><a href="/app">Home</a> <a href="/app/invoices">Invoices</a> <a href="/app/team">Team</a></nav>
+     <h1>Invoices</h1><input type="search" placeholder="Search invoices"><button>Filters</button>
+     <table><thead><tr><th>Number</th><th>Client</th><th>Total</th><th>Status</th></tr></thead>
+     <tbody><tr><td>INV-7</td><td>Jane Roe</td><td>$120</td><td>Paid</td></tr>
+     <tr><td>INV-8</td><td>John Doe</td><td>$80</td><td>Overdue</td></tr></tbody></table>
+     <form><label for="c">Client</label><select id="c" required><option>Jane Roe</option></select>
+     <label for="d">Due date</label><input id="d" type="date" required>
+     <label for="s">Status</label><select id="s"><option>Draft</option><option>Sent</option><option>Paid</option></select></form>
      <a href="/app/invoices/7">INV-7</a> <a href="/app/invoices/7/delete">Delete</a>`,
   ),
   "/app/invoices/7": page("INV-7", `<h1>Invoice INV-7</h1><button>Send</button>`),
@@ -69,6 +78,22 @@ describe.skipIf(!available)("reb capture in a real browser", () => {
       "/app/team",
     ]);
     expect(requests.every((r) => r.startsWith("GET "))).toBe(true);
+    // The deeper reading: field kinds and choices, kind columns, menu and list controls.
+    const map = JSON.parse(
+      await readFile(join(run.paths.imports(result.session), "capture.json"), "utf8"),
+    ) as { screens: Array<Record<string, unknown> & { pattern: string }> };
+    const invoices = map.screens.find((s) => s.pattern === "/app/invoices")!;
+    expect(invoices["form_fields"]).toEqual([
+      { label: "Search invoices", kind: "search", required: false, options: [] },
+      { label: "Client", kind: "select", required: true, options: [] },
+      { label: "Due date", kind: "date", required: true, options: [] },
+      { label: "Status", kind: "select", required: false, options: ["Draft", "Sent", "Paid"] },
+    ]);
+    expect(invoices["values"]).toEqual([{ column: "Status", values: ["Paid", "Overdue"] }]);
+    expect(invoices["nav"]).toEqual(["Home", "Invoices", "Team"]);
+    expect(invoices["controls"]).toEqual(expect.arrayContaining(["search", "filter"]));
+    expect(JSON.stringify(map)).not.toContain("Jane Roe");
+    expect(result.feature_model.entities).toBeGreaterThan(0);
     expect(requests.some((r) => /logout|delete|\/api\//.test(r))).toBe(false);
   }, 60_000);
 });

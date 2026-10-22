@@ -1,4 +1,5 @@
 import type { NodeType } from "./links.js";
+import { NFR_CATEGORIES } from "./productModel.js";
 
 /**
  * Typed front-matter fields (SPEC 6.3, v2). Some node types carry extra fields that frameworks
@@ -134,6 +135,8 @@ export const RULE_KINDS = [
   "other",
 ] as const;
 export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export const PRIORITIES = ["must", "should", "could"] as const;
+export const REQUIREMENT_KINDS = ["functional", "non_functional"] as const;
 
 const enumField = (
   name: string,
@@ -157,6 +160,26 @@ export const TYPE_FIELDS: Partial<Record<NodeType, FieldSpec[]>> = {
       required: false,
       about: "Acceptance criteria a rebuilt feature must meet, one sentence each.",
     },
+    {
+      name: "logic",
+      kind: "list",
+      required: false,
+      about:
+        "How the feature probably works behind the screen (calculations, triggers, states), one sentence each.",
+    },
+    {
+      name: "data_use",
+      kind: "list",
+      required: false,
+      about:
+        "How the feature's data is reused elsewhere (reports, other records, automation), one sentence each.",
+    },
+    enumField(
+      "priority",
+      PRIORITIES,
+      "MoSCoW priority for a rebuild: must, should or could.",
+      false,
+    ),
   ],
   data_object: [
     {
@@ -229,6 +252,17 @@ export const TYPE_FIELDS: Partial<Record<NodeType, FieldSpec[]>> = {
   ],
   screen: [text("path", "Where it is, for example /settings/billing (from normal use).")],
   business_rule: [enumField("kind", RULE_KINDS, "What kind of rule.")],
+  requirement: [
+    enumField("kind", REQUIREMENT_KINDS, "functional (what it does) or non_functional (how well)."),
+    text("statement", "The requirement in one sentence: The system shall ...", true),
+    enumField(
+      "category",
+      NFR_CATEGORIES,
+      "For a non-functional requirement: which quality.",
+      false,
+    ),
+    enumField("priority", PRIORITIES, "MoSCoW priority: must, should or could.", false),
+  ],
   api_endpoint: [
     enumField("method", HTTP_METHODS, "The HTTP method from the public API docs."),
     text("path", "The path from the public API docs, for example /v1/invoices.", true),

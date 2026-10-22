@@ -82,6 +82,7 @@ export const NODE_TYPES: Record<string, { name: string; family: string; shape: s
   user_role: { name: "User role", family: "build", shape: "ellipse" },
   business_rule: { name: "Business rule", family: "build", shape: "diamond" },
   api_endpoint: { name: "API endpoint", family: "build", shape: "round-tag" },
+  requirement: { name: "Requirement", family: "build", shape: "pentagon" },
 };
 export const typeName = (type: string) => NODE_TYPES[type]?.name ?? humanize(type);
 
@@ -133,6 +134,7 @@ export const LINK: Record<string, string> = {
   governs: "governs",
   exposes: "exposes",
   relates_to: "relates to",
+  specifies: "specifies",
 };
 export const linkName = (type: string) => LINK[type] ?? humanize(type);
 

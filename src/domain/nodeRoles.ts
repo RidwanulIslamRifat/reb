@@ -46,4 +46,6 @@ export const ROLE_FOR_TYPE: Record<NodeType, Role> = {
   screen: "feature_analyst",
   user_role: "feature_analyst",
   business_rule: "feature_analyst",
+  // Requirements come from the feature model (reb capture, analyse_capture) and the hands-on session.
+  requirement: "feature_analyst",
 };

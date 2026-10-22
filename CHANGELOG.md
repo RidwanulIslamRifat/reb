@@ -51,6 +51,19 @@ reports keep working; the v1 reports gain the new report frame (see Changed).
   navigation links and observed evidence, and writes a sitemap with suggested nodes per screen. It
   never clicks, types, submits forms, downloads or opens sign-out, delete, pay or export links.
   `playwright-core` is now a runtime dependency, loaded only when capture runs.
+- **Deep feature extraction** (`reb analyse`, MCP `analyse_capture`, also run after every capture):
+  from the captured screens reb works out the product's modules, features, data model (entities,
+  attributes and their types, required fields, states, relations), business rules, roles and
+  non-functional requirements, and for every feature its likely logic, how its data is reused,
+  draft acceptance criteria and a checklist of things to confirm by using it. It writes
+  `notes/feature-model-session-NN.md` and adds everything to the map as _inferred_ nodes. Capture now
+  also reads field kinds, drop-down choices, status and stage values, menus, tabs, charts and list
+  controls (never people's names or what was typed).
+- **Requirements report** (`reb report requirements`): functional requirements numbered FR-001 ...
+  by module with acceptance criteria, non-functional requirements numbered NFR-001 ... by quality,
+  feature logic and data reuse, data model with an ER diagram, user stories, roles, rules and screens.
+  New node type `requirement`, link `specifies`, and framework views `feature_logic`,
+  `requirements` and `nfr`.
 
 ### Changed
 

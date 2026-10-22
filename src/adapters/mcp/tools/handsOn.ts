@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { REA_PASSIVE_TOOLS } from "../../../domain/rea.js";
 import { importInbox, makeTestDataset, makeTestPlan } from "../../../workflows/handsOn.js";
+import { analyseCapture } from "../../../workflows/featureModel.js";
 import { recordReaResult } from "../../../workflows/rea.js";
 import { runArg, tool } from "./common.js";
 
@@ -57,6 +58,23 @@ export const handsOnTools = [
         .describe("Delete the raw .har files after import. Ask the user first."),
     },
     call: (ctx, args) => importInbox(ctx, args),
+  }),
+  tool({
+    name: "analyse_capture",
+    description:
+      "Turn the screens of a `reb capture` (the human ran it in a terminal) into the feature model an analyst writes " +
+      "after using every feature: modules, features with their likely logic, data reuse, acceptance criteria and " +
+      "questions to check by hand; entities with attributes, types, required fields, states and relations; business " +
+      "rules, roles and non-functional requirements. Writes notes/feature-model-<session>.md and adds inferred nodes " +
+      "(module, feature, data_object, business_rule, user_role, requirement) with evidence linking the screenshots. " +
+      "Existing nodes are never changed. reb capture already runs it once; run it again after a new capture, or with " +
+      "dry_run to preview. Then open the screenshots, confirm or correct each node, and raise labels you saw to observed.",
+    input: {
+      run: runArg,
+      session: session.optional().describe("Capture session to analyse (default: the latest)."),
+      dry_run: z.boolean().optional().describe("Only return the model; write nothing."),
+    },
+    call: (ctx, args) => analyseCapture(ctx, args),
   }),
   tool({
     name: "record_rea_result",

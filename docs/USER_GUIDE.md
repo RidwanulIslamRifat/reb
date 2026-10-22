@@ -53,8 +53,18 @@ If you have an account, reb can take the screenshots for you:
 4. reb opens the product's own links one at a time and saves a screenshot of each screen. It never
    clicks, types, submits forms, downloads, or opens sign-out, delete, pay, upgrade or export links.
    The window closes when it is done, and the login is forgotten.
-5. Ask your agent to "analyse the captured screens". The screens are already in the knowledge map
-   with a sitemap in `notes/capture-session-NN.md`.
+5. reb then works out the feature model by itself: every module and feature, the data each one
+   stores (entities, fields and their types, states such as deal stages, links between records),
+   how that data is reused elsewhere, the likely logic behind each feature, rules, roles and
+   non-functional needs. Read it in `notes/feature-model-session-NN.md`. Everything in it is marked
+   as an educated guess until you confirm it.
+6. Ask your agent to "check the feature model against the screenshots", and work through the
+   "Check by using it" boxes for each feature in the product yourself.
+7. Get the build-ready report: `npx @ridwanul/reb report requirements --docx` (functional and
+   non-functional requirements, numbered, with acceptance criteria, data model and feature logic).
+
+To redo the analysis without opening a browser again: `npx @ridwanul/reb analyse` (add
+`--dry-run` to only see the counts).
 
 Options: `--pages 40` (more screens, at most 100), `--depth 2` (fewer clicks away from the start),
 `--delay 3000` (wait longer between screens). reb uses Google Chrome or Microsoft Edge; set
@@ -99,6 +109,7 @@ Commands that work on one analysis use the most recently changed one, or the one
 | `reb report risk --html`                | Write the risk report, plus a web page you can print to PDF.             |
 | `reb compare <other-run>`               | Compare two analyses (same product over time, or two competitors).       |
 | `reb capture <login-page>`              | After your yes and your own login, screenshot the product's screens.     |
+| `reb analyse [session]`                 | Work out features, data model, logic and requirements from a capture.    |
 | `reb dashboard`                         | Open the dashboard in your browser (Ctrl+C in the terminal stops it).    |
 | `reb log tail`                          | Show the latest activity.                                                |
 
@@ -107,7 +118,7 @@ Every command has its own help, for example `reb plan --help`.
 Categories: `b2b-saas`, `developer-tool`, `marketplace`, `consumer-app`, `ai-tool`, `ecommerce`,
 `fintech`, `service-business`, `general-business`.
 Reports: `business`, `feature`, `market`, `build`, `due_diligence`, `risk`, `strategy`,
-`technical`, `rebuild`.
+`technical`, `rebuild`, `requirements`.
 
 ## Where files live
 

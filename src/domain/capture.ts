@@ -105,7 +105,29 @@ export function maskPersonal(text: string): string {
     .trim();
 }
 
-/** What reb reads from one screen: only visible labels, never field values. */
+/**
+ * One form field as the screen shows it: its label, the kind of input (text, email, date, select,
+ * checkbox ...), whether it is marked required, and for a select the choices it offers. What the
+ * person typed into a field is never read.
+ */
+export interface FormField {
+  label: string;
+  kind: string;
+  required: boolean;
+  options: string[];
+}
+
+/** The distinct short values shown in one table column whose header names a kind (Status, Stage). */
+export interface ColumnValues {
+  column: string;
+  values: string[];
+}
+
+/**
+ * What reb reads from one screen: visible labels, never what was typed into a field. The deeper
+ * parts (form field details, menu, tabs, column kinds, charts, controls, notices) feed the feature
+ * model (domain/productModel.ts); they are optional so older captures still read.
+ */
 export interface PageSnapshot {
   url: string;
   title: string;
@@ -114,6 +136,84 @@ export interface PageSnapshot {
   buttons: string[];
   fields: string[];
   columns: string[];
+  form_fields?: FormField[];
+  /** Items of the main menu (nav, sidebar): usually the product's modules. */
+  nav?: string[];
+  tabs?: string[];
+  /** Values of columns like Status, Stage, Type or Priority: the states records move through. */
+  values?: ColumnValues[];
+  /** Charts or graphs on the screen. */
+  charts?: number;
+  /** List controls seen: search, filter, sort, pagination, bulk_select, date_range, views. */
+  controls?: string[];
+  /** Short alerts and banners: limits, plan locks, usage ("3 of 5 seats used"). */
+  notices?: string[];
+  breadcrumbs?: string[];
+}
+
+/** Column headers whose values are kinds or states (Status, Stage, Type ...), not record data. */
+const KIND_COLUMN =
+  /\b(status|stage|state|phase|lifecycle|type|priority|category|source|health|severity|plan|tier|role|level|kind)\b/i;
+
+/** Fields whose choices are usually people or records, never kept. */
+const PERSONAL_FIELD =
+  /\b(owner|assignee|assigned|user|member|contact|person|people|rep|name|email|customer|client|company|account|lead|recipient|from|to)\b/i;
+
+/** Choices that are placeholders, not values. */
+const PLACEHOLDER = /^(-+|select.*|choose.*|none|all|any|\.\.\.|—)$/i;
+
+const shortValue = (v: string) =>
+  v.length > 0 && v.length <= 30 && !/\d{3,}|@|[$€£¥]|^\d+([.,]\d+)?%?$/.test(v);
+
+/**
+ * The deeper parts of a snapshot, cleaned: masked, with placeholders dropped, people's names and
+ * long lists left out. Column values are kept only for kind columns with at most 12 distinct short
+ * values, so they are the product's states and types (New, Won, Lost), not the person's records.
+ */
+export function screenDetail(snap: PageSnapshot) {
+  const mask = (t: string) => maskPersonal(t);
+  const uniq = (items: string[] | undefined, max: number) =>
+    [...new Set((items ?? []).map(mask).filter(Boolean))].slice(0, max);
+  const form_fields: FormField[] = [];
+  const seen = new Set<string>();
+  for (const f of snap.form_fields ?? []) {
+    const label = mask(f.label).slice(0, 80);
+    if (!label || seen.has(label.toLowerCase())) continue;
+    seen.add(label.toLowerCase());
+    let options = [...new Set(f.options.map(mask).filter((o) => o && !PLACEHOLDER.test(o)))];
+    if (
+      (PERSONAL_FIELD.test(label) && !KIND_COLUMN.test(label)) ||
+      options.length > 25 ||
+      !options.every(shortValue)
+    ) {
+      options = [];
+    }
+    form_fields.push({
+      label,
+      kind: (f.kind || "text").toLowerCase(),
+      required: !!f.required,
+      options,
+    });
+  }
+  const values: ColumnValues[] = [];
+  for (const v of snap.values ?? []) {
+    const column = mask(v.column);
+    if (!KIND_COLUMN.test(column) || values.some((x) => x.column === column)) continue;
+    const distinct = [...new Set(v.values.map(mask))].filter((x) => !PLACEHOLDER.test(x));
+    if (distinct.length && distinct.length <= 12 && distinct.every(shortValue)) {
+      values.push({ column, values: distinct });
+    }
+  }
+  return {
+    form_fields,
+    values,
+    nav: uniq(snap.nav, 40),
+    tabs: uniq(snap.tabs, 15),
+    charts: Math.max(0, Math.min(Number(snap.charts) || 0, 50)),
+    controls: uniq(snap.controls, 10),
+    notices: uniq(snap.notices, 8).map((n) => n.slice(0, 160)),
+    breadcrumbs: uniq(snap.breadcrumbs, 6),
+  };
 }
 
 export interface CapturedScreen {
@@ -128,6 +228,14 @@ export interface CapturedScreen {
   buttons: string[];
   fields: string[];
   columns: string[];
+  form_fields: FormField[];
+  nav: string[];
+  tabs: string[];
+  values: ColumnValues[];
+  charts: number;
+  controls: string[];
+  notices: string[];
+  breadcrumbs: string[];
   /** Ids of captured screens this one links to. */
   links_to: string[];
   hints: ScreenHint[];
@@ -240,6 +348,16 @@ export function captureNotes(input: {
     if (s.buttons.length) out.push(`- Buttons: ${s.buttons.join("; ")}`);
     if (s.fields.length) out.push(`- Form fields: ${s.fields.join("; ")}`);
     if (s.columns.length) out.push(`- Table columns: ${s.columns.join("; ")}`);
+    if (s.form_fields.length) {
+      out.push(
+        `- Field details: ${s.form_fields.map((f) => `${f.label} (${f.kind}${f.required ? ", required" : ""}${f.options.length ? `: ${f.options.join(" / ")}` : ""})`).join("; ")}`,
+      );
+    }
+    for (const v of s.values) out.push(`- ${v.column} values: ${v.values.join(", ")}`);
+    if (s.tabs.length) out.push(`- Tabs: ${s.tabs.join("; ")}`);
+    if (s.controls.length) out.push(`- List controls: ${s.controls.join(", ")}`);
+    if (s.charts) out.push(`- Charts: ${s.charts}`);
+    if (s.notices.length) out.push(`- Notices: ${s.notices.join("; ")}`);
     if (s.links_to.length) {
       out.push(`- Links to: ${s.links_to.map((id) => nameOf.get(id) ?? id).join(", ")}`);
     }

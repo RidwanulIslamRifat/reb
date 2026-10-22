@@ -1,6 +1,6 @@
 ---
 name: reb
-description: "Evidence-backed analysis of any business, product or tool with reb, the way a business analyst, product manager or audit firm would. Use when the user asks to analyse, research, assess or do due diligence on a company, product or website (for example 'Analyse notion.so; reports: business, risk, rebuild'), or asks to continue, audit or report on a reb run. Builds a linked knowledge graph and cited, audit-style reports (business, feature, market, build, due_diligence, risk, strategy, technical, rebuild) from public sources, documents the business provided and the user's own hands-on session."
+description: "Evidence-backed analysis of any business, product or tool with reb, the way a business analyst, product manager or audit firm would. Use when the user asks to analyse, research, assess or do due diligence on a company, product or website (for example 'Analyse notion.so; reports: business, risk, rebuild'), or asks to continue, audit or report on a reb run. Builds a linked knowledge graph and cited, audit-style reports (business, feature, market, build, due_diligence, risk, strategy, technical, rebuild, requirements) from public sources, documents the business provided and the user's own hands-on session."
 ---
 
 # reb: evidence-backed business and product analysis
@@ -34,12 +34,17 @@ If a step would need any of this, stop and give the human a checklist to do it t
 The one exception is `reb capture`, which only the human can start, in their own terminal: they
 agree, log in themselves in the browser it opens, and reb then opens the product's safe links and
 screenshots each screen. You may suggest it (see the walkthrough_coach role); never try to start a
-browser, log in or capture screens yourself, with reb or any other tool.
+browser, log in or capture screens yourself, with reb or any other tool. After a capture, reb has
+already drafted the feature model (`notes/feature-model-session-NN.md`, inferred nodes); your job is
+to check it against the screenshots and deepen it (feature_analyst role). `analyse_capture` redoes it.
+
+When the user wants to rebuild or clone a product ("make something like HubSpot"), suggest the
+reports `rebuild` and `requirements`, and `reb capture` with a test account.
 
 ## Start: "Analyse <domain>; reports: <list>"
 
 1. Read the request: the domain, the reports (business, feature, market, build, due_diligence,
-   risk, strategy, technical, rebuild), and if given the category (b2b-saas, developer-tool,
+   risk, strategy, technical, rebuild, requirements), and if given the category (b2b-saas, developer-tool,
    marketplace, consumer-app, ai-tool, ecommerce, fintech, service-business, general-business),
    focus questions, the pricing plan the user has (`plan_tier`) and a deadline. If the user asks
    for "a full analysis" or "due diligence" without naming reports, suggest due_diligence and risk.

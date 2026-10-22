@@ -24,17 +24,51 @@ export interface CaptureBrowser {
 
 export type BrowserLauncher = (options: { headless?: boolean }) => Promise<CaptureBrowser>;
 
-// Runs inside the page. Reads labels only; input values are never read.
+// Runs inside the page. Reads labels only; what is typed into an input is never read. Select
+// choices and short values of kind columns (Status, Stage ...) are read as raw text and filtered
+// in domain/productModel.ts (cleanScreenDetail), which drops people's names and long lists.
 const SNAPSHOT_SCRIPT = `(() => {
   const text = (el) => (el.innerText || el.textContent || "").replace(/\\s+/g, " ").trim();
   const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  const all = (selector) => [...document.querySelectorAll(selector)].filter(visible);
   const list = (selector, max, read = text) =>
-    [...new Set([...document.querySelectorAll(selector)].filter(visible).map(read).filter(Boolean))]
+    [...new Set(all(selector).map(read).filter(Boolean))]
       .map((t) => t.slice(0, 80))
       .slice(0, max);
   const label = (el) =>
     (el.labels && el.labels[0] && text(el.labels[0])) ||
     el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("name") || "";
+  const inputs = "input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea";
+  const formFields = all(inputs).slice(0, 40).map((el) => ({
+    label: label(el).slice(0, 80),
+    kind: el.tagName === "SELECT" ? "select" : el.tagName === "TEXTAREA" ? "textarea" : (el.getAttribute("type") || "text").toLowerCase(),
+    required: el.required === true || el.getAttribute("aria-required") === "true",
+    options: el.tagName === "SELECT" ? [...el.options].slice(0, 40).map((o) => text(o).slice(0, 40)) : [],
+  })).filter((f) => f.label);
+  const tableValues = [];
+  for (const table of all("table, [role=grid], [role=table]").slice(0, 3)) {
+    const heads = [...table.querySelectorAll("th, [role=columnheader]")].map(text);
+    const rows = [...table.querySelectorAll("tbody tr, [role=row]")].slice(0, 50);
+    heads.forEach((column, i) => {
+      if (!column) return;
+      const values = rows
+        .map((row) => row.querySelectorAll("td, [role=cell], [role=gridcell]")[i])
+        .filter(Boolean)
+        .map((c) => text(c).slice(0, 40))
+        .filter(Boolean);
+      if (values.length) tableValues.push({ column: column.slice(0, 60), values });
+    });
+  }
+  const controls = [];
+  const has = (selector) => all(selector).length > 0;
+  const words = (re) => all("button, [role=button], a, label, [role=tab]").some((el) => re.test(text(el)) || re.test(el.getAttribute("aria-label") || ""));
+  if (has("input[type=search], [role=search], input[placeholder*=earch i]")) controls.push("search");
+  if (words(/^filters?\\b|add filter|advanced filter/i)) controls.push("filter");
+  if (has("[aria-sort]") || words(/^sort\\b/i)) controls.push("sort");
+  if (has("[aria-label*=agination i], .pagination, nav[aria-label*=page i]") || words(/^(next|previous|prev)$|\\bof \\d+\\b/i)) controls.push("pagination");
+  if (has("thead input[type=checkbox], [role=columnheader] input[type=checkbox]")) controls.push("bulk_select");
+  if (words(/date range|last \\d+ days|this (month|quarter|year)/i)) controls.push("date_range");
+  if (words(/^(all|my) [a-z]+$|saved views?|create view|add view/i)) controls.push("views");
   return {
     url: location.href,
     title: document.title || "",
@@ -42,10 +76,18 @@ const SNAPSHOT_SCRIPT = `(() => {
     links: [...document.querySelectorAll("a[href]")]
       .slice(0, 400)
       .map((a) => ({ href: a.href, text: text(a).slice(0, 80) })),
-    buttons: list("button, [role=button], input[type=submit], input[type=button]", 20,
+    buttons: list("button, [role=button], input[type=submit], input[type=button]", 30,
       (el) => text(el) || el.getAttribute("aria-label") || el.value || ""),
-    fields: list("input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea", 20, label),
+    fields: list(inputs, 20, label),
     columns: list("th, [role=columnheader]", 20),
+    form_fields: formFields,
+    nav: list("nav a, nav [role=menuitem], aside a, [role=navigation] a, [role=menubar] [role=menuitem]", 40),
+    tabs: list("[role=tab]", 15),
+    values: tableValues,
+    charts: all("canvas, svg.highcharts-root, .recharts-wrapper, .apexcharts-canvas, [class*=chart i] svg, [data-testid*=chart i]").length,
+    controls,
+    notices: list("[role=alert], [role=status], [class*=banner i], [class*=upgrade i], [class*=quota i], [class*=usage i]", 8),
+    breadcrumbs: list("[aria-label*=readcrumb i] a, [aria-label*=readcrumb i] li, .breadcrumb li", 6),
   };
 })()`;
 

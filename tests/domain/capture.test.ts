@@ -3,6 +3,7 @@ import {
   captureNotes,
   maskPersonal,
   normalizeUrl,
+  screenDetail,
   screenHints,
   screenId,
   screenName,
@@ -81,6 +82,15 @@ describe("capture rules", () => {
       buttons: ["Invite member"],
       fields: [],
       columns: ["Name", "Role", "Last active"],
+      ...screenDetail({
+        url: "",
+        title: "",
+        headings: [],
+        links: [],
+        buttons: [],
+        fields: [],
+        columns: [],
+      }),
     };
     const types = screenHints(page).map((h) => h.type);
     expect(types).toEqual(expect.arrayContaining(["user_role", "data_object", "feature"]));

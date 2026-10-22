@@ -636,6 +636,37 @@ to main yet.
 - [x] Tests: link rules, a fake-browser workflow test, and a real headless browser against a local
       product that proves no sign-out, delete, form submit or API request is made.
 
+### Deep feature extraction (owner request, 2026-10-22)
+Goal: from a capture, reb works out every feature the way an analyst does after using the product
+(what data it stores, how the data is reused, the logic behind each feature) and writes a functional
+and non-functional requirements report a development team can build from.
+- [x] Capture reads more of each screen: field kinds, required marks and drop-down choices; values of
+      kind columns (Status, Stage, Type, Role); the main menu; tabs; charts; list controls (search,
+      filter, sort, pagination, bulk select, saved views); notices (limits, plan locks). People's names
+      in choices and other columns are left out; nothing typed into a field is read.
+- [x] Feature model (`domain/productModel.ts`): modules, entities with attributes, types, required
+      fields, states and relations, operations per entity, features of 13 kinds (records, pipelines,
+      dashboards, automation, messaging, team, billing, integrations, custom fields ...), each with its
+      likely logic, data reuse, acceptance criteria and questions to check by hand; business rules,
+      roles and non-functional requirements.
+- [x] `analyse_capture` / `reb analyse [session]` (also run by `reb capture`): writes
+      `notes/feature-model-<session>.md` and inferred nodes with evidence linking the screenshots;
+      never changes nodes the analyst already has.
+- [x] New node type `requirement` (functional or non_functional, statement, category, priority) and
+      link `specifies`; feature fields `logic`, `data_use`, `priority`.
+- [x] Framework views `feature_logic`, `requirements` (FR-001 ...) and `nfr` (NFR-001 ...), and the
+      new report type `requirements` (functional and non-functional requirements specification).
+- [x] Pipeline task `feature-model` for the rebuild and requirements reports.
+- [x] Tests: the model on a made-up CRM, the workflow, the CLI, and the real browser reading field
+      kinds, choices and status values.
+
+Follow-ups found in deep feature extraction
+- [ ] The model reads labels and layout only; the agent still has to look at each screenshot to catch
+      what labels miss (charts' meaning, board views, empty states). A vision step could help.
+- [ ] Entity names come from addresses and headings; products with opaque addresses (ids only) give
+      weaker entity names. Merging or renaming entities by hand needs a `reb kb rename` command.
+- [ ] Non-functional targets (2 s lists, 99.9% uptime) are suggested starting points, not measured.
+
 Follow-ups found in v2
 - [ ] A content-quality reviewer role: the audit counts nodes but does not judge how good they are.
 - [ ] Jobs-to-be-done view, and charts (risk heat map, metrics over time) in the Word and HTML copies.

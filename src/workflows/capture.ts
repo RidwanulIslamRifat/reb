@@ -8,6 +8,7 @@ import {
   screenHints,
   screenId,
   screenName,
+  screenDetail,
   screenPattern,
   skipReason,
   type CapturedScreen,
@@ -19,6 +20,7 @@ import { launchCaptureBrowser, type BrowserLauncher } from "../sources/browser.j
 import { writeRunFile } from "../storage/inbox.js";
 import type { Context } from "./context.js";
 import { linkNodes, upsertNode } from "./graph.js";
+import { analyseCapture } from "./featureModel.js";
 import { importInbox, pickSession } from "./handsOn.js";
 import { logged } from "./logging.js";
 import { redactText } from "./redact.js";
@@ -132,6 +134,15 @@ export async function captureProduct(
             buttons: clean(snap.buttons),
             fields: clean(snap.fields),
             columns: clean(snap.columns),
+            ...screenDetail({
+              ...snap,
+              form_fields: snap.form_fields?.map((f) => ({
+                ...f,
+                label: redactText(f.label),
+                options: f.options.map(redactText),
+              })),
+              notices: snap.notices?.map(redactText),
+            }),
           };
           const taken = new Set(screens.map((s) => s.name));
           let name = screenName(base);
@@ -208,6 +219,8 @@ export async function captureProduct(
           await linkNodes(ctx, { run: where, from: s.id, type: "navigates_to", to });
       }
       const imported = await importInbox(ctx, { run: where, session });
+      // The feature model: modules, features, entities, rules and requirements from the screens.
+      const analysis = await analyseCapture(ctx, { run: where, session });
 
       return {
         ...run,
@@ -221,6 +234,15 @@ export async function captureProduct(
         })),
         skipped: uniqueSkips.length,
         notes: notesFile,
+        feature_model: {
+          notes: analysis.notes,
+          modules: analysis.modules,
+          features: analysis.features,
+          entities: analysis.entities,
+          rules: analysis.rules,
+          requirements: analysis.requirements,
+          created: analysis.created.length,
+        },
         evidence: imported.items.filter((i) => i.record).map((i) => i.record!),
       };
     },

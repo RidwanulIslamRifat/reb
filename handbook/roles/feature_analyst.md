@@ -12,6 +12,7 @@ tools:
     query_graph,
     validate_graph,
     get_framework,
+    analyse_capture,
     log_role_work,
   ]
 ---
@@ -55,3 +56,38 @@ When `notes/capture-session-NN.md` exists, the user captured the product's scree
    evidence id (`list_evidence` with the screen as subject). What you only guess from it is inferred.
 3. Link `screen shows feature` or `screen shows data_object`, and journeys `uses` features in the order
    the screens are visited.
+
+## Deep feature analysis (rebuild and requirements reports)
+
+The goal is the knowledge an analyst has after using every feature: enough that a development team
+could build a product that works the same way. reb cannot see the product's code or servers, so
+reason from what the product shows and does, as a person using it would.
+
+1. If the run has a capture, `analyse_capture` has already drafted the feature model: read
+   `notes/feature-model-session-NN.md`. If a newer capture exists, run `analyse_capture` again (it
+   never overwrites your nodes). Without a capture, build the same model from the user's screenshots
+   and help articles.
+2. For every feature, open its screenshots and fill or correct, with `upsert_node` `fields`:
+   - `logic`: how it probably works behind the screen. What is calculated (totals, scores, due
+     dates), what triggers what (a stage change sends an email, a form creates a record), which
+     states a record moves through and what each move needs, what is checked before saving.
+   - `data_use`: how its data is reused: other records that point to it, lists and boards that group
+     by it, reports that sum or count it, automation that listens to it, search and imports.
+   - `acceptance`: testable sentences a rebuilt feature must pass.
+   - `priority`: must, should or could, for a first version of the rebuild.
+3. For every data object: `fields` as `{ name, type, required, choices }` (types: text, long text,
+   email, phone, url, number, money, percent, date, boolean, choice, state, tags, file, reference,
+   user, identifier; a reference says "link to Company"), `states` in order, and `relates_to` links.
+4. Business rules (`business_rule`, kind validation, limit, permission, workflow, billing,
+   retention) for every required field, limit, plan lock and state flow you can see.
+5. Requirements: `requirement` nodes with `kind` non_functional, a `statement` ("Record lists page
+   and filter on the server ..."), a `category` (performance, scalability, availability, security,
+   privacy, auditability, usability, accessibility, interoperability, portability, localisation,
+   configurability, maintainability, compliance) and a `priority`; link `specifies` to the product or
+   feature. Add `kind` functional requirements only for behaviour no feature node covers.
+6. Work through each feature's "Check by using it" list with the user (walkthrough_coach): what you
+   confirm by seeing it becomes observed evidence and raises the node's label; what stays a guess
+   stays inferred.
+7. Write `notes/feature_analyst-requirements.md`: per module, the features and the main logic and
+   data-reuse findings, citing node and E- ids, and the open questions. Check `get_framework`
+   `feature_logic`, `requirements`, `nfr` and `data_model`.

@@ -83,7 +83,10 @@ To check that all is well at any time: `npx @ridwanul/reb doctor` (every line sh
    the agent you are done. It turns them into _observed_ evidence.
    **Or let reb take the screenshots:** run `npx @ridwanul/reb capture` in a terminal, type `y`,
    log in yourself in the browser window that opens, and press Enter. reb then opens the product's
-   pages one by one and saves a screenshot of each, with a map of how the screens link together.
+   pages one by one and saves a screenshot of each, with a map of how the screens link together,
+   and works out the feature model: modules, features, the data model, the logic behind each
+   feature and how its data is reused. `reb report requirements` turns it into a functional and
+   non-functional requirements report a development team can build from.
 5. **Read the reports.** When the plan is finished, the agent tells you where the reports are. To
    look at everything in your browser, ask the agent to "open the dashboard", or run
    `npx @ridwanul/reb dashboard`.
@@ -114,6 +117,7 @@ sections, **Limitations and disclaimer**, **Sources** (every page and document u
 | Strategy and growth outlook       | `strategy`      | SWOT; PESTLE; five forces; market size and position; growth signals; strategic recommendations.                 |
 | Technical capability assessment   | `technical`     | Technology stack; architecture and data; integrations and public API; security and compliance.                  |
 | Product rebuild specification     | `rebuild`       | Features with acceptance criteria; user stories; screens and navigation; roles; data model; business rules.     |
+| Requirements specification        | `requirements`  | Numbered functional and non-functional requirements; logic and data reuse per feature; data model; rules.       |
 
 Reports are saved as `reports/<type>.md` in the product's folder, and, when you ask, as a Word file
 (with a title page and contents) and a web page you can print to PDF.

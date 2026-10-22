@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** The 13 v1 node types and the 21 v2 node types (SPEC 6.3). */
+/** The 13 v1 node types, the 21 v2 node types and requirement (SPEC 6.3). */
 export const NODE_TYPES = [
   "company",
   "product",
@@ -40,11 +40,13 @@ export const NODE_TYPES = [
   "user_role",
   "business_rule",
   "api_endpoint",
+  // Feature model: functional and non-functional requirements
+  "requirement",
 ] as const;
 export const NodeTypeSchema = z.enum(NODE_TYPES);
 export type NodeType = z.infer<typeof NodeTypeSchema>;
 
-/** The 12 v1 link types and the 23 v2 link types (SPEC 6.3). */
+/** The 12 v1 link types, the 23 v2 link types and specifies (SPEC 6.3). */
 export const LINK_TYPES = [
   "makes",
   "has",
@@ -82,6 +84,7 @@ export const LINK_TYPES = [
   "governs",
   "exposes",
   "relates_to",
+  "specifies",
 ] as const;
 export const LinkTypeSchema = z.enum(LINK_TYPES);
 export type LinkType = z.infer<typeof LinkTypeSchema>;
@@ -152,6 +155,7 @@ export const LINK_RULES: Record<LinkType, { pairs: Ends[]; ordered?: boolean }> 
   },
   exposes: { pairs: [{ from: ["product", "module"], to: ["api_endpoint"] }] },
   relates_to: { pairs: [{ from: ["data_object"], to: ["data_object"] }] },
+  specifies: { pairs: [{ from: ["requirement"], to: "any" }] },
 };
 
 const matches = (allowed: NodeType[] | "any", type: NodeType) =>

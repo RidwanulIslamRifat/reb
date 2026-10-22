@@ -57,3 +57,29 @@ export async function writeRunFile(absolute: string, text: string | Uint8Array):
   await mkdir(dirname(absolute), { recursive: true });
   await writeFileAtomic(absolute, text);
 }
+
+/**
+ * The capture maps reb wrote (evidence/imports/<session>/capture.json), as text, oldest session
+ * first. Sessions without one are left out.
+ */
+export async function readCaptureMaps(
+  paths: RunPaths,
+): Promise<Array<{ session: string; text: string }>> {
+  const root = dirname(paths.imports("x"));
+  let sessions: string[];
+  try {
+    sessions = (await readdir(root, { withFileTypes: true }))
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  const maps: Array<{ session: string; text: string }> = [];
+  for (const session of sessions) {
+    const bytes = await readBytesIfExists(join(paths.imports(session), "capture.json"));
+    if (bytes) maps.push({ session, text: Buffer.from(bytes).toString("utf8") });
+  }
+  return maps;
+}
