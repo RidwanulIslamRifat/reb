@@ -3,7 +3,16 @@ import type { LedgerRecord } from "./evidence.js";
 import { GraphIndex, summaryOf } from "./graphIndex.js";
 import type { NodeType } from "./links.js";
 import type { GraphNode } from "./node.js";
-import { FORCES, LEVELS, levelScore, PESTLE, PRIORITIES, TECH_CATEGORIES } from "./nodeFields.js";
+import {
+  FORCES,
+  LEVELS,
+  levelScore,
+  PATTERN_KINDS,
+  PESTLE,
+  PRIORITIES,
+  TECH_CATEGORIES,
+  TOKEN_CATEGORIES,
+} from "./nodeFields.js";
 import { NFR_CATEGORIES } from "./productModel.js";
 
 /**
@@ -36,6 +45,8 @@ export const FRAMEWORKS = [
   "feature_logic",
   "requirements",
   "nfr",
+  "design_system",
+  "ux_spec",
 ] as const;
 export const FrameworkSchema = z.enum(FRAMEWORKS);
 export type Framework = z.infer<typeof FrameworkSchema>;
@@ -184,6 +195,18 @@ export const FRAMEWORK_INFO: Record<Framework, { title: string; about: string; u
       about:
         "Numbered non-functional requirements (NFR-001 ...) by quality: performance, scalability, security, privacy, audit, usability and more, with priority and why.",
       uses: ["requirement"],
+    },
+    design_system: {
+      title: "Design system",
+      about:
+        "The measured design values a clone needs, by kind: colours, typography, spacing, corner radius, shadows, sizes, breakpoints and motion, with where each is used.",
+      uses: ["design_token"],
+    },
+    ux_spec: {
+      title: "UX specification",
+      about:
+        "Per screen: layout, regions and their sizes, components and states; then each component or pattern with its anatomy, variants, states and behaviour.",
+      uses: ["screen", "ux_pattern"],
     },
   };
 
@@ -698,6 +721,8 @@ const BUILDERS: Record<Framework, (g: GraphIndex) => Built> = {
   feature_logic: featureLogic,
   requirements: functionalRequirements,
   nfr: nonFunctionalRequirements,
+  design_system: designSystem,
+  ux_spec: uxSpec,
 
   api(g) {
     const endpoints = g
@@ -892,6 +917,81 @@ function nonFunctionalRequirements(g: GraphIndex): Built {
     );
   }
   return { lines, count: all.length };
+}
+
+function designSystem(g: GraphIndex): Built {
+  const tokens = g.ofType("design_token");
+  const lines: string[] = [];
+  for (const category of TOKEN_CATEGORIES) {
+    const group = tokens.filter((t) => field(t, "category") === category);
+    if (!group.length) continue;
+    lines.push(
+      `**${cap(category)}**`,
+      "",
+      "| Token | Value | Used for | Appears on | Label | Cites |",
+      "| --- | --- | --- | --- | --- | --- |",
+      ...group.map(
+        (t) =>
+          `| ${cell(t.meta.name)} | \`${cell(field(t, "value"))}\` | ${cell(field(t, "usage"))} | ${cell(names(g.out(t, "appears_on")))} | ${t.meta.label} | ${g.cite(t)} |`,
+      ),
+      "",
+    );
+  }
+  const missing = TOKEN_CATEGORIES.filter((c) => !tokens.some((t) => field(t, "category") === c));
+  if (tokens.length && missing.length) {
+    lines.push(
+      `Not measured yet: ${missing.map(cap).join(", ")} [${tokens.map((t) => t.meta.id).join(", ")}].`,
+    );
+  }
+  return { lines, count: tokens.length };
+}
+
+function uxSpec(g: GraphIndex): Built {
+  const screens = g.ofType("screen");
+  const patterns = g.ofType("ux_pattern");
+  const lines: string[] = [];
+  const described = screens.filter(
+    (s) => field(s, "layout") || listField(s, "regions").length || g.into(s, "appears_on").length,
+  );
+  if (described.length) lines.push("**Screens**", "");
+  for (const s of described) {
+    const components = [
+      ...new Set([
+        ...listField(s, "components"),
+        ...g
+          .into(s, "appears_on")
+          .filter((p) => p.meta.type === "ux_pattern")
+          .map((p) => p.meta.name),
+      ]),
+    ];
+    const parts = [
+      field(s, "path") ? `\`${field(s, "path")}\`` : "",
+      field(s, "viewport") ? `seen at ${field(s, "viewport")}` : "",
+    ].filter(Boolean);
+    lines.push(`- **${s.meta.name}**${parts.length ? ` (${parts.join(", ")})` : ""} ${g.cite(s)}`);
+    if (field(s, "layout")) lines.push(`  - Layout: ${field(s, "layout")}`);
+    for (const r of listField(s, "regions")) lines.push(`  - Region: ${r}`);
+    if (components.length) lines.push(`  - Components: ${components.join(", ")}`);
+    if (listField(s, "states").length)
+      lines.push(`  - States: ${listField(s, "states").join(", ")}`);
+  }
+  for (const kind of PATTERN_KINDS) {
+    const group = patterns.filter((p) => field(p, "kind") === kind);
+    if (!group.length) continue;
+    lines.push("", `**${cap(kind)} patterns**`, "");
+    for (const p of group) {
+      lines.push(`- **${p.meta.name}** (${p.meta.label}) ${g.cite(p)}`);
+      if (field(p, "anatomy")) lines.push(`  - Anatomy: ${field(p, "anatomy")}`);
+      if (listField(p, "variants").length)
+        lines.push(`  - Variants: ${listField(p, "variants").join(", ")}`);
+      if (listField(p, "states").length)
+        lines.push(`  - States: ${listField(p, "states").join(", ")}`);
+      if (field(p, "behaviour")) lines.push(`  - Behaviour: ${field(p, "behaviour")}`);
+      const on = names(g.out(p, "appears_on"));
+      if (on) lines.push(`  - Appears on: ${on}`);
+    }
+  }
+  return { lines, count: described.length + patterns.length };
 }
 
 function metricRow(g: GraphIndex, m: GraphNode): string {

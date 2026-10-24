@@ -92,6 +92,10 @@ export function registerCapture(program: Command, io: CliIo): void {
         );
         line(
           io,
+          `Design: ${m.design_tokens} design tokens and ${m.ux_patterns} UX patterns measured from the screens.`,
+        );
+        line(
+          io,
           'Next: ask your agent to check the feature model against the screenshots, then "reb report requirements".',
         );
       },

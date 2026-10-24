@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { isAllowedLink, LINK_TYPES, linkCanStartAt, NODE_TYPES } from "../../src/domain/links.js";
 
 describe("node and link types (SPEC 6.3)", () => {
-  it("has 13 v1 + 21 v2 + requirement node types and 12 v1 + 23 v2 + specifies link types", () => {
-    expect(NODE_TYPES).toHaveLength(35);
-    expect(LINK_TYPES).toHaveLength(36);
+  it("has 13 v1 + 21 v2 + requirement + 2 design node types and 12 v1 + 23 v2 + specifies + appears_on link types", () => {
+    expect(NODE_TYPES).toHaveLength(37);
+    expect(LINK_TYPES).toHaveLength(37);
   });
 
   it.each([

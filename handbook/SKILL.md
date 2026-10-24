@@ -143,7 +143,7 @@ evidence. Every reb tool call is logged in `logs/events.jsonl` automatically.
 ## Frameworks and comparisons
 
 - `get_framework` draws a standard view (SWOT, PESTLE, five forces, business model canvas, risk
-  register, user stories ...) from the graph. Use it when the user asks for one, and before writing
+  register, user stories, design system, UX specification ...) from the graph. Use it when the user asks for one, and before writing
   a report that shows it.
 - `compare_runs` compares two runs: the same product analysed again later ("what changed?"), or a
   competitor's run ("what do they have that we lack?"). It writes `reports/compare-<other>.md`.

@@ -38,7 +38,11 @@ const PAGES: Record<string, string> = {
      <a href="/app/invoices/7">INV-7</a> <a href="/app/invoices/7/delete">Delete</a>`,
   ),
   "/app/invoices/7": page("INV-7", `<h1>Invoice INV-7</h1><button>Send</button>`),
-  "/app/team": page("Team", `<h1>Team members</h1><button>Invite member</button>`),
+  "/app/team": page(
+    "Team",
+    `<style>button{background:#4f46e5;color:#fff;border:0;border-radius:6px;height:32px}</style>
+     <h1>Team members</h1><button>Invite member</button><p>Owner: jane.roe@acme.example</p>`,
+  ),
 };
 
 describe.skipIf(!available)("reb capture in a real browser", () => {
@@ -95,5 +99,48 @@ describe.skipIf(!available)("reb capture in a real browser", () => {
     expect(JSON.stringify(map)).not.toContain("Jane Roe");
     expect(result.feature_model.entities).toBeGreaterThan(0);
     expect(requests.some((r) => /logout|delete|\/api\//.test(r))).toBe(false);
+
+    // The visual design: measured from computed styles, turned into tokens and patterns.
+    const team = map.screens.find((s) => s.pattern === "/app/team")!;
+    const design = team["design"] as { viewport: { width: number }; components: unknown[] };
+    expect(design.viewport.width).toBe(1440);
+    expect(JSON.stringify(design)).toContain("#4f46e5");
+    expect(JSON.stringify(design)).not.toContain("jane.roe");
+    expect(result.feature_model.design_tokens).toBeGreaterThan(5);
+    expect(result.feature_model.ux_patterns).toBeGreaterThan(0);
+    const primary = await readFile(
+      join(run.paths.dir, "kb", "nodes", "design_token-primary.md"),
+      "utf8",
+    );
+    expect(primary).toContain('value: "#4f46e5"');
+    expect(primary).toContain("label: observed");
+
+    // Emails are covered in the screenshot: the mask paints them magenta (#ff00ff).
+    const shot = await readFile(
+      join(run.paths.inboxSession(result.session), "screen-app-team.png"),
+    );
+    const { chromium } = await import("playwright-core");
+    const viewer = await chromium.launch({ executablePath: CHROMIUM });
+    const tab = await viewer.newPage();
+    const magenta = await tab.evaluate(
+      async (src) => {
+        const img = new Image();
+        img.src = src;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const g = canvas.getContext("2d")!;
+        g.drawImage(img, 0, 0);
+        const px = g.getImageData(0, 0, img.width, img.height).data;
+        let n = 0;
+        for (let i = 0; i < px.length; i += 4)
+          if (px[i]! > 240 && px[i + 1]! < 20 && px[i + 2]! > 240) n++;
+        return n;
+      },
+      `data:image/png;base64,${shot.toString("base64")}`,
+    );
+    await viewer.close();
+    expect(magenta).toBeGreaterThan(100);
   }, 60_000);
 });

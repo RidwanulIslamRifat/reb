@@ -65,6 +65,14 @@ sections:
     list: false
     needs:
       - { type: screen, min: 3, severity: major }
+  - id: ux
+    title: UX and design requirements
+    about: The layout, components, states and design values a look-alike build must match.
+    views: [ux_spec, design_system]
+    list: false
+    needs:
+      - { type: ux_pattern, min: 1, severity: minor }
+      - { type: design_token, min: 1, severity: minor }
   - id: integrations
     title: Integrations and public API
     about: Outside services to connect to, and the public API to offer.
@@ -76,6 +84,6 @@ sections:
 
 The requirements a development team needs to build a product that works like {product}: its modules
 and features, the logic and data reuse behind each feature, the data model, numbered functional and
-non-functional requirements with acceptance criteria, user stories, roles, rules and screens.
-It is reasoned from the product's behaviour in normal use and its public documentation; it copies no
-code, design or content. Requirements marked inferred are educated guesses to confirm before building.
+non-functional requirements with acceptance criteria, user stories, roles, rules, screens, UX and design.
+It is reasoned from the product's behaviour and measured visual design in normal use and its public
+documentation; it copies no code, logos, icons, illustrations or content. Requirements marked inferred are educated guesses to confirm before building.

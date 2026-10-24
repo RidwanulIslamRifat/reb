@@ -667,6 +667,28 @@ Follow-ups found in deep feature extraction
       weaker entity names. Merging or renaming entities by hand needs a `reb kb rename` command.
 - [ ] Non-functional targets (2 s lists, 99.9% uptime) are suggested starting points, not measured.
 
+### UX and visual design for a pixel-level rebuild (owner request, 2026-10-24)
+Goal: the rebuild and requirements reports describe how the product looks and feels, not only what
+it does, so a team can build a look-alike clone (decision 24).
+- [x] SPEC 2.3 and 15: reb may measure the visual design (layout, sizes, colours, fonts, spacing,
+      corner radius, shadows, components and their visible states); it still never copies code,
+      logos, icons, illustrations or content.
+- [x] Node types `design_token` (category, value, usage) and `ux_pattern` (kind, anatomy, variants,
+      states, behaviour), link `appears_on`; screen fields `layout`, `regions`, `components`,
+      `states`, `viewport`.
+- [x] Capture measures each screen's computed styles, regions and components (passive, no clicks)
+      and covers email addresses and phone numbers in the screenshots.
+- [x] `analyse_capture` turns the measurements into observed design tokens and UX patterns.
+- [x] Framework views `design_system` and `ux_spec`; new sections in the rebuild and requirements
+      reports.
+- [x] Tests: the design model, the views, the real browser measuring a styled page and masking emails.
+
+Follow-ups found in the UX layer
+- [ ] Hover, focus, pressed states, open menus and dialogs need interaction, which capture never
+      does; today the person adds screenshots of them by hand.
+- [ ] Only one window width (1440 px) is measured; a second, narrow capture would give breakpoints.
+- [ ] Icons are counted and sized, never copied; a clone picks its own icon set.
+
 Follow-ups found in v2
 - [ ] A content-quality reviewer role: the audit counts nodes but does not judge how good they are.
 - [ ] Jobs-to-be-done view, and charts (risk heat map, metrics over time) in the Word and HTML copies.
@@ -777,3 +799,10 @@ They are binding for the milestones they name unless the owner changes them.
     dialogs dismissed; the login is forgotten when the window closes. Emails and long numbers are
     masked in the saved labels. `playwright-core` moves to the runtime dependencies for this and is
     loaded only when capture runs. `tests/safety.test.ts` checks the browser file never clicks or types.
+
+24. **Visual design for a clone (v2).** SPEC 2.3 said rebuild knowledge "never copies code, assets
+    or content", which read as "no design". The owner wants a pixel-level clone. *Decided by the
+    owner on 2026-10-24 ("Pixel-level clone"):* reb measures the look (layout, sizes, colours, fonts,
+    spacing, corner radius, shadows, components and their visible states) from computed styles and
+    screenshots; it still never copies code, logos, icons, illustrations or content. Capture also
+    covers email addresses and phone numbers in screenshots.

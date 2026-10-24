@@ -226,4 +226,62 @@ describe("framework views", () => {
     expect(stories).toContain("Step 1: Send invoice");
     expect(stories).toContain("Accept: The customer gets an email with a pay link.");
   });
+
+  it("draws the design system by kind and the UX specification per screen and pattern", () => {
+    const nodes: GraphNode[] = [
+      node({
+        id: "screen-invoices",
+        type: "screen",
+        name: "Invoices",
+        path: "/invoices",
+        layout: "sidebar 240px wide on the left, top bar 56px high",
+        regions: ["sidebar: at 0,0, 240x900px"],
+        states: ["empty"],
+        viewport: "1440x900",
+      }),
+      node({
+        id: "design_token-primary",
+        type: "design_token",
+        name: "Primary",
+        category: "color",
+        value: "#4f46e5",
+        usage: "fill of the main buttons",
+        links: { appears_on: ["screen-invoices"] },
+      }),
+      node({
+        id: "design_token-body-text",
+        type: "design_token",
+        name: "Body text",
+        category: "typography",
+        value: "14px/20px Inter 400",
+      }),
+      node({
+        id: "ux_pattern-button",
+        type: "ux_pattern",
+        name: "Button",
+        kind: "component",
+        anatomy: "height 32px, corners 6px",
+        variants: ["most common: background #4f46e5"],
+        states: ["default", "disabled: opacity 0.5"],
+        links: { appears_on: ["screen-invoices"] },
+      }),
+    ];
+    const design = frameworkView("design_system", nodes, []);
+    expect(design.count).toBe(2);
+    expect(design.markdown).toContain(
+      "| Primary | `#4f46e5` | fill of the main buttons | Invoices | documented | [design_token-primary] |",
+    );
+    expect(design.markdown.indexOf("**Color**")).toBeLessThan(
+      design.markdown.indexOf("**Typography**"),
+    );
+    expect(design.markdown).toMatch(/Not measured yet: Spacing, Radius/);
+    const ux = frameworkView("ux_spec", nodes, []).markdown;
+    expect(ux).toContain("- **Invoices** (`/invoices`, seen at 1440x900) [screen-invoices]");
+    expect(ux).toContain("  - Layout: sidebar 240px wide on the left, top bar 56px high");
+    expect(ux).toContain("  - Components: Button");
+    expect(ux).toContain("  - States: empty");
+    expect(ux).toContain("**Component patterns**");
+    expect(ux).toContain("  - States: default, disabled: opacity 0.5");
+    expect(ux).toContain("  - Appears on: Invoices");
+  });
 });

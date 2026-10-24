@@ -31,7 +31,9 @@ one install, an MCP server for AI agents, a CLI, a handbook skill, evidence reco
    links that could change something (sign out, delete, pay, export, confirm ...), private APIs,
    files or other sites, and never clicks, types, submits forms or downloads. It saves a
    screenshot and the visible labels of each screen as observed evidence, then forgets the login. "Rebuild" knowledge (v2) describes behaviour seen in normal
-   use and public docs; reb never copies code, assets or content.
+   use and public docs, and the visual design measured from it (layout, sizes, colours, fonts,
+   spacing, corner radius, shadows, components and their visible states; ROADMAP decision 24), so a
+   team can build a look-alike; reb never copies code, logos, icons, illustrations or content.
 4. Everything inspectable: plain files on disk, append-only logs, versioned plans.
 5. Local-first: data stays on the user's computer. No telemetry.
 6. Same behaviour from CLI and MCP: both call the same workflows.
@@ -94,7 +96,10 @@ Node types (v2), by family:
   company condition: metric, funding_round, leader, signal, geography, compliance;
   strategy and risk: finding, risk, trend, force;
   technology and rebuild: technology, screen, user_role, business_rule, api_endpoint, requirement
-  (a functional or non-functional requirement for a rebuild).
+  (a functional or non-functional requirement for a rebuild);
+  design and UX: design_token (one measured colour, text style, spacing, radius, shadow, size,
+  breakpoint or transition), ux_pattern (a layout, component, navigation, interaction, feedback or
+  state pattern with its anatomy, variants and states).
 Link types (from -> to): makes (company->product), has (product->module, module->feature),
   does (persona->journey), uses (journey->feature, ordered), gated_by (feature->pricing_tier),
   reads_writes (feature|api_endpoint->data_object), connects_to (feature->integration),
@@ -109,11 +114,14 @@ v2 links: delivers (product->value_proposition), serves (value_proposition|produ
   threatens (risk->any), concerns (finding->any), affects (trend|force|signal->any),
   shows (screen->feature|data_object), navigates_to (screen->screen), can (user_role->feature|screen),
   governs (business_rule->feature|data_object|pricing_tier|user_role), exposes (product|module->api_endpoint),
-  relates_to (data_object->data_object), specifies (requirement->any).
+  relates_to (data_object->data_object), specifies (requirement->any),
+  appears_on (design_token|ux_pattern->screen|feature).
 Typed fields (v2): some node types carry extra front-matter fields that frameworks and reports read,
   for example risk {category, likelihood, impact, mitigation}, metric {kind, value, unit, as_of},
   finding {rating, area, swot, recommendation}, trend {pestle, direction}, force {force, strength},
-  feature {acceptance, logic, data_use, priority}, requirement {kind, statement, category, priority}.
+  feature {acceptance, logic, data_use, priority}, requirement {kind, statement, category, priority},
+  screen {path, layout, regions, components, states, viewport}, design_token {category, value, usage},
+  ux_pattern {kind, anatomy, variants, states, behaviour}.
   The full table is in handbook/references/graph-format.md; validation reports missing or unknown values.
 Rule: one fact lives in one node; other nodes link to it.
 Validation reports: broken links, features without evidence, numbers without a dated source,
@@ -158,7 +166,7 @@ Output: render_report (markdown, docx, print-ready html), open_dashboard.
 Analysis (v2): get_framework (swot, pestle, five_forces, business_model_canvas, risk_register,
   findings, metrics, market_size, funding, growth_signals, tech_stack, competitor_matrix, sitemap,
   permission_matrix, data_model, user_stories, business_rules, api, feature_logic, requirements,
-  nfr), compare_runs (what changed between two runs of the same or competing products).
+  nfr, design_system, ux_spec), compare_runs (what changed between two runs of the same or competing products).
 Hands-on (v2): import_inbox also imports evidence/inbox/provided/ as provided evidence.
 Capture (v2, CLI only because the person must agree and log in at the keyboard): `reb capture
 [url]` writes screenshots and capture-notes.md into a new inbox session, screen nodes with
@@ -166,11 +174,16 @@ navigates_to links, observed evidence, evidence/imports/<session>/capture.json a
 notes/capture-<session>.md (sitemap, labels per screen, suggested node types). Besides labels it reads
 field kinds, required marks and drop-down choices, the values of kind columns (Status, Stage, Type,
 Role), the main menu, tabs, charts, list controls and notices; people's names in choices and other
-columns are left out, and nothing typed into a field is read.
+columns are left out, and nothing typed into a field is read. It also measures each screen's visual
+design from computed styles (colours, fonts, text styles, spacing, corner radius, shadows, icon sizes,
+transitions, regions such as sidebar and top bar, and each kind of component with its variants and
+visible states), never reading text, images, icons or code for it, and covers email addresses and
+phone numbers in the screenshots.
 Feature model: analyse_capture (`reb analyse [session]`, also run at the end of a capture) infers from
 the captured screens the modules, features (with likely logic, data reuse, acceptance criteria and
 questions to check by hand), entities (attributes, types, required fields, states, relations), business
-rules, roles and non-functional requirements. It writes notes/feature-model-<session>.md and adds them
+rules, roles and non-functional requirements, and from the measured design the design tokens and UX
+patterns (observed, since they are measurements). It writes notes/feature-model-<session>.md and adds them
 as inferred nodes with evidence linking the screenshots; existing nodes are never changed.
 Logging: log_role_work. Every tool call is also written to logs/events.jsonl automatically.
 Web search is done with the host agent's own search tool; results are recorded via record_source.
@@ -186,9 +199,9 @@ Read-only in v1.
 Templates in reports/templates/: business, feature, market, build; v2 adds due_diligence
 (business condition), risk (risk assessment), strategy (SWOT, PESTLE, five forces, growth outlook),
 technical (technical capability assessment), rebuild (product rebuild specification: PRD, screens,
-roles and permissions, data model, business rules, user stories, API) and requirements (functional and
+UX specification and design system, roles and permissions, data model, business rules, user stories, API) and requirements (functional and
 non-functional requirements specification: feature logic and data reuse, data model, numbered FR and NFR
-with acceptance criteria).
+with acceptance criteria, UX and design requirements).
 Each section declares the node types it needs (used by the auditor) and may show framework views.
 Every claim cites node ids or E-/S- ids. Every report (v2) has: report details with an overall
 confidence rating, an executive summary, scope and methodology, the sections, limitations and
@@ -215,4 +228,5 @@ GitHub Actions runs tests on every pull request. Published to npm as "reb"; if t
 ## 15. Out of scope for v2
 Self-driving mode with its own model calls, multi-user collaboration, cloud hosting,
 editing from the dashboard, any form of product automation, reading non-public or paywalled
-data sources, copying a product's code, assets or content.
+data sources, copying a product's code, logos, icons, illustrations or content (measuring its visual
+design is in scope, see 2.3).

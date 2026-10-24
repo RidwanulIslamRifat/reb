@@ -125,6 +125,24 @@ export const CHANNEL_KINDS = [
   "other",
 ] as const;
 export const COMPLIANCE_KINDS = ["regulation", "certification", "standard", "policy"] as const;
+export const TOKEN_CATEGORIES = [
+  "color",
+  "typography",
+  "spacing",
+  "radius",
+  "shadow",
+  "size",
+  "breakpoint",
+  "motion",
+] as const;
+export const PATTERN_KINDS = [
+  "component",
+  "layout",
+  "navigation",
+  "interaction",
+  "feedback",
+  "state",
+] as const;
 export const RULE_KINDS = [
   "limit",
   "validation",
@@ -147,6 +165,13 @@ const enumField = (
 const text = (name: string, about: string, required = false): FieldSpec => ({
   name,
   kind: "text",
+  required,
+  about,
+});
+
+const list = (name: string, about: string, required = false): FieldSpec => ({
+  name,
+  kind: "list",
   required,
   about,
 });
@@ -250,7 +275,30 @@ export const TYPE_FIELDS: Partial<Record<NodeType, FieldSpec[]>> = {
     enumField("force", FORCES, "Which of Porter's five forces."),
     enumField("strength", LEVELS, "How strong the force is: low, medium or high."),
   ],
-  screen: [text("path", "Where it is, for example /settings/billing (from normal use).")],
+  screen: [
+    text("path", "Where it is, for example /settings/billing (from normal use)."),
+    text(
+      "layout",
+      "How the screen is laid out, for example: left sidebar 240px, top bar 56px, main area with a table.",
+      false,
+    ),
+    list("regions", "The parts of the screen with their place and size, one per item."),
+    list("components", "The components on the screen (ux_pattern names), one per item."),
+    list("states", "States seen on the screen: empty, loading, error, selected, disabled ..."),
+    text("viewport", "The window size the screen was seen at, for example 1440x900.", false),
+  ],
+  design_token: [
+    enumField("category", TOKEN_CATEGORIES, "What kind of design value."),
+    text("value", "The measured value, for example #4F46E5, 14px/20px Inter 500, 8px.", true),
+    text("usage", "Where it is used, for example primary buttons and links.", false),
+  ],
+  ux_pattern: [
+    enumField("kind", PATTERN_KINDS, "What kind of pattern: component, layout, navigation ..."),
+    text("anatomy", "Its parts and measurements: size, padding, colours, font, corners."),
+    list("variants", "Its variants, for example primary, secondary, ghost."),
+    list("states", "Its states, for example default, hover, focus, disabled, loading."),
+    text("behaviour", "What it does when used, in plain words (from normal use).", false),
+  ],
   business_rule: [enumField("kind", RULE_KINDS, "What kind of rule.")],
   requirement: [
     enumField("kind", REQUIREMENT_KINDS, "functional (what it does) or non_functional (how well)."),
