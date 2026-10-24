@@ -122,24 +122,22 @@ describe.skipIf(!available)("reb capture in a real browser", () => {
     const { chromium } = await import("playwright-core");
     const viewer = await chromium.launch({ executablePath: CHROMIUM });
     const tab = await viewer.newPage();
-    const magenta = await tab.evaluate(
-      async (src) => {
-        const img = new Image();
-        img.src = src;
-        await img.decode();
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const g = canvas.getContext("2d")!;
-        g.drawImage(img, 0, 0);
-        const px = g.getImageData(0, 0, img.width, img.height).data;
-        let n = 0;
-        for (let i = 0; i < px.length; i += 4)
-          if (px[i]! > 240 && px[i + 1]! < 20 && px[i + 2]! > 240) n++;
-        return n;
-      },
-      `data:image/png;base64,${shot.toString("base64")}`,
-    );
+    // Counted inside the page (a string script: the test files are typed without DOM types).
+    const src = `data:image/png;base64,${shot.toString("base64")}`;
+    const magenta = (await tab.evaluate(`(async () => {
+      const img = new Image();
+      img.src = ${JSON.stringify(src)};
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const g = canvas.getContext("2d");
+      g.drawImage(img, 0, 0);
+      const px = g.getImageData(0, 0, img.width, img.height).data;
+      let n = 0;
+      for (let i = 0; i < px.length; i += 4) if (px[i] > 240 && px[i + 1] < 20 && px[i + 2] > 240) n++;
+      return n;
+    })()`)) as number;
     await viewer.close();
     expect(magenta).toBeGreaterThan(100);
   }, 60_000);
