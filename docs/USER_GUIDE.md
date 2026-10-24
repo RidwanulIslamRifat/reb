@@ -52,7 +52,8 @@ If you have an account, reb can take the screenshots for you:
    terminal.
 4. reb opens the product's own links one at a time and saves a screenshot of each screen. It never
    clicks, types, submits forms, downloads, or opens sign-out, delete, pay, upgrade or export links.
-   The window closes when it is done, and the login is forgotten.
+   The window closes when it is done, and the login is forgotten. Email addresses and phone numbers
+   are covered with a coloured box in the screenshots.
 5. reb then works out the feature model by itself: every module and feature, the data each one
    stores (entities, fields and their types, states such as deal stages, links between records),
    how that data is reused elsewhere, the likely logic behind each feature, rules, roles and
@@ -62,6 +63,13 @@ If you have an account, reb can take the screenshots for you:
    "Check by using it" boxes for each feature in the product yourself.
 7. Get the build-ready report: `npx @ridwanul/reb report requirements --docx` (functional and
    non-functional requirements, numbered, with acceptance criteria, data model and feature logic).
+
+For a look-alike rebuild, capture also measures how each screen looks: colours, fonts and text
+sizes, spacing, corner radius, shadows, the sidebar and top bar sizes, and each kind of component
+(buttons, inputs, tables, tabs ...) with its variants and states. These become the "Design system"
+and "UX specification" sections of the rebuild report. reb never copies the product's code, logos,
+icons, illustrations or text. Hover and focus states need a mouse, which reb never uses: take
+screenshots of those yourself and drop them in the inbox.
 
 To redo the analysis without opening a browser again: `npx @ridwanul/reb analyse` (add
 `--dry-run` to only see the counts).

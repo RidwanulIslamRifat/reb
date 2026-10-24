@@ -64,6 +64,14 @@ reports keep working; the v1 reports gain the new report frame (see Changed).
   feature logic and data reuse, data model with an ER diagram, user stories, roles, rules and screens.
   New node type `requirement`, link `specifies`, and framework views `feature_logic`,
   `requirements` and `nfr`.
+- **UX and visual design for a look-alike rebuild** (owner decision 2026-10-24): capture now measures
+  each screen's colours, fonts and text styles, spacing, corner radius, shadows, icon sizes,
+  transitions, regions (sidebar, top bar, main area) and each kind of component with its variants
+  and visible states, and covers email addresses and phone numbers in screenshots. `reb analyse`
+  turns this into new node types `design_token` and `ux_pattern` (link `appears_on`), and screen
+  nodes get `layout`, `regions`, `components`, `states` and `viewport`. New framework views
+  `design_system` and `ux_spec`, shown in new sections of the rebuild and requirements reports.
+  reb still never copies code, logos, icons, illustrations or text.
 
 ### Changed
 

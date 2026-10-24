@@ -83,6 +83,8 @@ export const NODE_TYPES: Record<string, { name: string; family: string; shape: s
   business_rule: { name: "Business rule", family: "build", shape: "diamond" },
   api_endpoint: { name: "API endpoint", family: "build", shape: "round-tag" },
   requirement: { name: "Requirement", family: "build", shape: "pentagon" },
+  design_token: { name: "Design token", family: "build", shape: "round-diamond" },
+  ux_pattern: { name: "UX pattern", family: "build", shape: "round-hexagon" },
 };
 export const typeName = (type: string) => NODE_TYPES[type]?.name ?? humanize(type);
 

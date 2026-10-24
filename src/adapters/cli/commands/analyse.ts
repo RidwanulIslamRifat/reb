@@ -24,12 +24,13 @@ export function registerAnalyse(program: Command, io: CliIo): void {
         io,
         `From ${result.session}: ${result.modules} modules, ${result.features} features, ${result.entities} ` +
           `entities, ${result.rules} business rules, ${result.roles} roles and ${result.requirements} ` +
-          "non-functional requirements.",
+          "non-functional requirements; " +
+          `${result.tokens} design tokens and ${result.patterns} UX patterns.`,
       );
       if (!result.dry_run) {
         line(
           io,
-          `Added ${result.created.length} inferred nodes and ${result.links} links` +
+          `Added ${result.created.length} nodes and ${result.links} links` +
             (result.kept.length
               ? `; kept ${result.kept.length} existing nodes as they were.`
               : "."),

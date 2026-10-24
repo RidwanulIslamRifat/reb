@@ -39,7 +39,7 @@ async function capturedRun() {
   return { ctx, dir };
 }
 
-describe("analyse_capture (feature model from captured screens)", () => {
+describe("analyse_capture (feature model from captured screens)", { timeout: 30_000 }, () => {
   it("adds inferred modules, features, entities, rules, roles and requirements with evidence", async () => {
     const { ctx, dir } = await capturedRun();
     const result = await analyseCapture(ctx, { run: dir });

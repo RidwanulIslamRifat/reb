@@ -149,6 +149,78 @@ export interface PageSnapshot {
   /** Short alerts and banners: limits, plan locks, usage ("3 of 5 seats used"). */
   notices?: string[];
   breadcrumbs?: string[];
+  /** The measured visual design of the screen (computed styles, sizes, regions, components). */
+  design?: DesignSnapshot;
+}
+
+/** A measured value and how many elements on the screen use it. */
+export interface Tally {
+  value: string;
+  count: number;
+}
+
+/** How one element looks, from its computed style and size. */
+export interface Look {
+  width: number;
+  height: number;
+  padding: string;
+  radius: string;
+  background: string;
+  color: string;
+  border: string;
+  font: string;
+  shadow: string;
+  opacity: string;
+}
+
+export interface TextStyle {
+  role: string;
+  count: number;
+  size: number;
+  line_height: number;
+  weight: string;
+  family: string;
+  color: string;
+  letter_spacing: string;
+}
+
+export interface ComponentLook {
+  kind: string;
+  count: number;
+  variants: Array<{ count: number; style: Look }>;
+  /** Visible states (disabled, selected, checked ...) and how a component in that state looks. */
+  states: Array<{ state: string; style: Look }>;
+}
+
+export interface Region {
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  background: string;
+  position: string;
+}
+
+/**
+ * The visual design of one screen, measured in the page from computed styles: colours (prefixed
+ * "text ", "background " or "border "), fonts, text styles per role, spacing, corner radius,
+ * shadows, icon sizes, motion, the screen's regions and each kind of component. It holds no text,
+ * images, icons or code of the product.
+ */
+export interface DesignSnapshot {
+  viewport: { width: number; height: number; page_height: number };
+  colors: Tally[];
+  fonts: Tally[];
+  text_styles: TextStyle[];
+  spacing: Tally[];
+  radius: Tally[];
+  shadows: Tally[];
+  icon_sizes: Tally[];
+  motion: Tally[];
+  regions: Region[];
+  components: ComponentLook[];
+  states: string[];
 }
 
 /** Column headers whose values are kinds or states (Status, Stage, Type ...), not record data. */
@@ -239,6 +311,7 @@ export interface CapturedScreen {
   /** Ids of captured screens this one links to. */
   links_to: string[];
   hints: ScreenHint[];
+  design?: DesignSnapshot;
 }
 
 export interface ScreenHint {

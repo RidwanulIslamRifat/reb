@@ -221,6 +221,8 @@ const TYPE_HEADING: Record<NodeType, string> = {
   business_rule: "Business rules",
   api_endpoint: "API endpoints",
   requirement: "Requirements",
+  design_token: "Design tokens",
+  ux_pattern: "UX patterns",
 };
 
 /** How a link reads from its start node, and from its end node. */
@@ -260,6 +262,7 @@ const LINK_WORDS: Record<Exclude<LinkType, "evidence">, { out: string; in: strin
   exposes: { out: "Exposes", in: "Exposed by" },
   relates_to: { out: "Relates to", in: "Related from" },
   specifies: { out: "Specifies", in: "Required by" },
+  appears_on: { out: "Appears on", in: "Uses design" },
 };
 
 export interface RenderReportInput {

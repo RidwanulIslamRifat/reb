@@ -173,6 +173,18 @@ const NODES: Row[] = [
   ["data_object", "Payment"],
   ["api_endpoint", "List invoices", ["method=GET", "path=/v1/invoices"]],
   ["hypothesis", "Invoices and payments live in one database", [], "inferred"],
+  ["design_token", "Primary", ["category=color", "value=#4F46E5", "usage=main buttons and links"]],
+  ["design_token", "Page background", ["category=color", "value=#FFFFFF"]],
+  ["design_token", "Body text", ["category=typography", "value=14px/20px Inter 400"]],
+  ["design_token", "Base spacing", ["category=spacing", "value=8px"]],
+  ["design_token", "Corner radius", ["category=radius", "value=6px"]],
+  [
+    "ux_pattern",
+    "Primary button",
+    ["kind=component", "anatomy=height 32px with 6px corners", "states=default,hover,disabled"],
+  ],
+  ["ux_pattern", "Invoice table", ["kind=component", "states=default,empty"]],
+  ["ux_pattern", "Sidebar layout", ["kind=layout", "anatomy=fixed left sidebar 240px wide"]],
 ];
 
 const LINKS: Array<[string, string, string]> = [
@@ -240,6 +252,8 @@ const LINKS: Array<[string, string, string]> = [
   ["api_endpoint-list-invoices", "reads_writes", "data_object-invoice"],
   ["feature-send-invoice", "reads_writes", "data_object-invoice"],
   ["hypothesis-invoices-and-payments-live-in-one-database", "explains", "data_object-payment"],
+  ["ux_pattern-invoice-table", "appears_on", "screen-invoices"],
+  ["design_token-primary", "appears_on", "screen-invoices"],
 ];
 
 const DD_DRAFT = `## Executive summary
@@ -431,6 +445,8 @@ describe("end to end (v2): a business-depth analysis with audit-grade reports", 
     expect(rebuild).toContain("`/settings/billing`");
     expect(rebuild).toContain("INVOICE }o--o{ CLIENT");
     expect(rebuild).toContain("As a Freelancer, I want to get paid.");
+    expect(rebuild).toContain("`#4F46E5`");
+    expect(rebuild).toMatch(/Invoice table.*\n(.*\n)*.*Appears on: Invoices/);
     const strategy = await readFile(join(dir, "reports", "strategy.md"), "utf8");
     expect(strategy).toContain("Overall competitive pressure");
 
@@ -462,5 +478,5 @@ describe("end to end (v2): a business-depth analysis with audit-grade reports", 
     if (process.env.REB_E2E_KEEP_V2) {
       await cp(dir, process.env.REB_E2E_KEEP_V2, { recursive: true });
     }
-  });
+  }, 30_000);
 });

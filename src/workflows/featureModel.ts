@@ -1,5 +1,11 @@
 import { join } from "node:path";
 import type { CapturedScreen } from "../domain/capture.js";
+import {
+  designDetail,
+  designNotes,
+  inferDesignModel,
+  type DesignModel,
+} from "../domain/designModel.js";
 import { RebError } from "../domain/errors.js";
 import type { NodeType } from "../domain/links.js";
 import {
@@ -39,6 +45,7 @@ function withDefaults(s: Partial<CapturedScreen> & { id: string }): CapturedScre
     notices: [],
     breadcrumbs: [],
     ...s,
+    design: designDetail(s.design),
     // Older captures only have field labels: treat each as a text field.
     form_fields:
       s.form_fields ??
@@ -95,6 +102,7 @@ export async function analyseCapture(
         .filter((s) => s && typeof s.id === "string")
         .map(withDefaults);
       const model = inferProductModel(screens);
+      const design = inferDesignModel(screens);
       const session = chosen.session;
       const notes = `notes/feature-model-${session}.md`;
       const graph = await loadGraph(run.paths);
@@ -110,7 +118,11 @@ export async function analyseCapture(
           shot[r.subject] = r.id;
         }
       }
-      const summary = summarise(model);
+      const summary = {
+        ...summarise(model),
+        tokens: design.tokens.length,
+        patterns: design.patterns.length,
+      };
       if (input.dry_run) {
         const nothing = {
           created: [] as string[],
@@ -132,7 +144,8 @@ export async function analyseCapture(
       const { brief } = await readBrief(run);
       await writeRunFile(
         join(run.paths.dir, ...notes.split("/")),
-        featureModelNotes({ product: brief.product, session, model, screens, evidence: shot }),
+        featureModelNotes({ product: brief.product, session, model, screens, evidence: shot }) +
+          designNotes(design),
       );
       const writer = new GraphWriter(
         ctx,
@@ -142,6 +155,7 @@ export async function analyseCapture(
         notes,
       );
       await writeModel(writer, model, graph.nodes.find((n) => n.meta.type === "product")?.meta.id);
+      await writeDesign(writer, design);
       return {
         ...run,
         session,
@@ -192,6 +206,7 @@ class GraphWriter {
     body: string,
     finding: string,
     screens: string[],
+    measured = false,
   ) {
     if (this.existing.has(id)) {
       if (!this.kept.includes(id)) this.kept.push(id);
@@ -202,7 +217,7 @@ class GraphWriter {
       type,
       id,
       name,
-      label: "inferred",
+      label: measured ? "observed" : "inferred",
       fields,
       body,
     });
@@ -212,13 +227,18 @@ class GraphWriter {
     const { record } = await appendEvidence(this.ctx, this.run, {
       role: "feature_analyst",
       subject: id,
-      operation: "infer_from_capture",
+      operation: measured ? "measure_from_capture" : "infer_from_capture",
       source: this.notes,
       finding,
-      confidence: "inferred",
-      limitations: [
-        "Inferred from captured screens (labels, fields, columns, buttons), not from using the feature; confirm by hand.",
-      ],
+      confidence: measured ? "observed" : "inferred",
+      limitations: measured
+        ? [
+            "Measured from the computed styles of the captured screens at one window size; names such as Primary are reb's reading of where a value is used.",
+            "Hover, focus and pressed states need interaction, which capture never does; check them by hand.",
+          ]
+        : [
+            "Inferred from captured screens (labels, fields, columns, buttons), not from using the feature; confirm by hand.",
+          ],
       links,
     });
     this.evidence.push(record.id);
@@ -231,6 +251,43 @@ class GraphWriter {
       () => null,
     );
     if (result?.changed) this.links++;
+  }
+}
+
+/** Design tokens and UX patterns are measurements of the captured screens, so they are observed. */
+async function writeDesign(w: GraphWriter, design: DesignModel) {
+  for (const t of design.tokens) {
+    await w.node(
+      "design_token",
+      t.id,
+      t.name,
+      { category: t.category, value: t.value, usage: t.usage },
+      `\n# ${t.name}\n\n\`${t.value}\`: ${t.usage}.\n`,
+      `${t.name} (${t.category}) measures ${t.value}: ${t.usage}.`,
+      t.screens,
+      true,
+    );
+  }
+  for (const p of design.patterns) {
+    const fields = {
+      kind: p.kind,
+      ...(p.anatomy ? { anatomy: p.anatomy } : {}),
+      ...(p.variants.length ? { variants: p.variants } : {}),
+      ...(p.states.length ? { states: p.states } : {}),
+    };
+    await w.node(
+      "ux_pattern",
+      p.id,
+      p.name,
+      fields,
+      `\n# ${p.name}\n\nA ${p.kind} pattern measured on the captured screens.\n` +
+        bullets("Variants", p.variants) +
+        bullets("States", p.states),
+      `${p.name} (${p.kind})${p.anatomy ? `: ${p.anatomy}` : ""}.`,
+      p.screens,
+      true,
+    );
+    for (const s of p.screens) await w.link(p.id, "appears_on", s);
   }
 }
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** The 13 v1 node types, the 21 v2 node types and requirement (SPEC 6.3). */
+/** The 13 v1 node types, the 21 v2 node types, requirement and the two design types (SPEC 6.3). */
 export const NODE_TYPES = [
   "company",
   "product",
@@ -42,11 +42,14 @@ export const NODE_TYPES = [
   "api_endpoint",
   // Feature model: functional and non-functional requirements
   "requirement",
+  // Design and UX: the look and behaviour of the screens, for a pixel-level rebuild
+  "design_token",
+  "ux_pattern",
 ] as const;
 export const NodeTypeSchema = z.enum(NODE_TYPES);
 export type NodeType = z.infer<typeof NodeTypeSchema>;
 
-/** The 12 v1 link types, the 23 v2 link types and specifies (SPEC 6.3). */
+/** The 12 v1 link types, the 23 v2 link types, specifies and appears_on (SPEC 6.3). */
 export const LINK_TYPES = [
   "makes",
   "has",
@@ -85,6 +88,7 @@ export const LINK_TYPES = [
   "exposes",
   "relates_to",
   "specifies",
+  "appears_on",
 ] as const;
 export const LinkTypeSchema = z.enum(LINK_TYPES);
 export type LinkType = z.infer<typeof LinkTypeSchema>;
@@ -156,6 +160,8 @@ export const LINK_RULES: Record<LinkType, { pairs: Ends[]; ordered?: boolean }> 
   exposes: { pairs: [{ from: ["product", "module"], to: ["api_endpoint"] }] },
   relates_to: { pairs: [{ from: ["data_object"], to: ["data_object"] }] },
   specifies: { pairs: [{ from: ["requirement"], to: "any" }] },
+  // Design and UX
+  appears_on: { pairs: [{ from: ["design_token", "ux_pattern"], to: ["screen", "feature"] }] },
 };
 
 const matches = (allowed: NodeType[] | "any", type: NodeType) =>

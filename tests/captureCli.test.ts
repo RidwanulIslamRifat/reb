@@ -46,7 +46,7 @@ describe("reb analyse in the terminal", () => {
     expect(output).toContain("Dry run: nothing was written.");
     output = "";
     await program().parseAsync(["analyze", "session-01"], { from: "user" });
-    expect(output).toMatch(/Added \d+ inferred nodes/);
+    expect(output).toMatch(/Added \d+ nodes/);
     expect(output).toContain("notes/feature-model-session-01.md");
   });
 });

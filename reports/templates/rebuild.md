@@ -26,6 +26,20 @@ sections:
     views: [sitemap]
     needs:
       - { type: screen, min: 3, severity: major }
+  - id: ux
+    title: UX specification
+    about: Each screen's layout, regions, components and states, and each component's anatomy and states.
+    views: [ux_spec]
+    list: false
+    needs:
+      - { type: ux_pattern, min: 3, severity: major }
+  - id: design
+    title: Design system
+    about: The measured colours, typography, spacing, corner radius, shadows and sizes.
+    views: [design_system]
+    list: false
+    needs:
+      - { type: design_token, min: 5, severity: major }
   - id: roles
     title: Roles and permissions
     about: The user roles inside the product and what each may use.
@@ -66,5 +80,6 @@ sections:
 ---
 
 What a team would need to rebuild the behaviour of {product}: scope, features with acceptance criteria,
-user stories, screens, roles and permissions, data model, business rules, plans and integrations.
-It describes behaviour seen in normal use and public documentation; it copies no code, design or content.
+user stories, screens, UX and design system, roles and permissions, data model, business rules, plans
+and integrations. It describes behaviour and measured visual design seen in normal use and public
+documentation; it copies no code, logos, icons, illustrations or content.

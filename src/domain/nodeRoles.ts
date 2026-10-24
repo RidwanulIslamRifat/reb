@@ -48,4 +48,7 @@ export const ROLE_FOR_TYPE: Record<NodeType, Role> = {
   business_rule: "feature_analyst",
   // Requirements come from the feature model (reb capture, analyse_capture) and the hands-on session.
   requirement: "feature_analyst",
+  // Design tokens and UX patterns come from reb capture and the hands-on session.
+  design_token: "feature_analyst",
+  ux_pattern: "feature_analyst",
 };

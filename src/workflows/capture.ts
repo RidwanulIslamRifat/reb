@@ -16,6 +16,7 @@ import {
   type SkipReason,
 } from "../domain/capture.js";
 import { RebError } from "../domain/errors.js";
+import { designDetail, screenLayout } from "../domain/designModel.js";
 import { launchCaptureBrowser, type BrowserLauncher } from "../sources/browser.js";
 import { writeRunFile } from "../storage/inbox.js";
 import type { Context } from "./context.js";
@@ -143,6 +144,7 @@ export async function captureProduct(
               })),
               notices: snap.notices?.map(redactText),
             }),
+            design: designDetail(snap.design),
           };
           const taken = new Set(screens.map((s) => s.name));
           let name = screenName(base);
@@ -210,7 +212,7 @@ export async function captureProduct(
           name: s.name,
           id: s.id,
           label: "observed",
-          fields: { path: s.pattern },
+          fields: { path: s.pattern, ...screenLayout(s.design) },
           body: `\n# ${s.name}\n\nCaptured at \`${s.pattern}\` (${notesFile}).\n`,
         });
       }
@@ -241,6 +243,8 @@ export async function captureProduct(
           entities: analysis.entities,
           rules: analysis.rules,
           requirements: analysis.requirements,
+          design_tokens: analysis.tokens,
+          ux_patterns: analysis.patterns,
           created: analysis.created.length,
         },
         evidence: imported.items.filter((i) => i.record).map((i) => i.record!),
